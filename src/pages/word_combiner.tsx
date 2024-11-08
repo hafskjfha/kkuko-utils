@@ -36,7 +36,7 @@ const Home: React.FC = () => {
                 <Image src="/report-logo.jpeg" alt="버그신고" width={40} height={40} />
             </Link>
             <button onClick={handleOpenModal}>
-              <Image src="/patchnote-logo.svg" alt="패치노트" width={40} height={40} />
+              <Image src="/1153451.png" alt="패치노트" width={40} height={40} />
             </button>
             <Link href="https://docs.google.com/document/d/1wlX4TaC4Y_b-Dnjjy5uXc0GwWpFy7GGE2EWwAAeLcSE/">
               <Image src="/info1-logo.svg" alt="인포메이션" width={40} height={40} />
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
                     글자조각:
                   </label>
                   <textarea id={`jokak-${type}`} name={`jokak-${type}`} className={styles[`text_area${type === 'normal' ? '' : type === 'gogp' ? '2' : '3'}`]}></textarea>
-                  <button type="button" onClick={() => submitForm(`jokak_${type}`)} className={styles.submitButton}>
+                  <button type="button" onClick={() => submitForm(`jokak_${type}`)} className={styles.submit_button}>
                     확인
                   </button>
                 </div>
@@ -88,11 +88,11 @@ const Home: React.FC = () => {
               <div className={styles.form_group}>
                 <label htmlFor="htmls-input" className={styles.htmlsInfo}>html 입력:</label>
                 <textarea id="htmls-input" name="htmls-input" className={styles.text_area1}></textarea>
-                <button type="button" onClick={() => submitForm('htmls-input')} className={styles.submitButton}>
+                <button type="button" onClick={() => submitForm('htmls-input')} className={styles.submit_button}>
                   확인
                 </button>
                 <Link href="https://docs.google.com/document/d/1wlX4TaC4Y_b-Dnjjy5uXc0GwWpFy7GGE2EWwAAeLcSE/edit#heading=h.jdfrwhkk43rr">
-                  <Image src="/help1-log.svg" alt="도움말" width={24} height={24} className={styles.helpIcon} />
+                  <Image src="/help1-log.svg" alt="도움말" width={24} height={24} className={styles.help_icon} />
                 </Link>
               </div>
             </form>
