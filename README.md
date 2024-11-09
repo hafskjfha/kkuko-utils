@@ -1,40 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# 끄코 도구 (kkuko-utils)
 
-## Getting Started
+끄코 사용자가 편리할수 있게 하는 도구 웹사이트
 
-First, run the development server:
+## 기능 (Features)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **기능 1**: 단어 조합기 (글자조각으로 6,5글자 조합하여 낱장,휘장 상자 휙득)
+- **기능 2**: 단어장 정리 도구 (글자순 정렬, 특정 단어들 추출 등)
+- **기능 3**: 매달 단어추가 요청 정리
+- **기능 4**: 빌런 단어장 게시
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 웹사이트
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+👉[게임 유틸리티 웹사이트 데모 링크](http://example.com) 
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## 사용 방법 (Usage)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+작성예정
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 기술 스택 (Tech Stack)
 
-## Learn More
+- **Frontend**: NextJS, React, Bootstrap
+- **Backend**: NextJS
+- **Database**: PostgreSQL (**Supabase**)  
+- **Deploy**: Vercel
 
-To learn more about Next.js, take a look at the following resources:
+## 기여 방법 (Contributing)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+이 프로젝트는 오픈 소스입니다! 기여를 원하시면 다음 단계를 따라주세요:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. 이 저장소를 Fork 합니다.
+2. 새로운 브랜치를 만듭니다 (`git checkout -b feature-name`).
+3. 변경 사항을 커밋합니다 (`git commit -am 'Add new feature'`).
+4. 브랜치를 푸시합니다 (`git push origin feature-name`).
+5. Pull Request를 생성하여 기여를 제출합니다.
 
-## Deploy on Vercel
+## 라이선스 (License)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+이 프로젝트는 [MIT 라이선스](LICENSE) 하에 제공됩니다.
