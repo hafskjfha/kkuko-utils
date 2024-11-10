@@ -17,9 +17,6 @@ const Home: React.FC = () => {
     // Handle form submission here...
     setSpinnerVisible(false);
   };
-  console.log(styles.form_group);
-  console.log(styles.container);
-  console.log(styles);
 
   return (
     <>
