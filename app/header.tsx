@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 //import Image from "next/image";
 
 
@@ -8,6 +9,7 @@ import Link from "next/link";
 const Header:React.FC = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     //const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+    const pathname = usePathname();
 
     return (
         <header className="bg-gray-900 text-white shadow-md">
@@ -53,19 +55,38 @@ const Header:React.FC = () => {
 
                 {/* 네비게이션 링크 */}
                 <div
-                    className={`${isOpen ? "block" : "hidden"
-                        } md:flex md:items-center md:space-x-6 text-sm`}
+                    className={`${isOpen ? "block" : "hidden"} md:flex md:items-center md:space-x-6 text-sm`}
                 >
-                    <Link href="/about" className="block py-2 md:py-0 hover:text-gray-300">
+                    <Link
+                        href="/word-combiner"
+                        className={`block py-2 md:py-0 hover:text-gray-300 ${
+                            pathname === "/word-combiner" ? "border-b-2 border-white" : ""
+                        }`}
+                    >
                         단어조합기
                     </Link>
-                    <Link href="/services" className="block py-2 md:py-0 hover:text-gray-300">
+                    <Link
+                        href="/services"
+                        className={`block py-2 md:py-0 hover:text-gray-300 ${
+                            pathname === "/services" ? "border-b-2 border-white" : ""
+                        }`}
+                    >
                         단어장 관리 도구
                     </Link>
-                    <Link href="/blog" className="block py-2 md:py-0 hover:text-gray-300">
+                    <Link
+                        href="/blog"
+                        className={`block py-2 md:py-0 hover:text-gray-300 ${
+                            pathname === "/blog" ? "border-b-2 border-white" : ""
+                        }`}
+                    >
                         빌런 단어장 공유
                     </Link>
-                    <Link href="/contact" className="block py-2 md:py-0 hover:text-gray-300">
+                    <Link
+                        href="/contact"
+                        className={`block py-2 md:py-0 hover:text-gray-300 ${
+                            pathname === "/contact" ? "border-b-2 border-white" : ""
+                        }`}
+                    >
                         단어 추가 요청 정리
                     </Link>
                 </div>
