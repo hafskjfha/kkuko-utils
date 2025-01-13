@@ -4,6 +4,10 @@ import { useState } from 'react';
 
 export default function WordCombinerClient() {
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [nomalJOKAK,setNomalJOKAK] = useState<string>("");
+    const [highJOKAK,setHighJOKAK] = useState<string>("");
+    const [rareJOKAK,setRareJOKAK] = useState<string>("");
+    const [inputHtml,setInputHtml] = useState<string>("");
 
     return (
         <div className="flex flex-col h-screen">
@@ -28,47 +32,58 @@ export default function WordCombinerClient() {
                 {/* 왼쪽 컨테이너 */}
                 <div className="w-full md:w-1/2 bg-gray-100 p-4 flex flex-col space-y-4">
                     <div className="flex items-center space-x-2">
-                        <label className="w-20 text-gray-700 text-sm">이름 입력:</label>
-                        <input
-                            type="text"
-                            placeholder="Input 1"
-                            className="flex-1 p-2 border border-gray-300 rounded-md"
+                        <label className="w-16 text-gray-700 text-xs">(일반) <br></br>
+                        글자조각:</label>
+                        <textarea
+                            placeholder="일반 글자조각 입력"
+                            className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
+                            rows={4}
+                            value={nomalJOKAK}
+                            onChange={(e)=>{setNomalJOKAK(e.target.value)}}
                         />
                         <button className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            Button 1
+                            확인
                         </button>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <label className="w-20 text-gray-700 text-sm">이메일 입력:</label>
-                        <input
-                            type="text"
-                            placeholder="Input 2"
-                            className="flex-1 p-2 border border-gray-300 rounded-md"
+                        <label className="w-16 text-gray-700 text-xs">(고급)<br></br>
+                            글자조각:</label>
+                        <textarea
+                            placeholder="고급 글자조각 입력"
+                            className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
+                            rows={3}
+                            value={highJOKAK}
+                            onChange={(e)=>{setHighJOKAK(e.target.value)}}
                         />
                         <button className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            Button 2
+                            확인
                         </button>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <label className="w-20 text-gray-700 text-sm">전화번호:</label>
-                        <input
-                            type="text"
-                            placeholder="Input 3"
-                            className="flex-1 p-2 border border-gray-300 rounded-md"
+                        <label className="w-16 text-gray-700 text-sm">(희귀)<br></br>
+                        글자조각:</label>
+                        <textarea
+                            placeholder="희귀 글자조각 입력"
+                            className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
+                            rows={2}
+                            value={rareJOKAK}
+                            onChange={(e)=>{setRareJOKAK(e.target.value)}}
                         />
                         <button className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            Button 3
+                            확인
                         </button>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <label className="w-20 text-gray-700 text-sm">주소 입력:</label>
-                        <input
-                            type="text"
-                            placeholder="Input 4"
-                            className="flex-1 p-2 border border-gray-300 rounded-md"
+                        <label className="w-16 text-gray-700 text-sm">html 입력:</label>
+                        <textarea
+                            placeholder="희귀 글자조각 입력"
+                            className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
+                            rows={2}
+                            value={inputHtml}
+                            onChange={(e)=>{setInputHtml(e.target.value)}}
                         />
                         <button className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                            Button 4
+                            확인
                         </button>
                     </div>
                 </div>
@@ -77,18 +92,18 @@ export default function WordCombinerClient() {
                 <div className="w-full md:w-1/2 bg-white p-4 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
                     <div className="flex flex-col w-full md:w-1/2 h-64">
                         <div className="p-2 text-center text-gray-600 bg-gray-100 rounded-t-md text-sm">
-                            박스 제목 1
+                            만들어진 6글자 단어
                         </div>
                         <div className="flex-1 bg-gray-200 rounded-b-md flex items-center justify-center">
-                            Result Box 1
+                            
                         </div>
                     </div>
                     <div className="flex flex-col w-full md:w-1/2 h-64">
                         <div className="p-2 text-center text-gray-600 bg-gray-100 rounded-t-md text-sm">
-                            박스 제목 2
+                            만들어진 5글자 단어
                         </div>
                         <div className="flex-1 bg-gray-200 rounded-b-md flex items-center justify-center">
-                            Result Box 2
+                            
                         </div>
                     </div>
                 </div>
