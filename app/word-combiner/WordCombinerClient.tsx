@@ -8,6 +8,49 @@ export default function WordCombinerClient() {
     const [highJOKAK,setHighJOKAK] = useState<string>("");
     const [rareJOKAK,setRareJOKAK] = useState<string>("");
     const [inputHtml,setInputHtml] = useState<string>("");
+    const [placeholderArray] = useState<[string,string,string]>(["일반 글자조각 입력","고급 글자조각 입력","희귀 글자조각 입력"]);
+
+    const handleHtmlSubmit = () => {
+        const htmlString = inputHtml;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+    
+        let nomal = ""; // 일반
+        let high = ""; // 고급
+        let rare = ""; // 희귀
+    
+        const dressItems = doc.querySelectorAll('div.dress-item.expl-mother');
+    
+        dressItems.forEach(item => {
+            const countTextElement = item.querySelector('div.jt-image.dress-item-image');
+            const charNameElement = item.querySelector('div.dress-item-title');
+    
+            if (!countTextElement || !charNameElement) {
+                // 하나라도 null이면 해당 item 건너뛰기
+                return;
+            }
+    
+            const countText = countTextElement.textContent?.trim() ?? '';
+            const tCount = parseInt(countText.replace('x', ''), 10) || 0;
+            const charName = charNameElement.textContent?.trim() ?? '';
+    
+            if (charName.includes("고급 글자 조각")) {
+                const chName = charName.replace("고급 글자 조각 - ", "");
+                high += chName.repeat(tCount);
+            } else if (charName.includes("희귀 글자 조각")) {
+                const chName = charName.replace("희귀 글자 조각 - ", "");
+                rare += chName.repeat(tCount);
+            } else if (charName.includes("글자 조각")) {
+                const chName = charName.replace("글자 조각 - ", "");
+                nomal += chName.repeat(tCount);
+            }
+        });
+        setInputHtml("");
+        setNomalJOKAK(nomal);
+        setHighJOKAK(high);
+        setRareJOKAK(rare);
+    };
+    
 
     return (
         <div className="flex flex-col h-screen">
@@ -35,7 +78,7 @@ export default function WordCombinerClient() {
                         <label className="w-16 text-gray-700 text-xs">(일반) <br></br>
                         글자조각:</label>
                         <textarea
-                            placeholder="일반 글자조각 입력"
+                            placeholder={placeholderArray[0]}
                             className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
                             rows={4}
                             value={nomalJOKAK}
@@ -49,7 +92,7 @@ export default function WordCombinerClient() {
                         <label className="w-16 text-gray-700 text-xs">(고급)<br></br>
                             글자조각:</label>
                         <textarea
-                            placeholder="고급 글자조각 입력"
+                            placeholder={placeholderArray[1]}
                             className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
                             rows={3}
                             value={highJOKAK}
@@ -63,7 +106,7 @@ export default function WordCombinerClient() {
                         <label className="w-16 text-gray-700 text-sm">(희귀)<br></br>
                         글자조각:</label>
                         <textarea
-                            placeholder="희귀 글자조각 입력"
+                            placeholder={placeholderArray[2]}
                             className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
                             rows={2}
                             value={rareJOKAK}
@@ -76,13 +119,16 @@ export default function WordCombinerClient() {
                     <div className="flex items-center space-x-2">
                         <label className="w-16 text-gray-700 text-sm">html 입력:</label>
                         <textarea
-                            placeholder="희귀 글자조각 입력"
+                            placeholder="html 입력"
                             className="flex-1 p-2 border border-gray-300 rounded-md text-xs overflow-auto resize-none"
                             rows={2}
                             value={inputHtml}
                             onChange={(e)=>{setInputHtml(e.target.value)}}
                         />
-                        <button className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        <button 
+                            className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                            onClick={handleHtmlSubmit}
+                            >
                             확인
                         </button>
                     </div>
