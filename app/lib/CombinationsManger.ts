@@ -42,7 +42,7 @@ class CombinationManager {
      * @param {string} syllable 조합에 사용될수 있는 글자들(중복도 같이 적어야함 ex<가가가나>)
      * @param {string[]} words 조합에 사용할수 있는 단어 목록(중복 포함x) 
      */
-    constructor(syllable: string = '', words: string[] = []) {
+    constructor(syllable: string, words: string[]) {
         // 초기화
         this.syllable = syllable;           // 음절(문자열)을 저장
         this.words = words;                 // 전체 단어 리스트를 저장
@@ -186,30 +186,21 @@ class CombinationManager {
         return true;
     }
 
+    /**
+     * 남아 있는 음절들을 정렬하여 반환하는 함수
+     * @returns {string} 정렬된 음절 문자열
+     */
+    public remainstr(): string {
+        const result = [];
+        for (const [syllable, count] of Object.entries(this.syllableCount)) {
+            if (count > 0) {
+                result.push(syllable.repeat(count));
+            }
+        }
+        return result.sort().join('');
+    }
+
 }
 
-
-// const kk="가객객객객것게게격겹고곡곡곤곶관관교구구굴기기기끌끔나나나나나나나난낭넘네녀년느는니다단단단담대대댕댕더독동동두둑둑득디딘딱뛰라락래랙램렌령루르름리리리리리립릿마마마멍며면면면명묘묘문바바바박배배뱀버범범법보복봄봇불불브브빛뻑사사사사사샅생선섯성세션션쇼수수수순슛스스스스스스슴시식싱아아아아악암압앙약업에오요육을을을의의이이이인잇잔잡쟌정정제족족종좋죄죄주준쥭즘즙지지짚찜차차차찬촉츠층층층층층치칙친친컬코코코크크클키킨킵타타타탈탕터토톤톤톤트트트틀틀틴파파판팬펠포폰푸풀품프프프한한합핸험험호화화화화";
-// import * as fs from 'fs';
-// import * as path from 'path';
-
-// // 현재 디렉토리의 경로를 가져옵니다
-// const currentDir = __dirname;
-
-// // t.txt 파일 경로
-// const filePath = path.join(currentDir, 'len6_words_listA.txt');
-
-// // 파일을 읽는 함수
-// fs.readFile(filePath, 'utf-8', (err, data) => {
-//   if (err) {
-//     console.error('파일 읽기 오류:', err);
-//     return;
-//   }
-//   const dataa= data.split('\n');
-//   const manager=new CombinationManager(kk,dataa);
-//   console.log(manager.getBests());
-
-
-// });
 
 export default CombinationManager;
