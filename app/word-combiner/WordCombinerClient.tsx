@@ -22,10 +22,10 @@ export default function WordCombinerClient() {
     const [placeholderArray] = useState<[string, string, string]>(["일반 글자조각 입력", "고급 글자조각 입력", "희귀 글자조각 입력"]);
     const [len6Data, setLen6Date] = useState<SixCharString[]>([]);
     const [len5Data, setLen5Data] = useState<FiveCharString[]>([]);
-    const [remainStr, setRemainStr] = useState<string>("");
     const [len6WordsData, setLen6WordsData] = useState<SixCharString[]>([]);
     const [len5WordsData, setLen5WordsData] = useState<FiveCharString[]>([]);
     const [loading, setLoading] = useState(false);
+    const [errorMessage,setErrorMessage] = useState<{}>();
 
     useEffect(() => {
         try {
