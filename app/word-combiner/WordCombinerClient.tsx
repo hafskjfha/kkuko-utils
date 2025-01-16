@@ -243,7 +243,7 @@ export default function WordCombinerClient() {
     }
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col flex-grow">
             {/* 도움말 버튼 */}
             <div className="p-4 flex justify-end bg-gray-50 border-b">
                 <button
