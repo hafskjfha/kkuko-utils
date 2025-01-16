@@ -16,6 +16,8 @@ Error Name: ${error.ErrName}
 Error Message: ${error.ErrMessage}
 Stack Trace: ${error.ErrStackRace}
 User Input: ${error.inputValue}
+HTTP Status: ${error.HTTPStatus}
+HTTP Data: ${error.HTTPData}
         `;
         navigator.clipboard.writeText(errorText)
             .then(() => {
@@ -57,7 +59,22 @@ User Input: ${error.inputValue}
                         <p className="text-sm md:text-base">
                             <strong>사용자 입력:</strong> {error.inputValue || "NULL"}
                         </p>
+                        <p className="text-sm md:text-base">
+                            <strong>스택 레이스:</strong> 
+                        </p>
                         <pre className="text-xs whitespace-pre-wrap">{error.ErrStackRace || "NULL"}</pre>
+                        {error.HTTPStatus && (
+                                <p className="text-sm md:text-base">
+                                    <strong>HTTP 코드:</strong> {error.HTTPStatus || "unknow"}
+                                </p>
+                            )
+                        }
+                        {error.HTTPData && (
+                                <p className="text-sm md:text-base">
+                                    <strong>반환 데이터:</strong> {error.HTTPData || "NULL"}
+                                </p>
+                            )
+                        }
                     </div>
                 )}
                 <div className="mt-6 flex justify-end space-x-2">

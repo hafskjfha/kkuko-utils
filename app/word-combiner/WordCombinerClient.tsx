@@ -1,9 +1,10 @@
 "use client"
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import type { SixCharString, FiveCharString } from '../types/type';
-import axios from 'axios';
+import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
+import axios, { AxiosError } from "axios";
 import CombinationManager from '../lib/CombinationsManger';
+import ErrorModal from '../components/ErrModal';
 
 const Spinner = () => {
     return (
@@ -25,7 +26,7 @@ export default function WordCombinerClient() {
     const [len6WordsData, setLen6WordsData] = useState<SixCharString[]>([]);
     const [len5WordsData, setLen5WordsData] = useState<FiveCharString[]>([]);
     const [loading, setLoading] = useState(false);
-    const [errorMessage,setErrorMessage] = useState<{}>();
+    const [errorModalView,seterrorModalView] = useState<ErrorMessage | null>(null);
 
     useEffect(() => {
         try {
@@ -47,88 +48,198 @@ export default function WordCombinerClient() {
             }
             rr();
             rrr();
-        } catch (err) {
-            console.error(err);
+        } catch (err:unknown) {
+            if (axios.isAxiosError(err)){
+                const axiosError = err as AxiosError;
+                seterrorModalView({
+                    ErrName: axiosError.name,
+                    ErrMessage: axiosError.message,
+                    ErrStackRace: axiosError.stack || null,
+                    inputValue: null,
+                    HTTPStatus: axiosError.response?.status,
+                    HTTPData: `${axiosError.response?.data}`
+                });
+
+            } else if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            } 
         }
     }, []);
 
 
 
     const handleHtmlSubmit = () => {
-        const htmlString = inputHtml;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, 'text/html');
 
-        let nomal = ""; // 일반
-        let high = ""; // 고급
-        let rare = ""; // 희귀
+        try{
+            const htmlString = inputHtml;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
 
-        const dressItems = doc.querySelectorAll('div.dress-item.expl-mother');
+            let nomal = ""; // 일반
+            let high = ""; // 고급
+            let rare = ""; // 희귀
 
-        dressItems.forEach(item => {
-            const countTextElement = item.querySelector('div.jt-image.dress-item-image');
-            const charNameElement = item.querySelector('div.dress-item-title');
+            const dressItems = doc.querySelectorAll('div.dress-item.expl-mother');
 
-            if (!countTextElement || !charNameElement) {
-                // 하나라도 null이면 해당 item 건너뛰기
-                return;
-            }
+            dressItems.forEach(item => {
+                const countTextElement = item.querySelector('div.jt-image.dress-item-image');
+                const charNameElement = item.querySelector('div.dress-item-title');
 
-            const countText = countTextElement.textContent?.trim() ?? '';
-            const tCount = parseInt(countText.replace('x', ''), 10) || 0;
-            const charName = charNameElement.textContent?.trim() ?? '';
+                if (!countTextElement || !charNameElement) {
+                    // 하나라도 null이면 해당 item 건너뛰기
+                    return;
+                }
 
-            if (charName.includes("고급 글자 조각")) {
-                const chName = charName.replace("고급 글자 조각 - ", "");
-                high += chName.repeat(tCount);
-            } else if (charName.includes("희귀 글자 조각")) {
-                const chName = charName.replace("희귀 글자 조각 - ", "");
-                rare += chName.repeat(tCount);
-            } else if (charName.includes("글자 조각")) {
-                const chName = charName.replace("글자 조각 - ", "");
-                nomal += chName.repeat(tCount);
-            }
-        });
-        setInputHtml("");
-        setNomalJOKAK(nomal);
-        setHighJOKAK(high);
-        setRareJOKAK(rare);
+                const countText = countTextElement.textContent?.trim() ?? '';
+                const tCount = parseInt(countText.replace('x', ''), 10) || 0;
+                const charName = charNameElement.textContent?.trim() ?? '';
+
+                if (charName.includes("고급 글자 조각")) {
+                    const chName = charName.replace("고급 글자 조각 - ", "");
+                    high += chName.repeat(tCount);
+                } else if (charName.includes("희귀 글자 조각")) {
+                    const chName = charName.replace("희귀 글자 조각 - ", "");
+                    rare += chName.repeat(tCount);
+                } else if (charName.includes("글자 조각")) {
+                    const chName = charName.replace("글자 조각 - ", "");
+                    nomal += chName.repeat(tCount);
+                }
+            });
+            setInputHtml("");
+            setNomalJOKAK(nomal);
+            setHighJOKAK(high);
+            setRareJOKAK(rare);
+        } catch (err:unknown) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            } 
+        }
     };
 
     const processCombN = () => {
-        setLoading(true);
-        setTimeout(() => {
-            const manger6 = new CombinationManager(nomalJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
-            setLen6Date(manger6.getBests());
-            const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
-            setLen5Data(manger5.getBests());
+        try {
+            setLoading(true);
+            setTimeout(() => {
+                const manger6 = new CombinationManager(nomalJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
+                setLen6Date(manger6.getBests());
+                const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
+                setLen5Data(manger5.getBests());
+                setLoading(false);
+                setNomalJOKAK(manger5.remainstr());
+            }, 1)
+        } catch (err:unknown) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            } 
+        } finally{
             setLoading(false);
-            setNomalJOKAK(manger5.remainstr());
-        }, 1)
+        }
     }
 
     const processCombH = () => {
-        setLoading(true);
-        setTimeout(() => {
-            const manger6 = new CombinationManager(highJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
-            setLen6Date(manger6.getBests());
-            const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
-            setLen5Data(manger5.getBests());
+
+        try {
+            setLoading(true);
+            setTimeout(() => {
+                const manger6 = new CombinationManager(highJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
+                setLen6Date(manger6.getBests());
+                const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
+                setLen5Data(manger5.getBests());
+                setLoading(false);
+                setHighJOKAK(manger5.remainstr());
+            }, 1)
+        } catch (err:unknown) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            } 
+        } finally{
             setLoading(false);
-            setHighJOKAK(manger5.remainstr());
-        }, 1)
+        }
     }
 
     const processCombR = () => {
-        setLoading(true);
-        setTimeout(() => {
-            const manger6 = new CombinationManager(rareJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
-            setLen6Date(manger6.getBests());
-            const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
-            setLen5Data(manger5.getBests());
+        try {
+            setLoading(true);
+            setTimeout(() => {
+                const manger6 = new CombinationManager(rareJOKAK.replace(/\s+/g, '').split('').sort().join(''), len6WordsData);
+                setLen6Date(manger6.getBests());
+                const manger5 = new CombinationManager(manger6.remainstr(), len5WordsData);
+                setLen5Data(manger5.getBests());
+                setLoading(false);
+                setRareJOKAK(manger5.remainstr());
+            }, 1)
+        } catch (err:unknown) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            } 
+        } finally{
             setLoading(false);
-            setRareJOKAK(manger5.remainstr());
-        }, 1)
+        }
     }
 
     return (
@@ -308,6 +419,13 @@ export default function WordCombinerClient() {
                     <Spinner />
                 </div>
             )}
+
+            {/* 오류 모달 */}
+            {errorModalView && (<ErrorModal
+                error={errorModalView}
+                onClose={()=>seterrorModalView(null)}
+                />)
+            }
         </div>
     );
 }
