@@ -1,12 +1,13 @@
+import Link from 'next/link';
 const Footer: React.FC = () => {
     return (
         <footer className="bg-gray-900 text-white flex-shrink-0">
             <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
                 {/* 로고 또는 제목 */}
                 <div className="text-xl font-bold">
-                    <a href="/" className="hover:text-gray-300 transition-colors">
+                    <Link href="/" className="hover:text-gray-300 transition-colors">
                         Kkuko Utils
-                    </a>
+                    </Link>
                 </div>
                 {/* 네비게이션 링크 */}
                 <nav className="flex flex-col md:flex-row md:space-x-6 text-sm space-y-2 md:space-y-0">

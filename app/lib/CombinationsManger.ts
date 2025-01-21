@@ -71,7 +71,7 @@ class CombinationManager {
     public getBests(): string[] {
         const temp: string[] = [];
         while (this.wordCount.size > 0) {
-            for (const [word, c] of this.wordCount) {
+            for (const [word] of this.wordCount) {
                 if (this.exist(word)) {
                     temp.push(word); //만들수 있으면 반환배열 추가 (그리디로 얻은것들을 정렬하여 앞에 두었으므로 첫키가 탐욕적으로 최상의 결과임.)
                     this.deleteWord(word);

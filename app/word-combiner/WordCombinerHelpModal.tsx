@@ -1,6 +1,6 @@
 "use client";
 import Image from 'next/image';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface HelpModalprop {
     onClose: () => void;
@@ -25,6 +25,7 @@ const HelpModal: React.FC<HelpModalprop> = ({ onClose, wantGo }) => {
             switch(wantGo){
                 case 3:
                     scrollToSection(HTMLHelp);
+                    break;
             }
         }
     });
