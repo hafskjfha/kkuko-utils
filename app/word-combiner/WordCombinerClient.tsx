@@ -1,10 +1,11 @@
 "use client"
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import axios, { AxiosError } from "axios";
 import CombinationManager from '../lib/CombinationsManger';
 import ErrorModal from '../components/ErrModal';
+import HelpModal from './WordCombinerHelpModal';
 
 const Spinner = () => {
     return (
@@ -27,6 +28,7 @@ export default function WordCombinerClient() {
     const [len5WordsData, setLen5WordsData] = useState<FiveCharString[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorModalView,seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [HtmlHelpModalView,setHtmlHelpModalView] = useState<boolean>(false);
 
     useEffect(() => {
         try {
@@ -325,6 +327,17 @@ export default function WordCombinerClient() {
                         </button>
                     </div>
                     <div className="flex items-center space-x-2">
+                    <button
+                            onClick={() => setHtmlHelpModalView(true)}
+                            className="relative w-6 h-6 md:w-8 md:h-8"
+                        >
+                            <Image
+                                src="/help1-log.svg"
+                                alt="Info"
+                                fill 
+                                className="cursor-pointer object-contain"
+                            />
+                        </button>
                         <label className="w-16 text-gray-700 text-sm">html 입력:</label>
                         <textarea
                             placeholder="html 입력"
@@ -395,22 +408,13 @@ export default function WordCombinerClient() {
                 </div>
             </div>
 
-            {/* 모달창 */}
+            {/* 도움말 모달창 */}
             {showHelpModal && (
-                <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-96">
-                        <h3 className="text-lg font-bold mb-4">도움말</h3>
-                        <p className="text-sm text-gray-700">
-                            이 애플리케이션은 ... (도움말 내용을 여기에 추가)
-                        </p>
-                        <button
-                            onClick={() => setShowHelpModal(false)}
-                            className="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                        >
-                            닫기
-                        </button>
-                    </div>
-                </div>
+                <HelpModal onClose={()=>setShowHelpModal(false)}/>
+            )}
+
+            {HtmlHelpModalView && (
+                <HelpModal onClose={()=>setHtmlHelpModalView(false)} wantGo={3} />
             )}
 
             {/* 스피너 */}
