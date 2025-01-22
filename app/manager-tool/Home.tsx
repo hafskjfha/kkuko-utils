@@ -33,7 +33,7 @@ export default function Home() {
                     <p className="text-sm md:text-base text-gray-700 mb-4">
                         단어장의 내용을 정렬 / 중복제거 / 특정글자 바꾸기 등등의 기능을 제공하는 도구입니다.
                     </p>
-                    <Link href="/feature2">
+                    <Link href="/manager-tool/arrange">
                         <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full md:w-auto">
                             이동하기기
                         </button>

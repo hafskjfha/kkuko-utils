@@ -68,7 +68,7 @@ const Header:React.FC = () => {
                     <Link
                         href="/manager-tool"
                         className={`block py-2 md:py-0 hover:text-gray-300 ${
-                            pathname === "/manager-tool" ? "border-b-2 border-white" : ""
+                            /manager-tool/.test(pathname) ? "border-b-2 border-white" : ""
                         }`}
                     >
                         단어장 관리 도구
