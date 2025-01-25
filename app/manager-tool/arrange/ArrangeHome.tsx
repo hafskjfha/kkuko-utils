@@ -8,58 +8,58 @@ const FileSector: React.FC<{ fileContent: string, fileInputRef: React.RefObject<
 
     return (
         <>
-    {/* 위쪽: 파일 업로드 */}
-    <div className="bg-white p-2 shadow rounded mb-2">
-        <input
-            ref={fileInputRef}
-            type="file"
-            className="border rounded p-2 w-full text-sm"
-            onChange={handleFileUpload}
-            accept=".txt"
-        />
-    </div>
-
-    {/* 가운데: 파일 내용 */}
-    <div className="bg-gray-50 p-4 shadow rounded border border-gray-300 overflow-y-auto mb-2 max-h-[400px]">
-        <div className="flex flex-col gap-2 h-full">
-            <div className="flex justify-between items-center">
-                <h2 className="text-base font-semibold">파일 내용</h2>
-                <span className="text-xs text-gray-500">
-                    줄 개수: {lineCount}
-                </span>
+            {/* 위쪽: 파일 업로드 */}
+            <div className="bg-white p-2 shadow rounded mb-2">
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="border rounded p-2 w-full text-sm"
+                    onChange={handleFileUpload}
+                    accept=".txt"
+                />
             </div>
-            <div className="flex-1 overflow-y-auto border border-gray-300 p-2">
-                <div className="text-xs text-gray-700 whitespace-pre-wrap">
-                    {fileContent || "파일 내용을 불러오세요."}
+
+            {/* 가운데: 파일 내용 */}
+            <div className="bg-gray-50 p-4 shadow rounded border border-gray-300 overflow-y-auto mb-2 max-h-[400px]">
+                <div className="flex flex-col gap-2 h-full">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-base font-semibold">파일 내용</h2>
+                        <span className="text-xs text-gray-500">
+                            줄 개수: {lineCount}
+                        </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto border border-gray-300 p-2">
+                        <div className="text-xs text-gray-700 whitespace-pre-wrap">
+                            {fileContent || "파일 내용을 불러오세요."}
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {/* 아래쪽: 파일 다운로드 */}
-    <div className="bg-white p-2 shadow rounded text-center">
-        <button
-            className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm w-full md:w-auto"
-            disabled={!fileContent}
-            onClick={() => {
-                const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                const today = new Date();
-                const formattedDate = `${today.getFullYear().toString().slice(-2)}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-                a.download = `${file?.name.split(".")[0]}_${formattedDate}.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
-            }}
-        >
-            파일 다운로드
-        </button>
-    </div>
-</>
+            {/* 아래쪽: 파일 다운로드 */}
+            <div className="bg-white p-2 shadow rounded text-center">
+                <button
+                    className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm w-full md:w-auto"
+                    disabled={!fileContent}
+                    onClick={() => {
+                        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        const today = new Date();
+                        const formattedDate = `${today.getFullYear().toString().slice(-2)}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+                        a.download = `${file?.name.split(".")[0]}_${formattedDate}.txt`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                        }
+                    }}
+                >
+                    파일 다운로드
+                </button>
+            </div>
+        </>
 
 
     )
@@ -399,26 +399,26 @@ const ArrangeHome: React.FC = () => {
 
     return (
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-        {/* 파일 관련 */}
-        <div className="w-full md:w-3/5 bg-blue-100 p-4 flex flex-col gap-3 h-auto md:h-full overflow-y-auto">
-            <FileSector
-                fileContent={fileContent}
-                fileInputRef={fileInputRef}
-                handleFileUpload={handleFileUpload}
-                file={file}
-                lineCount={lineCount}
-            />
-        </div>
+            {/* 파일 관련 */}
+            <div className="w-full md:w-3/5 bg-blue-100 p-4 flex flex-col gap-3 h-auto md:h-full overflow-y-auto">
+                <FileSector
+                    fileContent={fileContent}
+                    fileInputRef={fileInputRef}
+                    handleFileUpload={handleFileUpload}
+                    file={file}
+                    lineCount={lineCount}
+                />
+            </div>
 
-        {/* 도구 관련 */}
-        <div className="w-full md:flex-1 bg-green-100 p-6 overflow-y-auto h-auto md:h-full">
-            <ToolSector
-                fileContent={fileContent}
-                setFileContent={setFileContent}
-                setLineCount={setLineCount}
-            />
+            {/* 도구 관련 */}
+            <div className="w-full md:flex-1 bg-green-100 p-6 overflow-y-auto h-auto md:h-full">
+                <ToolSector
+                    fileContent={fileContent}
+                    setFileContent={setFileContent}
+                    setLineCount={setLineCount}
+                />
+            </div>
         </div>
-    </div>
 
 
     );
