@@ -20,7 +20,7 @@ export default function Home() {
                     <p className="text-sm md:text-base text-gray-700 mb-4">
                         텍스트파일 합치기 / 미션단어 ● 돌림단어 추출 / 그외 등등을 도와주는 도구입니다.
                     </p>
-                    <Link href="/feature1">
+                    <Link href="/manager-tool/extract">
                         <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full md:w-auto">
                             이동하기
                         </button>
