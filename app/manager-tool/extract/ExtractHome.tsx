@@ -17,27 +17,28 @@ const ExtractHome: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="grid grid-cols-3 gap-6 p-4">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {menuItems.map((item) => (
                     item.link ? (
                         <Link key={item.id} href={`/manager-tool/extract${item.link}`}>
-                            <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-lg transition-all cursor-pointer">
-                                <h2 className="text-lg font-semibold mb-2">{item.name}</h2>
-                                <p className="text-gray-500 text-sm text-center">{item.description}</p>
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg p-6 flex flex-col items-center hover:shadow-lg dark:hover:shadow-xl transition-all cursor-pointer">
+                                <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">{item.name}</h2>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm text-center">{item.description}</p>
                             </div>
                         </Link>
                     ) : (
                         <div
                             key={item.id}
-                            className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-lg transition-all">
-                            <h2 className="text-lg font-semibold mb-2">{item.name}</h2>
-                            <p className="text-gray-500 text-sm text-center">{item.description}</p>
+                            className="bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg p-6 flex flex-col items-center hover:shadow-lg dark:hover:shadow-xl transition-all">
+                            <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">{item.name}</h2>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm text-center">{item.description}</p>
                         </div>
                     )
                 ))}
             </div>
         </div>
+
     );
 };
 
