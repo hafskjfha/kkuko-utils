@@ -4,6 +4,8 @@ import React, { useState, useRef } from "react";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import Image from "next/image";
 import HelpModal from "./HelpModal";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type'
 
 const FileSector: React.FC<{ fileContent: string, fileInputRef: React.RefObject<HTMLInputElement | null>, handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void, file: File | null, lineCount: number }> = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount }) => {
 
@@ -67,7 +69,7 @@ const FileSector: React.FC<{ fileContent: string, fileInputRef: React.RefObject<
     )
 }
 
-const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch<React.SetStateAction<string>>, setLineCount: React.Dispatch<React.SetStateAction<number>>, setHelpMoalOpen: React.Dispatch<React.SetStateAction<0|1|2>> }> = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen }) => {
+const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch<React.SetStateAction<string>>, setLineCount: React.Dispatch<React.SetStateAction<number>>, setHelpMoalOpen: React.Dispatch<React.SetStateAction<0|1|2>>, seterrorModalView: React.Dispatch<React.SetStateAction<ErrorMessage|null>> }> = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen, seterrorModalView }) => {
     const [undoStack, setUndoStack] = useState<string[]>([]);
     const [redoStack, setRedoStack] = useState<string[]>([]);
     const [replaceTarget, setReplaceTarget] = useState<string>("");
@@ -76,116 +78,306 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
     const [replaceOpen, setReplaceOpen] = useState<boolean>(false);
 
     const pushToUndoStack = (content: string) => {
-        setUndoStack((prev) => [...prev, content]);
-        setRedoStack([]); // 새로운 작업이 시작되면 Redo 스택 초기화
+        try{
+            setUndoStack((prev) => [...prev, content]);
+            setRedoStack([]);
+        } catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `UNDO | ${content}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `UNDO | ${content}`
+                });
+            }
+        }
     };
 
     const handleUndo = () => {
-        if (undoStack.length > 0) {
-            const previousContent = undoStack[undoStack.length - 1];
-            setUndoStack((prev) => prev.slice(0, -1));
-            setRedoStack((prev) => [fileContent, ...prev]); // 현재 상태를 Redo 스택에 저장
-            setFileContent(previousContent); // 이전 상태로 복원
-            setLineCount(previousContent.split("\n").length);
+        try{
+            if (undoStack.length > 0) {
+                const previousContent = undoStack[undoStack.length - 1];
+                setUndoStack((prev) => prev.slice(0, -1));
+                setRedoStack((prev) => [fileContent, ...prev]); // 현재 상태를 Redo 스택에 저장
+                setFileContent(previousContent); // 이전 상태로 복원
+                setLineCount(previousContent.split("\n").length);
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `UNDO | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `UNDO | ${fileContent}`
+                });
+            }
         }
     };
 
     const handleRedo = () => {
-        if (redoStack.length > 0) {
-            const nextContent = redoStack[0];
-            setRedoStack((prev) => prev.slice(1));
-            setUndoStack((prev) => [...prev, fileContent]); // 현재 상태를 Undo 스택에 저장
-            setFileContent(nextContent); // Redo 상태로 복원
-            setLineCount(nextContent.split("\n").length);
+        try{    
+            if (redoStack.length > 0) {
+                const nextContent = redoStack[0];
+                setRedoStack((prev) => prev.slice(1));
+                setUndoStack((prev) => [...prev, fileContent]); // 현재 상태를 Undo 스택에 저장
+                setFileContent(nextContent); // Redo 상태로 복원
+                setLineCount(nextContent.split("\n").length);
+            }
+        } catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `REDO | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `REDO | ${fileContent}`
+                });
+            }
         }
     };
 
     const handleReplaceSpacesWithNewlines = () => {
-        const updatedContent = fileContent.replace(/ +/g, "\n");
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.split("\n").length);
+        try{
+            const updatedContent = fileContent.replace(/ +/g, "\n");
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `ReplaceSpacesWithNewlines | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `ReplaceSpacesWithNewlines | ${fileContent}`
+                });
+            }
+        }
     };
 
     const handleRemoveEmptyLines = () => {
-        const updatedContent = fileContent
-            .split("\n")
-            .filter((line) => line.trim() !== "")
-            .join("\n");
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.split("\n").length);
+        try{
+            const updatedContent = fileContent
+                .split("\n")
+                .filter((line) => line.trim() !== "")
+                .join("\n");
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+        } catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `RemoveEmptyLines | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `RemoveEmptyLines | ${fileContent}`
+                });
+            }
+        }
     };
 
     const handleRemoveWord = (word: string) => {
-        const updatedContent = fileContent
-            .split("\n")
-            .map((line) => line.replaceAll(word, ""))
-            .join("\n");
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.split("\n").length);
-        setRemoveWord("");
+        try{
+            const updatedContent = fileContent
+                .split("\n")
+                .map((line) => line.replaceAll(word, ""))
+                .join("\n");
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+            setRemoveWord("");
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `RemoveWord | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `RemoveWord | ${fileContent}`
+                });
+            }
+        }
     };
 
     const handleReplaceCharacter = (target: string, replacement: string) => {
-        const updatedContent = fileContent.replaceAll(target, replacement);
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.split("\n").length);
-        setReplaceTarget("");
-        setReplaceValue("");
+        try{
+            const updatedContent = fileContent.replaceAll(target, replacement);
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+            setReplaceTarget("");
+            setReplaceValue("");
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `ReplaceCharacter | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `ReplaceCharacter | ${fileContent}`
+                });
+            }
+        }
     };
 
     const handleRemoveDuplicates = () => {
-        const okSet = new Set<string>();
-        const temp: string[] = [];
-        for (const w of fileContent.split("\n")) {
-            if (okSet.has(w)) continue;
-            okSet.add(w);
-            temp.push(w);
+        try{
+            const okSet = new Set<string>();
+            const temp: string[] = [];
+            for (const w of fileContent.split("\n")) {
+                if (okSet.has(w)) continue;
+                okSet.add(w);
+                temp.push(w);
+            }
+            const updatedContent = temp.join("\n");
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.length);
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `RemoveDuplicates | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `RemoveDuplicates | ${fileContent}`
+                });
+            }
         }
-        const updatedContent = temp.join("\n");
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.length);
     };
 
     const handleSortWordv1 = () => {
-        const updatedContent = fileContent.split("\n").sort().join("\n");
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.length);
+        try{
+            const updatedContent = fileContent.split("\n").sort().join("\n");
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.length);
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `SortWordv1 | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `SortWordv1 | ${fileContent}`
+                });
+            }
+        }
     };
 
     const handleSortWordv2 = () => {
-        let groupedText = '';
-        let currentChar: string | null = null;
-        for (const word of fileContent.split("\n").sort()) {
-            if (!word || word.includes("=[")) continue;
-            const firstChar = word[0].toLowerCase(); // 첫 글자 (대소문자 무시)
+        try{
+            let groupedText = '';
+            let currentChar: string | null = null;
+            for (const word of fileContent.split("\n").sort()) {
+                if (!word || word.includes("=[")) continue;
+                const firstChar = word[0].toLowerCase(); // 첫 글자 (대소문자 무시)
 
-            if (currentChar !== firstChar) {
-                // 새로운 그룹의 시작
-                if (currentChar !== null) groupedText += '\n'; // 이전 그룹과 구분
-                groupedText += `=[${firstChar.toUpperCase()}]=\n`;
-                currentChar = firstChar;
+                if (currentChar !== firstChar) {
+                    // 새로운 그룹의 시작
+                    if (currentChar !== null) groupedText += '\n'; // 이전 그룹과 구분
+                    groupedText += `=[${firstChar.toUpperCase()}]=\n`;
+                    currentChar = firstChar;
+                }
+
+                // 현재 단어 추가
+                groupedText += word + '\n';
             }
+            const updatedContent = groupedText.trim();
+            if (updatedContent === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `SortWordv2 | ${fileContent}`
+                });
 
-            // 현재 단어 추가
-            groupedText += word + '\n';
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `SortWordv2 | ${fileContent}`
+                });
+            }
         }
-        const updatedContent = groupedText.trim();
-        if (updatedContent === fileContent) return;
-        pushToUndoStack(fileContent);
-        setFileContent(updatedContent);
-        setLineCount(updatedContent.split("\n").length);
     };
 
     return (
@@ -370,6 +562,7 @@ const ArrangeHome: React.FC = () => {
     const [lineCount, setLineCount] = useState<number>(0);
     const [helpModalopen,setHelpMoalOpen] = useState<0|1|2>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -389,8 +582,32 @@ const ArrangeHome: React.FC = () => {
                     }
                 };
 
-                reader.onerror = () => {
-                    alert("파일을 읽는 중 오류가 발생했습니다.");
+                reader.onerror = (event) => {
+                    const error = event.target?.error;
+                    try{
+                        if(error){
+                            const errorObj = new Error(`FileReader Error: ${error.message}`);
+                            errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                            throw errorObj;
+                        }
+                    }catch(err){
+                        if (err instanceof Error) {
+                            seterrorModalView({
+                                ErrName: err.name,
+                                ErrMessage: err.message,
+                                ErrStackRace: err.stack,
+                                inputValue: null
+                            });
+            
+                        } else {
+                            seterrorModalView({
+                                ErrName: null,
+                                ErrMessage: null,
+                                ErrStackRace: err as string,
+                                inputValue: null
+                            });
+                        }
+                    }
                 };
 
                 reader.readAsText(file, "utf-8");
@@ -422,10 +639,12 @@ const ArrangeHome: React.FC = () => {
                     setFileContent={setFileContent}
                     setLineCount={setLineCount}
                     setHelpMoalOpen={setHelpMoalOpen}
+                    seterrorModalView={seterrorModalView}
                 />
             </div>
 
             {helpModalopen && <HelpModal onClose={()=>setHelpMoalOpen(0)} wantGo={helpModalopen}/>}
+            {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
         </div>
 
 
