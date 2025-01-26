@@ -2,7 +2,7 @@
 import React, { useState, useRef } from "react";
 
 const WordExtractorApp: React.FC = () => {
-    const [file,setFile] = useState<File | null>(null);
+    const [file, setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [wordLength, setWordLength] = useState<number>(5);
@@ -29,7 +29,7 @@ const WordExtractorApp: React.FC = () => {
     };
 
     const downloadExtractedWords = () => {
-        if(extractedWords.length === 0) return;
+        if (extractedWords.length === 0) return;
         const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -41,30 +41,30 @@ const WordExtractorApp: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
 
             {/* Main Content */}
             <main className="flex-grow p-4">
                 <div className="flex flex-col md:flex-row h-full gap-4">
                     {/* Left section */}
                     <div className="md:w-4/5 w-full flex flex-col gap-4">
-                        <div className="p-4 border rounded shadow">
+                        <div className="p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
                             <input
                                 ref={fileInputRef}
                                 type="file"
                                 accept=".txt"
                                 onChange={handleFileUpload}
-                                className="border p-2 rounded w-full"
+                                className="border p-2 rounded w-full dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                            <div className="p-4 border rounded shadow overflow-auto">
+                            <div className="p-4 border rounded shadow overflow-auto dark:border-gray-700 dark:bg-gray-800">
                                 <h2 className="text-lg font-bold mb-2">업로드된 파일 내용</h2>
                                 <div className="h-full max-h-96 overflow-y-auto">
                                     <pre>{fileContent || "아직 파일이 업로드 되지 않았습니다"}</pre>
                                 </div>
                             </div>
-                            <div className="p-4 border rounded shadow overflow-auto">
+                            <div className="p-4 border rounded shadow overflow-auto dark:border-gray-700 dark:bg-gray-800">
                                 <h2 className="text-lg font-bold mb-2">{`${wordLength}글자의 단어 목록`}</h2>
                                 <div className="h-full max-h-96 overflow-y-auto">
                                     <pre>{extractedWords.length > 0 ? extractedWords.join("\n") : "아직 추출되지 않았거나 \n추출된 단어가 없습니다."}</pre>
@@ -74,31 +74,31 @@ const WordExtractorApp: React.FC = () => {
                     </div>
 
                     {/* Right section */}
-                    <div className="md:w-1/5 w-full p-4 border rounded shadow">
+                    <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
                         <input
                             type="number"
                             value={wordLength}
                             onChange={(e) => setWordLength(Math.max(Number(e.target.value), 0))}
-                            className="border p-2 rounded w-full mb-4"
+                            className="border p-2 rounded w-full mb-4 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             placeholder="Enter word length"
                         />
                         <button
                             onClick={extractWords}
-                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-4"
+                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-4 dark:bg-blue-600 dark:hover:bg-blue-700"
                         >
                             추출
                         </button>
                         <button
                             onClick={downloadExtractedWords}
-                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
                         >
                             추출된 단어목록 다운로드
                         </button>
                     </div>
                 </div>
             </main>
-
         </div>
+
     );
 };
 
