@@ -5,7 +5,7 @@ const WordExtractorApp: React.FC = () => {
     const [file,setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
-    const [wordLength, setWordLength] = useState<number>(5);
+    const [wordStart, setwordStart] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,8 +22,8 @@ const WordExtractorApp: React.FC = () => {
     };
 
     const extractWords = () => {
-        if (fileContent) {
-            const words = fileContent.split(/\s+/).filter((word) => word.length === wordLength);
+        if (fileContent && wordStart) {
+            const words = fileContent.split(/\s+/).filter((word) => word[0]=== wordStart);
             setExtractedWords(words);
         }
     };
@@ -33,7 +33,7 @@ const WordExtractorApp: React.FC = () => {
         const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_${wordLength}글자 목록.txt`;
+        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_${wordStart} 목록.txt`;
         link.click();
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -65,7 +65,7 @@ const WordExtractorApp: React.FC = () => {
                                 </div>
                             </div>
                             <div className="p-4 border rounded shadow overflow-auto">
-                                <h2 className="text-lg font-bold mb-2">{`${wordLength}글자의 단어 목록`}</h2>
+                                <h2 className="text-lg font-bold mb-2">{`${wordStart || "?"}로 시작하는 단어 목록`}</h2>
                                 <div className="h-full max-h-96 overflow-y-auto">
                                     <pre>{extractedWords.length > 0 ? extractedWords.join("\n") : "아직 추출되지 않았거나 \n추출된 단어가 없습니다."}</pre>
                                 </div>
@@ -76,11 +76,10 @@ const WordExtractorApp: React.FC = () => {
                     {/* Right section */}
                     <div className="md:w-1/5 w-full p-4 border rounded shadow">
                         <input
-                            type="number"
-                            value={wordLength}
-                            onChange={(e) => setWordLength(Math.max(Number(e.target.value), 0))}
+                            value={wordStart}
+                            onChange={(e) => setwordStart(e.target.value)}
                             className="border p-2 rounded w-full mb-4"
-                            placeholder="Enter word length"
+                            placeholder="시작글자를 입력하세요."
                         />
                         <button
                             onClick={extractWords}

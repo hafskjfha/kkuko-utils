@@ -23,7 +23,7 @@ const Home: React.FC = () => {
                         </p>
                     </div>
 
-                    <div className="p-5 bg-white shadow-md rounded-lg">
+                    <div className="p-5 bg-white shadow-md rounded-lg cursor-pointer" onClick={()=> router.push('/manager-tool')} >
                         <h3 className="text-xl font-bold mb-3">기능 2: 단어장 정리 도구</h3>
                         <p className="text-gray-700">
                             글자순 정렬 및 특정 단어 추출 등 정리 도구 제공.
