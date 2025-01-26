@@ -292,17 +292,7 @@ export default function WordCombinerClient() {
                         </div>
                     ))}
                     <div className="flex items-center space-x-4">
-                        <button
-                            onClick={() => setHtmlHelpModalView(true)}
-                            className="relative w-8 h-8"
-                        >
-                            <Image
-                                src="/help1-log.svg"
-                                alt="Info"
-                                fill
-                                className="cursor-pointer object-contain"
-                            />
-                        </button>
+                        v
                         <label className="w-20 text-gray-700 text-sm">html 입력:</label>
                         <textarea
                             placeholder="html 입력"
