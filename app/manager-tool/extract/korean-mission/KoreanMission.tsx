@@ -194,7 +194,7 @@ const WordExtractorApp: React.FC = () => {
                                     type="checkbox"
                                     checked={oneMissionChecked}
                                     onChange={() => setOneMissionChecked(!oneMissionChecked)}
-                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-white"
+                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
                                 />
                                 <span className="dark:text-white">1미 포함 여부</span>
                             </label>
@@ -203,7 +203,7 @@ const WordExtractorApp: React.FC = () => {
                                     type="checkbox"
                                     checked={missionLetterView}
                                     onChange={() => setMissionLetterView(!missionLetterView)}
-                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-white"
+                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
                                 />
                                 <span className="dark:text-white">미션글자 표시 여부</span>
                             </label>

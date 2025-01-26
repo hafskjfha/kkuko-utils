@@ -88,6 +88,7 @@ const WordExtractorApp: React.FC = () => {
 
                     {/* Right section */}
                     <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
+                    <span className="dark:text-white">최소 포함수</span>
                         <input
                             type="number"
                             value={minMission}
@@ -101,7 +102,7 @@ const WordExtractorApp: React.FC = () => {
                                     type="checkbox"
                                     checked={sortChecked}
                                     onChange={() => setSortChecked(!sortChecked)}
-                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-white"
+                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
                                 />
                                 <span className="dark:text-white">정렬 여부</span>
                             </label>
