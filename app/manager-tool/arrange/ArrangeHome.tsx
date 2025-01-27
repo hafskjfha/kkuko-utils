@@ -6,6 +6,7 @@ import Image from "next/image";
 import HelpModal from "./HelpModal";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type'
+import Spinner from "@/app/components/Spinner";
 
 const FileSector: React.FC<{ fileContent: string, fileInputRef: React.RefObject<HTMLInputElement | null>, handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void, file: File | null, lineCount: number }> = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount }) => {
 
@@ -563,6 +564,7 @@ const ArrangeHome: React.FC = () => {
     const [helpModalopen,setHelpMoalOpen] = useState<0|1|2>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -577,8 +579,10 @@ const ArrangeHome: React.FC = () => {
                 reader.onload = (e) => {
                     const text = e.target?.result;
                     if (typeof text === "string") {
+                        setLoading(true);
                         setFileContent(text); // Update state with file content
                         setLineCount(text.split("\n").length); // Count lines
+                        setLoading(false);
                     }
                 };
 
@@ -645,6 +649,11 @@ const ArrangeHome: React.FC = () => {
 
             {helpModalopen && <HelpModal onClose={()=>setHelpMoalOpen(0)} wantGo={helpModalopen}/>}
             {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
+            {loading && (
+                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
+                    <Spinner />
+                </div>
+            )}
         </div>
 
 

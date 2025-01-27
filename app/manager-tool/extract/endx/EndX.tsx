@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type';
+import Spinner from "@/app/components/Spinner";
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -10,6 +11,7 @@ const WordExtractorApp: React.FC = () => {
     const [wordEnd, setWordEnd] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -17,8 +19,10 @@ const WordExtractorApp: React.FC = () => {
             setFile(file);
             const reader = new FileReader();
             reader.onload = (event) => {
+                setLoading(true);
                 const content = event.target?.result as string;
                 setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+                setLoading(false);
             };
 
             reader.onerror = (event) => {
@@ -165,6 +169,11 @@ const WordExtractorApp: React.FC = () => {
                     </div>
                 </div>
                 {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView}/>}
+                {loading && (
+                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
+                    <Spinner />
+                </div>
+            )}
             </main>
         </div>
 

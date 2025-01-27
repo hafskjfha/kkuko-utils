@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type';
+import Spinner from "@/app/components/Spinner";
 
 const WordExtractorApp: React.FC = () => {
     const [fileContent1, setFileContent1] = useState("");
@@ -9,6 +10,7 @@ const WordExtractorApp: React.FC = () => {
     const [mergedContent, setMergedContent] = useState("");
     const [sortChecked,setSortChecked] = useState<boolean>(true);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const fileInputRef1 = useRef(null);
     const fileInputRef2 = useRef(null);
@@ -18,6 +20,7 @@ const WordExtractorApp: React.FC = () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
+                setLoading(true)
                 if (fileNumber === 1) {
                     const r = e.target?.result as string
                     setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, ""));
@@ -25,6 +28,7 @@ const WordExtractorApp: React.FC = () => {
                     const rr = e.target?.result as string
                     setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, ""));
                 }
+                setLoading(false);
             };
             reader.onerror = (event) => {
                 const error = event.target?.error;
@@ -188,6 +192,11 @@ const WordExtractorApp: React.FC = () => {
                     </div>
                 </div>
                 {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
+                {loading && (
+                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
+                    <Spinner />
+                </div>
+            )}
             </main>
         </div>
 
