@@ -74,7 +74,7 @@ const Header:React.FC = () => {
                         단어장 관리 도구
                     </Link>
                     <Link
-                        href="/blog"
+                        href="/"
                         className={`block py-2 md:py-0 hover:text-gray-300 ${
                             pathname === "/blog" ? "border-b-2 border-white" : ""
                         }`}
@@ -82,7 +82,7 @@ const Header:React.FC = () => {
                         빌런 단어장 공유
                     </Link>
                     <Link
-                        href="/contact"
+                        href="/"
                         className={`block py-2 md:py-0 hover:text-gray-300 ${
                             pathname === "/contact" ? "border-b-2 border-white" : ""
                         }`}
