@@ -10,7 +10,6 @@ const WordExtractorApp: React.FC = () => {
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [oneMissionChecked, setOneMissionChecked] = useState<boolean>(false);
-    const [missionLetterView, setMissionLetterView] = useState<boolean>(false);
     const [wordMod, setWordMod] = useState<"mode1" | "mode2" | "mode3" | "mode4" | "">('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
@@ -269,15 +268,6 @@ const WordExtractorApp: React.FC = () => {
                                     className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
                                 />
                                 <span className="dark:text-white">1미 포함 여부</span>
-                            </label>
-                            <label className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    checked={missionLetterView}
-                                    onChange={() => setMissionLetterView(!missionLetterView)}
-                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
-                                />
-                                <span className="dark:text-white">미션글자 표시 여부</span>
                             </label>
                         </div>
 
