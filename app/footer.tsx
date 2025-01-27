@@ -31,6 +31,9 @@ const Footer: React.FC = () => {
                     >
                         Bug report
                     </a>
+                    <Link href="/release-note" className="hover:text-gray-300 transition-colors">
+                        Release note
+                    </Link>
                 </nav>
             </div>
             {/* 저작권 섹션 */}
