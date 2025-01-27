@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { Counter } from "@/app/lib/collections";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type'
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -9,47 +11,133 @@ const WordExtractorApp: React.FC = () => {
     const [minMission, setMinMission] = useState<number>(0);
     const [sortChecked,setSortChecked] = useState<boolean>(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFile(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const content = event.target?.result as string;
-                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
-            };
-            reader.readAsText(file);
+        try{    
+            const file = e.target.files?.[0];
+            if (file) {
+                setFile(file);
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const content = event.target?.result as string;
+                    setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+                };
+                reader.onerror = (event) => {
+                    const error = event.target?.error;
+                    try{
+                        if(error){
+                            const errorObj = new Error(`FileReader Error: ${error.message}`);
+                            errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                            throw errorObj;
+                        }
+                    }catch(err){
+                        if (err instanceof Error) {
+                            seterrorModalView({
+                                ErrName: err.name,
+                                ErrMessage: err.message,
+                                ErrStackRace: err.stack,
+                                inputValue: null
+                            });
+            
+                        } else {
+                            seterrorModalView({
+                                ErrName: null,
+                                ErrMessage: null,
+                                ErrStackRace: err as string,
+                                inputValue: null
+                            });
+                        }
+                    }
+                };
+
+                reader.readAsText(file);
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: null
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: null
+                });
+            }
         }
     };
 
     const extractWords = () => {
-        if (fileContent) {
-            const words:string[] = [];
-            for (const word of fileContent.split('\n')){
-                const counter = new Counter<string>();
-                for (const c of 'abcdefghijklmnopqrstuvwxyz'){
-                    if ([...word].filter((char) => char === c).length >= minMission)
-                    counter.set(c, [...word].filter((char) => char === c).length)
+        try{    
+            if (fileContent) {
+                const words:string[] = [];
+                for (const word of fileContent.split('\n')){
+                    const counter = new Counter<string>();
+                    for (const c of 'abcdefghijklmnopqrstuvwxyz'){
+                        if ([...word].filter((char) => char === c).length >= minMission)
+                        counter.set(c, [...word].filter((char) => char === c).length)
+                    }
+                    
+                    const aa = sortChecked ? counter.entries().sort((a,b)=>b[1]-a[1]) : counter.entries();
+                    
+                    words.push(`${word} [${aa.map(([key, value]) => `${key}:${value}`).join(" ")}]`);
                 }
-                
-                const aa = sortChecked ? counter.entries().sort((a,b)=>b[1]-a[1]) : counter.entries();
-                
-                words.push(`${word} [${aa.map(([key, value]) => `${key}:${value}`).join(" ")}]`);
+                setExtractedWords(words);
             }
-            setExtractedWords(words);
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `EN_MISSION | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `EN_MISSION | ${fileContent}`
+                });
+            }
         }
     };
 
     const downloadExtractedWords = () => {
-        if (extractedWords.length === 0) return;
-        const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_미션단어 목록.txt`;
-        link.click();
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+        try{    
+            if (extractedWords.length === 0) return;
+            const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_미션단어 목록.txt`;
+            link.click();
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: fileContent
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: fileContent
+                });
+            }
         }
     };
 
@@ -121,6 +209,7 @@ const WordExtractorApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                {errorModalView  && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
             </main>
         </div>
 

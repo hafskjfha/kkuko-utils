@@ -3,6 +3,8 @@ import React, { useState, useRef } from "react";
 import Image from 'next/image';
 import DuemLaw from "@/app/lib/DuemLaw";
 import HelpModal from "./HelpModal";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type';
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -12,6 +14,7 @@ const WordExtractorApp: React.FC = () => {
     const [loopLetter, setLoopLetter] = useState<string>('');
     const [helpModalOpen, setHelpModalOpen] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -20,47 +23,112 @@ const WordExtractorApp: React.FC = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target?.result as string;
-                setFileContent(content);
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+            };
+            reader.onerror = (event) => {
+                const error = event.target?.error;
+                try{
+                    if(error){
+                        const errorObj = new Error(`FileReader Error: ${error.message}`);
+                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                        throw errorObj;
+                    }
+                }catch(err){
+                    if (err instanceof Error) {
+                        seterrorModalView({
+                            ErrName: err.name,
+                            ErrMessage: err.message,
+                            ErrStackRace: err.stack,
+                            inputValue: null
+                        });
+        
+                    } else {
+                        seterrorModalView({
+                            ErrName: null,
+                            ErrMessage: null,
+                            ErrStackRace: err as string,
+                            inputValue: null
+                        });
+                    }
+                }
             };
             reader.readAsText(file);
         }
     };
 
     const extractWords = () => {
-        if (!fileContent || !loopLetter) return;
-        switch (wordMod) {
-            case 'mode1':
-                const words1 = fileContent.split(/\s+/).filter(word => word.startsWith(loopLetter) && word.endsWith(loopLetter));
-                setExtractedWords(words1);
-                break;
-            case 'mode2':
-                const loopl2 = DuemLaw(loopLetter[0]);
-                const words2 = fileContent.split(/\s+/).filter(word => (word.startsWith(loopLetter) || word.startsWith(loopl2)) && word.endsWith(loopLetter));
-                setExtractedWords(words2);
-                break;
-            case 'mode3':
-                const loopl3 = DuemLaw(loopLetter[0]);
-                const words3 = fileContent.split(/\s+/).filter(word => word.startsWith(loopLetter) && (word.endsWith(loopLetter) || word.endsWith(loopl3)));
-                setExtractedWords(words3);
-                break;
-            case 'mode4':
-                const loopl4 = DuemLaw(loopLetter[0]);
-                const words4 = fileContent.split(/\s+/).filter(word => (word.startsWith(loopLetter) || word.startsWith(loopl4)) && (word.endsWith(loopLetter) || word.endsWith(loopl4)));
-                setExtractedWords(words4);
-                break;
+        try{    
+            if (!fileContent || !loopLetter) return;
+            switch (wordMod) {
+                case 'mode1':
+                    const words1 = fileContent.split(/\s+/).filter(word => word.startsWith(loopLetter) && word.endsWith(loopLetter));
+                    setExtractedWords(words1);
+                    break;
+                case 'mode2':
+                    const loopl2 = DuemLaw(loopLetter[0]);
+                    const words2 = fileContent.split(/\s+/).filter(word => (word.startsWith(loopLetter) || word.startsWith(loopl2)) && word.endsWith(loopLetter));
+                    setExtractedWords(words2);
+                    break;
+                case 'mode3':
+                    const loopl3 = DuemLaw(loopLetter[0]);
+                    const words3 = fileContent.split(/\s+/).filter(word => word.startsWith(loopLetter) && (word.endsWith(loopLetter) || word.endsWith(loopl3)));
+                    setExtractedWords(words3);
+                    break;
+                case 'mode4':
+                    const loopl4 = DuemLaw(loopLetter[0]);
+                    const words4 = fileContent.split(/\s+/).filter(word => (word.startsWith(loopLetter) || word.startsWith(loopl4)) && (word.endsWith(loopLetter) || word.endsWith(loopl4)));
+                    setExtractedWords(words4);
+                    break;
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `LOOP | MOD: ${wordMod} |${fileContent}` 
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `LOOP | MOD: ${wordMod} |${fileContent}` 
+                });
+            }
         }
 
     };
 
     const downloadExtractedWords = () => {
-        if (extractedWords.length === 0) return;
-        const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_돌림단어 목록.txt`;
-        link.click();
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+        try{    
+            if (extractedWords.length === 0) return;
+            const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_돌림단어 목록.txt`;
+            link.click();
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: fileContent 
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: fileContent
+                });
+            }
         }
     };
 
@@ -185,6 +253,7 @@ const WordExtractorApp: React.FC = () => {
                     </div>
                 </div>
                 {helpModalOpen && <HelpModal onClose={() => setHelpModalOpen(false)} />}
+                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
             </main>
         </div>
 

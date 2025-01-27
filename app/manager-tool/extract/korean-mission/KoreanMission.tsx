@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { DefaultDict } from "@/app/lib/collections";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type';
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -10,6 +12,7 @@ const WordExtractorApp: React.FC = () => {
     const [missionLetterView, setMissionLetterView] = useState<boolean>(false);
     const [wordMod, setWordMod] = useState<"mode1" | "mode2" | "mode3" | "mode4" | "">('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -18,138 +21,203 @@ const WordExtractorApp: React.FC = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target?.result as string;
-                setFileContent(content);
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
                 setExtractedWords([]);
+            };
+            reader.onerror = (event) => {
+                const error = event.target?.error;
+                try{
+                    if(error){
+                        const errorObj = new Error(`FileReader Error: ${error.message}`);
+                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                        throw errorObj;
+                    }
+                }catch(err){
+                    if (err instanceof Error) {
+                        seterrorModalView({
+                            ErrName: err.name,
+                            ErrMessage: err.message,
+                            ErrStackRace: err.stack,
+                            inputValue: null
+                        });
+        
+                    } else {
+                        seterrorModalView({
+                            ErrName: null,
+                            ErrMessage: null,
+                            ErrStackRace: err as string,
+                            inputValue: null
+                        });
+                    }
+                }
             };
             reader.readAsText(file);
         }
     };
 
     const extractWords = () => {
-        if (fileContent && wordMod) {
-            const kkk = new DefaultDict<string, { word: string, mission: number }[]>(() => []);
-            const include = oneMissionChecked ? 1 : 2;
-            for (const m of "가나다라마바사아자차카타파하") {
-                for (const word of fileContent.split('\n')) {
-                    const pp = (word.match(new RegExp(m, "gi")) || []).length
-                    if (pp >= include) {
-                        kkk.get(m).push({ word, mission: pp });
+        try{    
+            if (fileContent && wordMod) {
+                const kkk = new DefaultDict<string, { word: string, mission: number }[]>(() => []);
+                const include = oneMissionChecked ? 1 : 2;
+                for (const m of "가나다라마바사아자차카타파하") {
+                    for (const word of fileContent.split('\n')) {
+                        const pp = (word.match(new RegExp(m, "gi")) || []).length
+                        if (pp >= include) {
+                            kkk.get(m).push({ word, mission: pp });
+                        }
                     }
                 }
-            }
-            switch (wordMod) {
-                case "mode1": 
-                const words1: string[] = [];
-                    for (const m of "가나다라마바사아자차카타파하") {
-                        if (kkk.get(m).length > 0) {
-                            kkk.get(m).sort((a, b) => {
-                                // 1순위: mission 내림차순
-                                if (b.mission !== a.mission) {
-                                    return b.mission - a.mission;
-                                }
-                                // 2순위: word 길이 내림차순
-                                if (b.word.length !== a.word.length) {
-                                    return b.word.length - a.word.length;
-                                }
-                                // 3순위: ㄱㄴㄷ 순 (사전순)
-                                return a.word.localeCompare(b.word);
-                            })
-                            words1.push(`=[${m}]=`);
-                            words1.push(...kkk.get(m).map(i => i.word));
-                            words1.push(' ');
-                            setExtractedWords(words1);
+                switch (wordMod) {
+                    case "mode1": 
+                    const words1: string[] = [];
+                        for (const m of "가나다라마바사아자차카타파하") {
+                            if (kkk.get(m).length > 0) {
+                                kkk.get(m).sort((a, b) => {
+                                    // 1순위: mission 내림차순
+                                    if (b.mission !== a.mission) {
+                                        return b.mission - a.mission;
+                                    }
+                                    // 2순위: word 길이 내림차순
+                                    if (b.word.length !== a.word.length) {
+                                        return b.word.length - a.word.length;
+                                    }
+                                    // 3순위: ㄱㄴㄷ 순 (사전순)
+                                    return a.word.localeCompare(b.word);
+                                })
+                                words1.push(`=[${m}]=`);
+                                words1.push(...kkk.get(m).map(i => i.word));
+                                words1.push(' ');
+                                setExtractedWords(words1);
+                            }
+                            else{
+                                words1.push(`=[${m}]=`);
+                                words1.push(' ');
+                            }
                         }
-                        else{
-                            words1.push(`=[${m}]=`);
-                            words1.push(' ');
-                        }
-                    }
-                    break;
+                        break;
 
-                case "mode2":
-                    const words2:string[] = [];
-                    for (const m of "가나다라마바사아자차카타파하") {
-                        if (kkk.get(m).length > 0) {
-                            kkk.get(m).sort((a, b) => {
-                                // 1순위: ㄱㄴㄷ 순 (사전순)
-                                const wordComparison = a.word.localeCompare(b.word);
-                                if (wordComparison !== 0) {
-                                    return wordComparison;
-                                }
-                                // 2순위: mission 내림차순
-                                if (b.mission !== a.mission) {
-                                    return b.mission - a.mission;
-                                }
-                                // 3순위: word 길이 내림차순
-                                return b.word.length - a.word.length;
-                            })
-                            let ko:undefined | string = undefined;
-                            let ww:{word:string,mission:number}[] = [];
-                            words2.push(`==[[${m}]]==`)
-                            for (const {word,mission} of kkk.get(m)){
-                                if (!ko){
-                                    ko= word[0];
-                                    ww.push({word,mission});
-                                }
-                                else{
-                                    if (word[0] === ko){
+                    case "mode2":
+                        const words2:string[] = [];
+                        for (const m of "가나다라마바사아자차카타파하") {
+                            if (kkk.get(m).length > 0) {
+                                kkk.get(m).sort((a, b) => {
+                                    // 1순위: ㄱㄴㄷ 순 (사전순)
+                                    const wordComparison = a.word.localeCompare(b.word);
+                                    if (wordComparison !== 0) {
+                                        return wordComparison;
+                                    }
+                                    // 2순위: mission 내림차순
+                                    if (b.mission !== a.mission) {
+                                        return b.mission - a.mission;
+                                    }
+                                    // 3순위: word 길이 내림차순
+                                    return b.word.length - a.word.length;
+                                })
+                                let ko:undefined | string = undefined;
+                                let ww:{word:string,mission:number}[] = [];
+                                words2.push(`==[[${m}]]==`)
+                                for (const {word,mission} of kkk.get(m)){
+                                    if (!ko){
+                                        ko= word[0];
                                         ww.push({word,mission});
                                     }
                                     else{
-                                        ww.sort((a,b)=>{
-                                            if (b.mission !== a.mission) {
-                                                return b.mission - a.mission;
-                                            }
-                                            return b.word.length - a.word.length;
-                                        });
-                                        words2.push(`=[${ko}]=`);
-                                        words2.push(...ww.map(w=>w.word));
-                                        words2.push(' ')
-                                        ww=[];
-                                        ww.push({word,mission});
-                                        ko=word[0];
+                                        if (word[0] === ko){
+                                            ww.push({word,mission});
+                                        }
+                                        else{
+                                            ww.sort((a,b)=>{
+                                                if (b.mission !== a.mission) {
+                                                    return b.mission - a.mission;
+                                                }
+                                                return b.word.length - a.word.length;
+                                            });
+                                            words2.push(`=[${ko}]=`);
+                                            words2.push(...ww.map(w=>w.word));
+                                            words2.push(' ')
+                                            ww=[];
+                                            ww.push({word,mission});
+                                            ko=word[0];
+                                        }
                                     }
                                 }
+                                words2.push(' ')
                             }
-                            words2.push(' ')
+                            else{
+                                words2.push(`==[[${m}]]==`)
+                                words2.push(' ')
+                            }
                         }
-                        else{
-                            words2.push(`==[[${m}]]==`)
-                            words2.push(' ')
+                        setExtractedWords(words2);
+                        break;
+                    
+                    case "mode3":
+                        const words3:string[] = [];
+                        for (const m of "가나다라마바사아자차카타파하"){
+                            words3.push(...kkk.get(m).map(w=>w.word));
                         }
-                    }
-                    setExtractedWords(words2);
-                    break;
-                
-                case "mode3":
-                    const words3:string[] = [];
-                    for (const m of "가나다라마바사아자차카타파하"){
-                        words3.push(...kkk.get(m).map(w=>w.word));
-                    }
-                    words3.sort((a,b)=>b.length-a.length);
-                    setExtractedWords(words3);
-                    break;
-                case "mode4":
-                    const words4:string[] = [];
-                    for (const m of "가나다라마바사아자차카타파하"){
-                        words4.push(...kkk.get(m).map(w=>w.word));
-                    }
-                    words4.sort((a,b)=>a.localeCompare(b));
-                    setExtractedWords(words4);
-                    break;
+                        words3.sort((a,b)=>b.length-a.length);
+                        setExtractedWords(words3);
+                        break;
+                    case "mode4":
+                        const words4:string[] = [];
+                        for (const m of "가나다라마바사아자차카타파하"){
+                            words4.push(...kkk.get(m).map(w=>w.word));
+                        }
+                        words4.sort((a,b)=>a.localeCompare(b));
+                        setExtractedWords(words4);
+                        break;
+                }
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `KOREAN_MISSION | MOD: ${wordMod} | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `KOREAN_MISSION | MOD: ${wordMod} | ${fileContent}`
+                });
             }
         }
     };
 
     const downloadExtractedWords = () => {
-        if (extractedWords.length === 0) return;
-        const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_미션단어 목록.txt`;
-        link.click();
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+        try{    
+            if (extractedWords.length === 0) return;
+            const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_미션단어 목록.txt`;
+            link.click();
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: fileContent
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: fileContent
+                });
+            }
         }
     };
 
@@ -271,6 +339,7 @@ const WordExtractorApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
             </main>
         </div>
 

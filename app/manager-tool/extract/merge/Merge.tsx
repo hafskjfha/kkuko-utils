@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useRef } from "react";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type';
 
 const WordExtractorApp: React.FC = () => {
     const [fileContent1, setFileContent1] = useState("");
     const [fileContent2, setFileContent2] = useState("");
     const [mergedContent, setMergedContent] = useState("");
     const [sortChecked,setSortChecked] = useState<boolean>(true);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const fileInputRef1 = useRef(null);
     const fileInputRef2 = useRef(null);
@@ -23,28 +26,90 @@ const WordExtractorApp: React.FC = () => {
                     setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, ""));
                 }
             };
+            reader.onerror = (event) => {
+                const error = event.target?.error;
+                try{
+                    if(error){
+                        const errorObj = new Error(`FileReader Error: ${error.message}`);
+                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                        throw errorObj;
+                    }
+                }catch(err){
+                    if (err instanceof Error) {
+                        seterrorModalView({
+                            ErrName: err.name,
+                            ErrMessage: err.message,
+                            ErrStackRace: err.stack,
+                            inputValue: null
+                        });
+        
+                    } else {
+                        seterrorModalView({
+                            ErrName: null,
+                            ErrMessage: null,
+                            ErrStackRace: err as string,
+                            inputValue: null
+                        });
+                    }
+                }
+            };
             reader.readAsText(file);
         }
     };
 
     const mergeFiles = () => {
-        if (fileContent1 && fileContent2) {
-            const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
-            setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
+        try{    if (fileContent1 && fileContent2) {
+                const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
+                setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `MERGE | ${fileContent1} | ${fileContent2}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `MERGE | ${fileContent1} | ${fileContent2}`
+                });
+            }
         }
     };
 
     const downloadMergedContent = () => {
-        if (mergedContent) {
-            const blob = new Blob([mergedContent], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "merged_file.txt";
-            a.click();
-            URL.revokeObjectURL(url);
-        } else {
-            alert("병합된 내용이 없습니다.");
+        try{    
+            if (mergedContent) {
+                const blob = new Blob([mergedContent], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "merged_file.txt";
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `${fileContent1} | ${fileContent2}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `${fileContent1} | ${fileContent2}`
+                });
+            }
         }
     };
 
@@ -122,6 +187,7 @@ const WordExtractorApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
             </main>
         </div>
 

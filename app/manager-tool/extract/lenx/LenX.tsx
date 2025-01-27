@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type';
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -7,6 +9,7 @@ const WordExtractorApp: React.FC = () => {
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [wordLength, setWordLength] = useState<number>(5);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -15,28 +18,94 @@ const WordExtractorApp: React.FC = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target?.result as string;
-                setFileContent(content);
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
             };
+            reader.onerror = (event) => {
+                const error = event.target?.error;
+                try{
+                    if(error){
+                        const errorObj = new Error(`FileReader Error: ${error.message}`);
+                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                        throw errorObj;
+                    }
+                }catch(err){
+                    if (err instanceof Error) {
+                        seterrorModalView({
+                            ErrName: err.name,
+                            ErrMessage: err.message,
+                            ErrStackRace: err.stack,
+                            inputValue: null
+                        });
+        
+                    } else {
+                        seterrorModalView({
+                            ErrName: null,
+                            ErrMessage: null,
+                            ErrStackRace: err as string,
+                            inputValue: null
+                        });
+                    }
+                }
+            };
+
             reader.readAsText(file);
         }
     };
 
     const extractWords = () => {
-        if (fileContent) {
-            const words = fileContent.split(/\s+/).filter((word) => word.length === wordLength);
-            setExtractedWords(words);
+        try{    
+            if (fileContent) {
+                const words = fileContent.split(/\s+/).filter((word) => word.length === wordLength);
+                setExtractedWords(words);
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `LENX | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `LENX | ${fileContent}`
+                });
+            }
         }
     };
 
     const downloadExtractedWords = () => {
-        if (extractedWords.length === 0) return;
-        const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_${wordLength}글자 목록.txt`;
-        link.click();
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+        try{    
+            if (extractedWords.length === 0) return;
+            const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_${wordLength}글자 목록.txt`;
+            link.click();
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }catch(err){
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: fileContent 
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: fileContent
+                });
+            }
         }
     };
 
@@ -96,6 +165,7 @@ const WordExtractorApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
             </main>
         </div>
 

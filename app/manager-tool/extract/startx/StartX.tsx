@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
+import ErrorModal from "@/app/components/ErrModal";
+import type { ErrorMessage } from '@/app/types/type';
 
 const WordExtractorApp: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -7,6 +9,7 @@ const WordExtractorApp: React.FC = () => {
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [wordStart, setwordStart] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -15,16 +18,45 @@ const WordExtractorApp: React.FC = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target?.result as string;
-                setFileContent(content);
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+            };
+            reader.onerror = (event) => {
+                const error = event.target?.error;
+                try{
+                    if(error){
+                        const errorObj = new Error(`FileReader Error: ${error.message}`);
+                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
+                        throw errorObj;
+                    }
+                }catch(err){
+                    if (err instanceof Error) {
+                        seterrorModalView({
+                            ErrName: err.name,
+                            ErrMessage: err.message,
+                            ErrStackRace: err.stack,
+                            inputValue: null
+                        });
+        
+                    } else {
+                        seterrorModalView({
+                            ErrName: null,
+                            ErrMessage: null,
+                            ErrStackRace: err as string,
+                            inputValue: null
+                        });
+                    }
+                }
             };
             reader.readAsText(file);
         }
     };
 
     const extractWords = () => {
-        if (fileContent && wordStart) {
-            const words = fileContent.split(/\s+/).filter((word) => word[0] === wordStart);
-            setExtractedWords(words);
+        {    
+            if (fileContent && wordStart) {
+                const words = fileContent.split(/\s+/).filter((word) => word[0] === wordStart);
+                setExtractedWords(words);
+            }
         }
     };
 
