@@ -20,13 +20,9 @@ const Footer: React.FC = () => {
                         Github
                     </a>
                     <a
-                        href="#"
-                        className="hover:text-gray-300 transition-colors"
-                    >
-                        Discord
-                    </a>
-                    <a
-                        href="#"
+                        href="https://github.com/hafskjfha/kkuko-utils?tab=readme-ov-file#%EB%B2%84%EA%B7%B8-%EC%8B%A0%EA%B3%A0--%EA%B8%B0%EB%8A%A5-%EC%B6%94%EA%B0%80-%EC%9A%94%EC%B2%AD-bug-report--feature-suggestions"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="hover:text-gray-300 transition-colors"
                     >
                         Bug report

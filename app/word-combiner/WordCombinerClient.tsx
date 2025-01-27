@@ -26,6 +26,7 @@ export default function WordCombinerClient() {
     useEffect(() => {
         try {
             const rr = async () => {
+                setLoading(true);
                 const word_data = await axios.get<{len5:string[],len6:string[]}>("/api/get-words");
                 if (word_data.data.len6) {
                     setLen6WordsData(word_data.data.len6.sort((a,b)=>a.localeCompare(b)));
@@ -33,6 +34,7 @@ export default function WordCombinerClient() {
                 if (word_data.data.len5){
                     setLen5WordsData(word_data.data.len5.sort((a,b)=>a.localeCompare(b)));
                 }
+                setLoading(false);
             }
             rr();
         } catch (err: unknown) {
