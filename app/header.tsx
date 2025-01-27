@@ -66,9 +66,9 @@ const Header:React.FC = () => {
                         단어조합기
                     </Link>
                     <Link
-                        href="/services"
+                        href="/manager-tool"
                         className={`block py-2 md:py-0 hover:text-gray-300 ${
-                            pathname === "/services" ? "border-b-2 border-white" : ""
+                            /manager-tool/.test(pathname) ? "border-b-2 border-white" : ""
                         }`}
                     >
                         단어장 관리 도구
