@@ -5,8 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import type { Database } from "../types/database.types";
-import { Provider, useDispatch } from "react-redux";
-import { store } from "../store/store";
+import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
 import { Suspense } from 'react';
@@ -213,11 +212,9 @@ const AuthPage: React.FC = () => {
 
 const Auth: React.FC = () => {
     return (
-        <Provider store={store}>
-            <Suspense fallback={<Spinner />}>
-                <AuthPage />
-            </Suspense>
-        </Provider>
+        <Suspense fallback={<Spinner />}>
+            <AuthPage />
+        </Suspense>
     );
 };
 

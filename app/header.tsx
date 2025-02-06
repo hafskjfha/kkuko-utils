@@ -3,8 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Provider, useSelector } from 'react-redux';
-import { store } from "./store/store";
+import { useSelector } from 'react-redux';
 import type { RootState } from "./store/store";
 
 
@@ -96,12 +95,4 @@ const Header: React.FC = () => {
 };
 
 
-const HeaderP: React.FC = () => {
-    return (
-        <Provider store={store}>
-            <Header />
-        </Provider>
-    )
-}
-
-export default HeaderP;
+export default Header;
