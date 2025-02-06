@@ -60,6 +60,27 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          contribution: number
+          id: string
+          nickname: string
+          role: Database["public"]["Enums"]["role_level"]
+        }
+        Insert: {
+          contribution?: number
+          id: string
+          nickname: string
+          role?: Database["public"]["Enums"]["role_level"]
+        }
+        Update: {
+          contribution?: number
+          id?: string
+          nickname?: string
+          role?: Database["public"]["Enums"]["role_level"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -68,7 +89,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      role_level: "r1" | "r2" | "r3" | "r4" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
