@@ -313,11 +313,12 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
 
     const handleSortWordv1 = () => {
         try{
-            const updatedContent = fileContent.split("\n").sort().join("\n");
-            if (updatedContent === fileContent) return;
+            const updatedContent = fileContent.split("\n").sort((a, b) => a.localeCompare(b, "ko-KR"));
+            if (updatedContent.join('\n') === fileContent) return;
             pushToUndoStack(fileContent);
-            setFileContent(updatedContent);
+            setFileContent(updatedContent.join('\n'));
             setLineCount(updatedContent.length);
+            console.log(updatedContent)
         }catch(err){
             if (err instanceof Error) {
                 seterrorModalView({
@@ -342,7 +343,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         try{
             let groupedText = '';
             let currentChar: string | null = null;
-            for (const word of fileContent.split("\n").sort()) {
+            for (const word of fileContent.split("\n").sort((a, b) => a.localeCompare(b, "ko-KR"))) {
                 if (!word || word.includes("=[")) continue;
                 const firstChar = word[0].toLowerCase(); // 첫 글자 (대소문자 무시)
 
@@ -579,11 +580,16 @@ const ArrangeHome: React.FC = () => {
                 reader.onload = (e) => {
                     const text = e.target?.result;
                     if (typeof text === "string") {
-                        setLoading(true);
-                        setFileContent(text); // Update state with file content
+                        
+                        
+                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "")); // Update state with file content
                         setLineCount(text.split("\n").length); // Count lines
                         setLoading(false);
                     }
+                    else{
+                        throw new Error('fail to read file');
+                    }
+                    
                 };
 
                 reader.onerror = (event) => {
@@ -611,10 +617,14 @@ const ArrangeHome: React.FC = () => {
                                 inputValue: null
                             });
                         }
+                    } finally{
+                        setLoading(false);
                     }
                 };
-
+                setLoading(true);
                 reader.readAsText(file, "utf-8");
+                
+
             } else {
                 alert("지원되지 않는 파일 형식입니다. UTF-8 형식의 .txt 파일만 업로드해주세요.");
             }
