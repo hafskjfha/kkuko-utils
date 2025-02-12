@@ -4,7 +4,7 @@
 
 ## 웹사이트 (Link)
 
-👉[웹사이트 링크]() 
+👉[웹사이트 링크](https://kkuko-utils.vercel.app/) 
 
 ## 목차 (Contents)
 
@@ -61,8 +61,7 @@
 ## 버그 신고 / 기능 추가 요청 (Bug Report / Feature Suggestions)
 
 + 깃허브 이슈 사용: https://github.com/hafskjfha/kkuko-utils/issues
-+ 네이버 카페 글 댓글 이용 : (link)
-+ 구글 폼 이용 : (link)
++ 네이버 카페 글 댓글 이용 : https://cafe.naver.com/kkutukorea/129064
 
 ## 라이선스 (License)
 

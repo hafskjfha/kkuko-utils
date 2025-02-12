@@ -19,7 +19,7 @@ const WordExtractorApp: React.FC = () => {
             setFile(file);
             const reader = new FileReader();
             reader.onload = (event) => {
-                setLoading(true);
+                
                 const content = event.target?.result as string;
                 setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
                 setLoading(false);
@@ -51,6 +51,7 @@ const WordExtractorApp: React.FC = () => {
                     }
                 }
             };
+            setLoading(true);
             reader.readAsText(file);
         }
     };
