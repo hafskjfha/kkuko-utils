@@ -582,7 +582,7 @@ const ArrangeHome: React.FC = () => {
                     if (typeof text === "string") {
                         
                         
-                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "")); // Update state with file content
+                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b","")); // Update state with file content
                         setLineCount(text.split("\n").length); // Count lines
                         setLoading(false);
                     }

@@ -23,10 +23,10 @@ const WordExtractorApp: React.FC = () => {
                 
                 if (fileNumber === 1) {
                     const r = e.target?.result as string
-                    setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, ""));
+                    setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 } else {
                     const rr = e.target?.result as string
-                    setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, ""));
+                    setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 }
                 setLoading(false);
             };
@@ -63,7 +63,8 @@ const WordExtractorApp: React.FC = () => {
     };
 
     const mergeFiles = () => {
-        try{    if (fileContent1 && fileContent2) {
+        try{    
+            if (fileContent1 && fileContent2) {
                 const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
                 setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
             }

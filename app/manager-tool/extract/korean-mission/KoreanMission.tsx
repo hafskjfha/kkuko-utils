@@ -23,7 +23,7 @@ const WordExtractorApp: React.FC = () => {
             reader.onload = (event) => {
                 
                 const content = event.target?.result as string;
-                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 setExtractedWords([]);
                 setLoading(false);
             };
