@@ -5,15 +5,36 @@ import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type';
 import Spinner from "@/app/components/Spinner";
 
+const sortedLength = (a: {word:string, mission: number}, b: {word:string, mission: number}) => b.word.length - a.word.length;
+const sortedAlphabet = (a: {word:string, mission: number}, b: {word:string, mission: number}) => a.word.localeCompare(b.word, "ko-KR");
+const sortedMission = (a: {word:string, mission: number}, b: {word:string, mission: number}) => b.mission - a.mission;
+const pack = {"미션글자 포함순":sortedMission, "글자길이순":sortedLength, "ㄱㄴㄷ순":sortedAlphabet};
+
 const WordExtractorApp: React.FC = () => {
+    type op = "미션글자 포함순" | "글자길이순" | "ㄱㄴㄷ순";
     const [file, setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [oneMissionChecked, setOneMissionChecked] = useState<boolean>(false);
-    const [wordMod, setWordMod] = useState<"mode1" | "mode2" | "mode3" | "mode4" | "">('');
+    const [showMissionLetter, setShowMissionLetter] = useState<boolean>(false);
+    const [selected, setSelected] = useState<op[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [loading, setLoading] = useState(false);
+    
+    const options: ["미션글자 포함순", "글자길이순", "ㄱㄴㄷ순"] = ["미션글자 포함순", "글자길이순", "ㄱㄴㄷ순"];
+
+    const handleToggle = (option: op) => {
+        setSelected((prev) => {
+            if (prev.includes(option)) {
+                return prev.filter((item) => item !== option); // 선택 해제
+            }
+            if (prev.length < 3) {
+                return [...prev, option]; // 새로운 선택 추가
+            }
+            return prev; // 3개 초과 선택 방지
+        });
+    }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -21,7 +42,7 @@ const WordExtractorApp: React.FC = () => {
             setFile(file);
             const reader = new FileReader();
             reader.onload = (event) => {
-                
+
                 const content = event.target?.result as string;
                 setFileContent(content.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 setExtractedWords([]);
@@ -29,13 +50,13 @@ const WordExtractorApp: React.FC = () => {
             };
             reader.onerror = (event) => {
                 const error = event.target?.error;
-                try{
-                    if(error){
+                try {
+                    if (error) {
                         const errorObj = new Error(`FileReader Error: ${error.message}`);
                         errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
                         throw errorObj;
                     }
-                }catch(err){
+                } catch (err) {
                     if (err instanceof Error) {
                         seterrorModalView({
                             ErrName: err.name,
@@ -43,7 +64,7 @@ const WordExtractorApp: React.FC = () => {
                             ErrStackRace: err.stack,
                             inputValue: null
                         });
-        
+
                     } else {
                         seterrorModalView({
                             ErrName: null,
@@ -60,8 +81,9 @@ const WordExtractorApp: React.FC = () => {
     };
 
     const extractWords = () => {
-        try{    
-            if (fileContent && wordMod) {
+        try {
+            setLoading(true);
+            if (fileContent && selected.length > 0) {
                 const kkk = new DefaultDict<string, { word: string, mission: number }[]>(() => []);
                 const include = oneMissionChecked ? 1 : 2;
                 for (const m of "가나다라마바사아자차카타파하") {
@@ -72,55 +94,118 @@ const WordExtractorApp: React.FC = () => {
                         }
                     }
                 }
-                switch (wordMod) {
-                    case "mode1": 
-                    const words1: string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하") {
-                            if (kkk.get(m).length > 0) {
-                                kkk.get(m).sort((a, b) => {
-                                    // 1순위: mission 내림차순
-                                    if (b.mission !== a.mission) {
-                                        return b.mission - a.mission;
+
+                const f = (word:string) => {
+                    let r = `${word} `;
+                    for (const m of "가나다라마바사아자차카타파하") {
+                        const pp = (word.match(new RegExp(m, "gi")) || []).length
+                        if (pp >= 1) {
+                            r += `[${m} ${pp}]`;
+                        }
+                    }
+                    return r;
+                }
+                const rank2 = pack[selected[1]];
+                const rank3 = pack[selected[2]];
+                switch (selected[0]){
+                    case "미션글자 포함순":
+                        const wordz:string[] = [];
+                        for (const m of "가나다라마바사아자차카타파하"){
+                            if (kkk.get(m).length > 0){
+                                kkk.get(m).sort((a, b) =>{
+                                    const k =pack[selected[0]](a,b);
+                                    if (k!=0){
+                                        return k;
                                     }
-                                    // 2순위: word 길이 내림차순
-                                    if (b.word.length !== a.word.length) {
-                                        return b.word.length - a.word.length;
+                                    if (rank2 !== undefined){
+                                        const k = rank2(a,b);
+                                        if (k!=0) return k;
                                     }
-                                    // 3순위: ㄱㄴㄷ 순 (사전순)
-                                    return a.word.localeCompare(b.word);
-                                })
-                                words1.push(`=[${m}]=`);
-                                words1.push(...kkk.get(m).map(i => i.word));
-                                words1.push(' ');
-                                setExtractedWords(words1);
+                                    if (rank3 !== undefined){
+                                        const k = rank3(a,b)
+                                        return k;
+                                    }
+                                    return sortedAlphabet(a,b);
+                                });
+                                wordz.push(`=[${m}]=`);
+                                if (showMissionLetter){
+                                    wordz.push(...kkk.get(m).map(i => f(i.word)));
+                                }
+                                else{
+                                    wordz.push(...kkk.get(m).map(i => i.word));
+                                }
+                                wordz.push(' ');
+                                
                             }
                             else{
-                                words1.push(`=[${m}]=`);
-                                words1.push(' ');
+                                wordz.push(`=[${m}]=`);
+                                wordz.push(' ');
                             }
                         }
+                        setExtractedWords(wordz);
                         break;
-
-                    case "mode2":
+                    case "글자길이순":
                         const words2:string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하") {
-                            if (kkk.get(m).length > 0) {
+                        for (const m of "가나다라마바사아자차카타파하"){
+                            if (kkk.get(m).length > 0){
                                 kkk.get(m).sort((a, b) => {
-                                    // 1순위: ㄱㄴㄷ 순 (사전순)
-                                    const wordComparison = a.word.localeCompare(b.word);
-                                    if (wordComparison !== 0) {
-                                        return wordComparison;
+                                    const k = pack[selected[0]](a,b);
+                                    if (k!=0){
+                                        return k;
                                     }
-                                    // 2순위: mission 내림차순
-                                    if (b.mission !== a.mission) {
-                                        return b.mission - a.mission;
+                                    if (rank2 != undefined){
+                                        const k = rank2(a,b);
+                                        if (k!=0) return k;
                                     }
-                                    // 3순위: word 길이 내림차순
-                                    return b.word.length - a.word.length;
+                                    if (rank3 != undefined){
+                                        const k = rank3(a,b);
+                                        return k;
+                                    }
+                                    return sortedAlphabet(a,b);
+                                })
+                                if (showMissionLetter){
+                                    words2.push(...kkk.get(m).map(i => f(i.word)));
+                                }
+                                else{
+                                    words2.push(...kkk.get(m).map(i => i.word));
+                                }
+                            }
+                        }
+                        setExtractedWords(words2);
+                        break;
+                    case "ㄱㄴㄷ순":
+                        const words3:string[] = [];
+                        if (rank2 === undefined){
+                            for (const m of "가나다라마바사아자차카타파하"){
+                                words3.push(...kkk.get(m).map(w=>w.word));
+                            }
+                            words3.sort((a,b) => sortedAlphabet({word:a,mission:-1},{word:b,mission:-1}));
+                            if (showMissionLetter) setExtractedWords(words3.map(w => f(w)));
+                            else setExtractedWords(words3);
+                            return;
+                        }
+                        
+                        for (const m of "가나다라마바사아자차카타파하") {
+                            if (kkk.get(m).length > 0){
+                                
+                                kkk.get(m).sort((a, b) => {
+                                    const k = pack[selected[0]](a,b);
+                                    if (k!=0) return k;
+                                    
+                                    if (rank2 !== undefined){
+                                        const k = rank2(a,b)
+                                        if (k!=0) return k;
+                                    }
+
+                                    if (rank3 != undefined){
+                                        return rank3(a,b)
+                                    }
+
+                                    return sortedAlphabet(a,b);
                                 })
                                 let ko:undefined | string = undefined;
                                 let ww:{word:string,mission:number}[] = [];
-                                words2.push(`==[[${m}]]==`)
+                                words3.push(`==[[${m}]]==`);
                                 for (const {word,mission} of kkk.get(m)){
                                     if (!ko){
                                         ko= word[0];
@@ -132,55 +217,49 @@ const WordExtractorApp: React.FC = () => {
                                         }
                                         else{
                                             ww.sort((a,b)=>{
-                                                if (b.mission !== a.mission) {
-                                                    return b.mission - a.mission;
+                                                if (rank2 !== undefined) {
+                                                    const k = rank2(a,b);
+                                                    if (k!=0) return k;
                                                 }
-                                                return b.word.length - a.word.length;
+                                                if (rank3 !== undefined) {
+                                                    const k = rank3(a,b);
+                                                    return k;
+                                                }
+                                                return sortedLength(a,b);
                                             });
-                                            words2.push(`=[${ko}]=`);
-                                            words2.push(...ww.map(w=>w.word));
-                                            words2.push(' ')
-                                            ww=[];
+                                            words3.push(`=[${ko}]=`);
+                                            if (showMissionLetter){
+                                                words3.push(...ww.map(w => f(w.word)));
+                                            }
+                                            else{
+                                                words3.push(...ww.map(w => w.word));
+                                            }
+                                            words3.push(' ');
+                                            ww = [];
                                             ww.push({word,mission});
-                                            ko=word[0];
+                                            ko = word[0];
                                         }
                                     }
                                 }
-                                words2.push(' ')
+                                words3.push(' ');
                             }
                             else{
-                                words2.push(`==[[${m}]]==`)
-                                words2.push(' ')
+                                words3.push(`==[[${m}]]==`);
+                                words3.push(' ');
                             }
                         }
-                        setExtractedWords(words2);
-                        break;
-                    
-                    case "mode3":
-                        const words3:string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하"){
-                            words3.push(...kkk.get(m).map(w=>w.word));
-                        }
-                        words3.sort((a,b)=>b.length-a.length);
                         setExtractedWords(words3);
-                        break;
-                    case "mode4":
-                        const words4:string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하"){
-                            words4.push(...kkk.get(m).map(w=>w.word));
-                        }
-                        words4.sort((a,b)=>a.localeCompare(b));
-                        setExtractedWords(words4);
-                        break;
+                        
                 }
+            
             }
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
                     ErrMessage: err.message,
                     ErrStackRace: err.stack,
-                    inputValue: `KOREAN_MISSION | MOD: ${wordMod} | ${fileContent}`
+                    inputValue: `KOREAN_MISSION | MOD: ${selected.join(", ")} | ${fileContent}`
                 });
 
             } else {
@@ -188,14 +267,16 @@ const WordExtractorApp: React.FC = () => {
                     ErrName: null,
                     ErrMessage: null,
                     ErrStackRace: err as string,
-                    inputValue: `KOREAN_MISSION | MOD: ${wordMod} | ${fileContent}`
+                    inputValue: `KOREAN_MISSION | MOD: ${selected.join(", ")} | ${fileContent}`
                 });
             }
+        } finally {
+            setLoading(false);
         }
     };
 
     const downloadExtractedWords = () => {
-        try{    
+        try {
             if (extractedWords.length === 0) return;
             const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
             const link = document.createElement("a");
@@ -205,7 +286,7 @@ const WordExtractorApp: React.FC = () => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -224,6 +305,10 @@ const WordExtractorApp: React.FC = () => {
             }
         }
     };
+
+    const handleHelp = () => {
+        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4hk4plz6rbsd", "_blank", "noopener,noreferrer");
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
@@ -261,6 +346,12 @@ const WordExtractorApp: React.FC = () => {
                     {/* Right section */}
                     <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
                         <div className="flex flex-col space-y-2">
+                            <button
+                                onClick={handleHelp}
+                                className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 mb-4"
+                            >
+                                도움말
+                            </button>
                             <label className="flex items-center space-x-2">
                                 <input
                                     type="checkbox"
@@ -270,54 +361,36 @@ const WordExtractorApp: React.FC = () => {
                                 />
                                 <span className="dark:text-white">1미 포함 여부</span>
                             </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={showMissionLetter}
+                                    onChange={() => setShowMissionLetter(!showMissionLetter)}
+                                    className="h-5 w-5 border rounded dark:border-gray-600 dark:bg-gray-700 dark:accent-blue-300"
+                                />
+                                <span className="dark:text-white">미션글자 표시 여부</span>
+                            </label>
                         </div>
 
                         <div className="flex flex-col space-y-2">
-                            <span className="text-lg font-semibold">정렬 모드 선택:</span>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="wordMod"
-                                    value="mode1"
-                                    checked={wordMod === "mode1"}
-                                    onChange={(e) => setWordMod(e.target.value as "mode1")}
-                                    className="mr-2"
-                                />
-                                1: 미션글자 포함순, 2: 글자길이순, 3: ㄱㄴㄷ순
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="wordMod"
-                                    value="mode2"
-                                    checked={wordMod === "mode2"}
-                                    onChange={(e) => setWordMod(e.target.value as "mode2")}
-                                    className="mr-2"
-                                />
-                                1: ㄱㄴㄷ순, 2:미션글자 포함순, 3: 글자길이순
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="wordMod"
-                                    value="mode3"
-                                    checked={wordMod === "mode3"}
-                                    onChange={(e) => setWordMod(e.target.value as "mode3")}
-                                    className="mr-2"
-                                />
-                                1. 길이순
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="wordMod"
-                                    value="mode4"
-                                    checked={wordMod === "mode4"}
-                                    onChange={(e) => setWordMod(e.target.value as "mode4")}
-                                    className="mr-2"
-                                />
-                                1. ㄱㄴㄷ순
-                            </label>
+                            <span className="text-lg font-semibold dark:text-white">정렬 모드 선택:</span>
+                            {options.map((option) => (
+                                <label key={option} className="flex items-center space-x-2 py-2">
+                                    <input
+                                        type="checkbox"
+                                        className="w-5 h-5 accent-blue-500 dark:accent-blue-300 dark:bg-gray-700 dark:border-gray-600"
+                                        checked={selected.includes(option)}
+                                        onChange={() => handleToggle(option)}
+                                    />
+                                    <span className="text-lg dark:text-white">{option}</span>
+                                    {selected.includes(option) && (
+                                        <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                                            {selected.indexOf(option) + 1}순위
+                                        </span>
+                                    )}
+                                </label>
+                            ))}
+
                         </div>
 
                         <button
@@ -334,12 +407,12 @@ const WordExtractorApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
-                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
+                {errorModalView && <ErrorModal onClose={() => seterrorModalView(null)} error={errorModalView} />}
                 {loading && (
-                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
-                    <Spinner />
-                </div>
-            )}
+                    <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
+                        <Spinner />
+                    </div>
+                )}
             </main>
         </div>
 
