@@ -21,7 +21,7 @@ const WordExtractorApp: React.FC = () => {
             reader.onload = (event) => {
                 
                 const content = event.target?.result as string;
-                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, ""));
+                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 setLoading(false);
             };
             reader.onerror = (event) => {
@@ -77,6 +77,10 @@ const WordExtractorApp: React.FC = () => {
         }
     };
 
+    const handleHelp = () => {
+        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.g4swozullp4v", "_blank", "noopener,noreferrer");
+    }
+
     return (
         <div className="flex flex-col min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
 
@@ -112,6 +116,12 @@ const WordExtractorApp: React.FC = () => {
 
                     {/* Right section */}
                     <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
+                        <button
+                            onClick={handleHelp}
+                            className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 mb-4"
+                        >
+                            도움말
+                        </button>
                         <input
                             value={wordStart}
                             onChange={(e) => setwordStart(e.target.value)}

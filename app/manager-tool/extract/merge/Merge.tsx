@@ -23,10 +23,10 @@ const WordExtractorApp: React.FC = () => {
                 
                 if (fileNumber === 1) {
                     const r = e.target?.result as string
-                    setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, ""));
+                    setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 } else {
                     const rr = e.target?.result as string
-                    setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, ""));
+                    setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
                 }
                 setLoading(false);
             };
@@ -63,7 +63,8 @@ const WordExtractorApp: React.FC = () => {
     };
 
     const mergeFiles = () => {
-        try{    if (fileContent1 && fileContent2) {
+        try{    
+            if (fileContent1 && fileContent2) {
                 const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
                 setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
             }
@@ -118,6 +119,10 @@ const WordExtractorApp: React.FC = () => {
         }
     };
 
+    const handleHelp = () => {
+        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4sz3wbmpl386", "_blank", "noopener,noreferrer");
+    }
+
     return (
         <div className="flex flex-col min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
             {/* Main Content */}
@@ -168,6 +173,12 @@ const WordExtractorApp: React.FC = () => {
                     {/* Right section */}
                     <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex flex-col space-y-2">
+                        <button
+                            onClick={handleHelp}
+                            className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 mb-4"
+                        >
+                            도움말
+                        </button>
                         <label className="flex items-center space-x-2">
                                 <input
                                     type="checkbox"

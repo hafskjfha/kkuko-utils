@@ -384,7 +384,19 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
 
     return (
         <div className="p-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-h-screen">
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">도구</h1>
+            <h1 className="flex items-center text-2xl md:text-3xl font-bold mb-4">
+                도구
+                <span className="relative w-6 h-6 ml-2">
+                    <Image 
+                    src="/help1-log.svg"
+                    alt="도움말"
+                    fill // 자동 크기 조정
+                    className="object-contain"
+                    onClick={()=>window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.3gxircxieo6c", "_blank", "noopener,noreferrer")}
+                    />
+                </span>
+            </h1>
+
 
             <div className="flex flex-col gap-4">
                 {/* Undo / Redo */}
@@ -582,7 +594,7 @@ const ArrangeHome: React.FC = () => {
                     if (typeof text === "string") {
                         
                         
-                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "")); // Update state with file content
+                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b","")); // Update state with file content
                         setLineCount(text.split("\n").length); // Count lines
                         setLoading(false);
                     }
