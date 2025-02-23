@@ -36,6 +36,22 @@ class DefaultDict<K, V> {
     set(key: K, value: V): void {
         this.store.set(key, value);
     }
+
+    /**
+     * 키를 기준으로 정렬
+     * 
+     * @returns 전체 키/값 쌍 반환
+     */
+    sortedEntries(): [K, V][] {
+        return [...this.store.entries()].sort(([a], [b]) => {
+            if (typeof a === "string" && typeof b === "string") {
+                return a.localeCompare(b,"ko-KR"); // 문자열 비교
+            }
+            return a > b ? 1 : a < b ? -1 : 0; // 일반적인 비교 연산자
+        });
+    }
+    
+
 }
 
 class Counter<T> {

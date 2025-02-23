@@ -100,7 +100,7 @@ const WordExtractorApp: React.FC = () => {
                     for (const m of "가나다라마바사아자차카타파하") {
                         const pp = (word.match(new RegExp(m, "gi")) || []).length
                         if (pp >= 1) {
-                            r += `[${m} ${pp}]`;
+                            r += `[${m}${pp}]`;
                         }
                     }
                     return r;
@@ -184,10 +184,59 @@ const WordExtractorApp: React.FC = () => {
                             else setExtractedWords(words3);
                             return;
                         }
-                        
+                        else if (selected[1] === "미션글자 포함순"){
+                            const ppp = new DefaultDict<string,Set<string>>(()=>new Set<string>());
+                            for (const m of "가나다라마바사아자차카타파하"){
+                                if (kkk.get(m).length > 0){
+                                    for (const {word} of kkk.get(m)){
+                                        ppp.get(word[0]).add(word);
+                                    }
+                                }
+                            }
+                            const rr = ppp.sortedEntries();
+                            const words3:string[] = [];
+                            let ww:{word:string,mission:number}[] = [];
+                            for (const [k,v] of rr){
+                                words3.push(`=[${k}]=`);
+                                for (const m of "가나다라마바사아자차카타파하"){
+                                    for (const word of v){
+                                        const pp = (word.match(new RegExp(m, "gi")) || []).length;
+                                        if (pp >= include){
+                                            if (!ww.includes({word,mission:pp})) ww.push({word,mission:pp});
+                                        }
+                                    }
+                                    if (ww.length > 0){
+                                        words3.push(`-${m}-`);
+                                        ww.sort((a,b)=>{
+                                            if (rank2 !== undefined){
+                                                const k = rank2(a,b);
+                                                if (k!=0) return k;
+                                            }
+                                            if (rank3 !== undefined){
+                                                return rank3(a,b);
+                                            }
+                                            return sortedLength(a,b);
+                                        });
+                                        if (showMissionLetter){
+                                            words3.push(...ww.map(w => f(w.word)));
+                                        }
+                                        else{
+                                            words3.push(...ww.map(w => w.word));
+                                        }
+                                        words3.push(' ');
+                                        
+                                    }
+                                    ww = [];
+                                }
+
+                                
+                            }
+                            setExtractedWords(words3);
+                            return;
+
+                        }
                         for (const m of "가나다라마바사아자차카타파하") {
                             if (kkk.get(m).length > 0){
-                                
                                 kkk.get(m).sort((a, b) => {
                                     const k = pack[selected[0]](a,b);
                                     if (k!=0) return k;
