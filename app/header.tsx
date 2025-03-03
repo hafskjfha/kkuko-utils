@@ -83,9 +83,11 @@ const Header: React.FC = () => {
                                 <p className="text-sm">{isLoggedIn ? `${username}님` : "로그인하세요"}</p>
                             </div>
                             <hr />
-                            <div className="p-2 hover:bg-gray-100 cursor-pointer">
-                                {isLoggedIn ? <Link href="/profile">프로필 페이지</Link> : <Link href="/auth">로그인</Link>}
-                            </div>
+                            <Link href={isLoggedIn ? "/profile" : "/auth"}>
+                                <div className="p-2 hover:bg-gray-100 cursor-pointer">
+                                    {isLoggedIn ? "프로필 페이지" : "로그인"}
+                                </div>
+                            </Link>
                         </div>
                     )}
                 </div>

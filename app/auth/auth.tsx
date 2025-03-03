@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import type { Database } from "../types/database.types";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
@@ -12,17 +10,7 @@ import { Suspense } from 'react';
 import Spinner from "../components/Spinner";
 import ErrorModal from '../components/ErrModal';
 import type { ErrorMessage } from "../types/type";
-
-const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-        auth: {
-            persistSession: true, // 세션을 자동으로 저장
-            autoRefreshToken: true, // 토큰 자동 갱신 활성화
-        },
-    }
-);
+import { supabase } from "../lib/supabaseClient";
 
 const AuthPage: React.FC = () => {
     const router = useRouter();
@@ -36,7 +24,6 @@ const AuthPage: React.FC = () => {
     useEffect(() => {
         const checkUser = async (session: Session | null) => {
             if (!session) {
-
                 return;
             }
     
@@ -85,7 +72,7 @@ const AuthPage: React.FC = () => {
             provider: "google",
             options: {
                 redirectTo:
-                    "https://refactored-space-journey-wrrxqrv54g9xf5xpq-3000.app.github.dev/auth", //개발 코드 스페이스
+                    "https://refactored-space-journey-wrrxqrv54g9xf5xpq-3000.app.github.dev/auth", //개발용 코드 스페이스
             },
         });
         if (err) {
