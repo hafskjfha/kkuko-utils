@@ -6,11 +6,14 @@ import { supabase } from "../lib/supabaseClient";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
+import ErrorModal from '../components/ErrModal';
+import type { ErrorMessage } from "../types/type";
 
 export default function ProfileEdit({ user, onClose }: { user: UserInfo; onClose: () => void }) {
     const [name, setName] = useState(user.nickname || "");
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch<AppDispatch>();
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     const handleUpdate = async () => {
         setLoading(true);
@@ -21,7 +24,7 @@ export default function ProfileEdit({ user, onClose }: { user: UserInfo; onClose
             .maybeSingle();
 
         if (existingUser) {
-            // 이미 있는 유저 처리
+            alert("이미 존재하는 닉네임 입니다.");
         } else {
             const { data, error } = await supabase
                 .from("users")
@@ -31,7 +34,12 @@ export default function ProfileEdit({ user, onClose }: { user: UserInfo; onClose
                 .single();
 
             if (error) {
-                // 오류 처리
+                seterrorModalView({
+                    ErrName: error.name ?? null,
+                    ErrMessage: error.message ?? null,
+                    ErrStackRace: error.stack ?? null,
+                    inputValue: name
+                });
             } else {
                 // 업데이트 성공 처리
                 dispatch(
@@ -73,6 +81,8 @@ export default function ProfileEdit({ user, onClose }: { user: UserInfo; onClose
                     </button>
                 </div>
             </div>
+            {/* 오류 모달 */}
+            {errorModalView && <ErrorModal error={errorModalView} onClose={() => seterrorModalView(null)} />}
         </div>
     );
 }

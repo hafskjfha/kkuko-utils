@@ -39,7 +39,6 @@ export default function RootLayout({
 						width="0"
 						style={{ display: 'none', visibility: 'hidden' }}></iframe>
 				</noscript>
-					/* Google Analytics */
 					<Script
 						src="https://www.googletagmanager.com/gtag/js?id=G-7EYGNWC1DL"
 						strategy="beforeInteractive" /><Script
@@ -53,7 +52,6 @@ export default function RootLayout({
             gtag('config', 'G-7EYGNWC1DL');
           `,
 						}} />
-					/* End Google Analytics */
 					<Script
 						id="gtm-script"
 						strategy="beforeInteractive"

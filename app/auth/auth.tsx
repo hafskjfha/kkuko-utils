@@ -64,7 +64,7 @@ const AuthPage: React.FC = () => {
         return () => {
             authListener.subscription.unsubscribe();
         };
-    }, [router]);
+    }, [router, dispatch]);
     
 
     const signInWithGoogle = async () => {

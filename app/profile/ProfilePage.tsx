@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ProfileCard from "./ProfileCard";
 import { supabase } from "../lib/supabaseClient";
-import type { UserInfo } from "../types/type";
+import type { UserInfo, ErrorMessage } from "../types/type";
 import { Loader2 } from "lucide-react";
+import ErrorModal from '../components/ErrModal';
 
 export default function ProfilePage() {
     const searchParams = useSearchParams();
@@ -13,6 +14,7 @@ export default function ProfilePage() {
     const [userData, setUserData] = useState<UserInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     useEffect(() => {
         async function fetchUser() {
@@ -24,6 +26,14 @@ export default function ProfilePage() {
                         .eq("nickname", username)
                         .maybeSingle();
                     if (error || !data) {
+                        if (error){
+                            seterrorModalView({
+                                ErrName: error.name ?? null,
+                                ErrMessage: error.message ?? null,
+                                ErrStackRace: error.stack ?? null,
+                                inputValue: null
+                            });
+                        }
                         setError("사용자를 찾을 수 없습니다.");
                     } else {
                         setUserData({
@@ -44,6 +54,12 @@ export default function ProfilePage() {
                         .single();
                     
                     if (userError) {
+                        seterrorModalView({
+                            ErrName: userError.name ?? null,
+                            ErrMessage: userError.message ?? null,
+                            ErrStackRace: userError.stack ?? null,
+                            inputValue: null
+                        });
                         setError("사용자 정보를 불러오는 중 오류가 발생했습니다.");
                     } else {
                         setUserData({
@@ -55,6 +71,22 @@ export default function ProfilePage() {
                     }
                 }
             } catch (err) {
+                if (err instanceof Error) {
+                    seterrorModalView({
+                        ErrName: err.name,
+                        ErrMessage: err.message,
+                        ErrStackRace: err.stack,
+                        inputValue: null
+                    });
+    
+                } else {
+                    seterrorModalView({
+                        ErrName: null,
+                        ErrMessage: null,
+                        ErrStackRace: err as string,
+                        inputValue: null
+                    });
+                }
                 setError("오류가 발생했습니다. 다시 시도해주세요.");
             } finally {
                 setLoading(false);
@@ -89,6 +121,9 @@ export default function ProfilePage() {
                     <ProfileCard user={userData} isEditable={!username} />
                 </div>
             )}
+
+            {/* 오류 모달 */}
+            {errorModalView && <ErrorModal error={errorModalView} onClose={() => seterrorModalView(null)} />}
         </div>
     );
 }
