@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
@@ -20,6 +20,8 @@ const AuthPage: React.FC = () => {
     const [nicknameError, setNicknameError] = useState("");
     const dispatch = useDispatch<AppDispatch>();
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         const checkUser = async (session: Session | null) => {
@@ -68,11 +70,11 @@ const AuthPage: React.FC = () => {
     
 
     const signInWithGoogle = async () => {
+        const fullUrl = `${window.location.origin}${pathname}${searchParams ? `?${searchParams.toString()}` : ""}`;
         const { error: err } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo:
-                    "https://refactored-space-journey-wrrxqrv54g9xf5xpq-3000.app.github.dev/auth", //개발용 코드 스페이스
+                redirectTo: fullUrl, 
             },
         });
         if (err) {
