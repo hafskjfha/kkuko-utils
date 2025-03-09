@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      docs: {
+        Row: {
+          created_at: string
+          id: number
+          maker: string | null
+          name: string
+          typez: Database["public"]["Enums"]["document_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          maker?: string | null
+          name: string
+          typez: Database["public"]["Enums"]["document_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          maker?: string | null
+          name?: string
+          typez?: Database["public"]["Enums"]["document_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_maker_fkey"
+            columns: ["maker"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      last_update: {
+        Row: {
+          last_modified: string
+          table_name: string
+        }
+        Insert: {
+          last_modified?: string
+          table_name: string
+        }
+        Update: {
+          last_modified?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       len5_word: {
         Row: {
           id: number
@@ -39,6 +86,35 @@ export type Database = {
         }
         Relationships: []
       }
+      logs: {
+        Row: {
+          created_at: string
+          id: number
+          user: string | null
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          user?: string | null
+          word: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          user?: string | null
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_user_fkey"
+            columns: ["user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       release_note: {
         Row: {
           content: string
@@ -57,6 +133,24 @@ export type Database = {
           created_at?: string
           id?: number
           title?: string
+        }
+        Relationships: []
+      }
+      themes: {
+        Row: {
+          code: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          id?: never
+          name: string
+        }
+        Update: {
+          code?: string
+          id?: never
+          name?: string
         }
         Relationships: []
       }
@@ -81,6 +175,144 @@ export type Database = {
         }
         Relationships: []
       }
+      wait_word_themes: {
+        Row: {
+          theme_id: number
+          wait_word_id: number
+        }
+        Insert: {
+          theme_id: number
+          wait_word_id: number
+        }
+        Update: {
+          theme_id?: number
+          wait_word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wait_word_themes_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wait_word_themes_wait_word_id_fkey"
+            columns: ["wait_word_id"]
+            isOneToOne: false
+            referencedRelation: "wait_words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wait_words: {
+        Row: {
+          id: number
+          request_type: Database["public"]["Enums"]["request_type_enum"]
+          requested_at: string | null
+          requested_by: string | null
+          status: Database["public"]["Enums"]["request_status_enum"]
+          word: string
+          word_id: number | null
+        }
+        Insert: {
+          id?: never
+          request_type: Database["public"]["Enums"]["request_type_enum"]
+          requested_at?: string | null
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["request_status_enum"]
+          word: string
+          word_id?: number | null
+        }
+        Update: {
+          id?: never
+          request_type?: Database["public"]["Enums"]["request_type_enum"]
+          requested_at?: string | null
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["request_status_enum"]
+          word?: string
+          word_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wait_words_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wait_words_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      word_themes: {
+        Row: {
+          theme_id: number
+          word_id: number
+        }
+        Insert: {
+          theme_id: number
+          word_id: number
+        }
+        Update: {
+          theme_id?: number
+          word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "word_themes_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "word_themes_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      words: {
+        Row: {
+          first_letter: string
+          id: number
+          k_canuse: boolean
+          last_letter: string
+          length: number
+          noin_canuse: boolean
+          word: string
+          word_type: Database["public"]["Enums"]["word_type"]
+        }
+        Insert: {
+          first_letter: string
+          id?: never
+          k_canuse?: boolean
+          last_letter: string
+          length: number
+          noin_canuse?: boolean
+          word: string
+          word_type?: Database["public"]["Enums"]["word_type"]
+        }
+        Update: {
+          first_letter?: string
+          id?: never
+          k_canuse?: boolean
+          last_letter?: string
+          length?: number
+          noin_canuse?: boolean
+          word?: string
+          word_type?: Database["public"]["Enums"]["word_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -89,7 +321,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      document_type: "letter" | "theme" | "ect"
+      request_status_enum: "pending" | "approved" | "rejected"
+      request_type_enum: "add" | "delete"
       role_level: "r1" | "r2" | "r3" | "r4" | "admin"
+      word_type: "ok" | "deprecated"
     }
     CompositeTypes: {
       [_ in never]: never
