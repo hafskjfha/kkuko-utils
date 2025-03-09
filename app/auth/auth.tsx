@@ -24,12 +24,12 @@ const AuthPage: React.FC = () => {
     const searchParams = useSearchParams();
 
     useEffect(() => {
+        
         const checkUser = async (session: Session | null) => {
             if (!session) {
                 return;
             }
-    
-    
+
             const { data, error: err } = await supabase
                 .from("users")
                 .select("*")
@@ -58,11 +58,15 @@ const AuthPage: React.FC = () => {
             }
     
         };
-    
+        setLoading(true);
         const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            await checkUser(session);
+            try{
+                await checkUser(session);
+            }
+            finally {
+                setLoading(false);
+            }
         });
-    
         return () => {
             authListener.subscription.unsubscribe();
         };
@@ -191,7 +195,7 @@ const AuthPage: React.FC = () => {
                     </button>
                 )}
 
-
+                {loading && <Spinner />}
                 {/* 오류 모달 */}
                 {errorModalView && <ErrorModal error={errorModalView} onClose={() => seterrorModalView(null)} />}
             </div>
