@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import WordCombinerClient from './WordCombinerClient';
 import { supabase } from '../lib/supabaseClient';
 import { cache } from "react";
 import { PostgrestError } from '@supabase/supabase-js';
+import Spinner from '../components/Spinner';
 
 interface WordCombinerWithData {
 	len5: string[];
@@ -30,26 +31,26 @@ export async function generateMetadata() {
 }
 
 const getWords = cache(async () => {
-	const { data: lastUpdateData, error: lastUpdateError } = await supabase.from('last_update').select('*').eq('table_name','words').maybeSingle();
-	if (lastUpdateError || !lastUpdateData){
-		return { len5: [], len6: [], error: lastUpdateError ?? new PostgrestError({message: "not found table",hint:"",code:"null",details:"null"}) };
+	const { data: lastUpdateData, error: lastUpdateError } = await supabase.from('last_update').select('*').eq('table_name', 'words').maybeSingle();
+	if (lastUpdateError || !lastUpdateData) {
+		return { len5: [], len6: [], error: lastUpdateError ?? new PostgrestError({ message: "not found table", hint: "", code: "null", details: "null" }) };
 	}
 
 	const currentLastUpdate = lastUpdateData.last_modified;
-	if (cachedData && lastFetchedTime === currentLastUpdate){
+	if (cachedData && lastFetchedTime === currentLastUpdate) {
 		return cachedData;
 	}
 
-	const { data , error} =  await supabase.from('words').select('word').in('length', [5, 6]);
-	if (error){
+	const { data, error } = await supabase.from('words').select('word').in('length', [5, 6]);
+	if (error) {
 		return { len5: [], len6: [], error };
 	}
-	const datas:WordCombinerWithData = {len5:[], len6: [], error};
-	for (const {word} of data){
-		if (word.length == 5){
+	const datas: WordCombinerWithData = { len5: [], len6: [], error };
+	for (const { word } of data) {
+		if (word.length == 5) {
 			datas.len5.push(word);
 		}
-		else{
+		else {
 			datas.len6.push(word);
 		}
 	}
@@ -61,7 +62,9 @@ const getWords = cache(async () => {
 const word_combiner_Home: React.FC = async () => {
 	const prop = await getWords()
 	return (
-		< WordCombinerClient prop={prop}/>
+		<Suspense fallback={<Spinner />}>
+			< WordCombinerClient prop={prop} />
+		</Suspense>
 	)
 }
 
