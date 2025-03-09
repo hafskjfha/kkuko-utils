@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import ProfileCard from "./ProfileCard";
 import { supabase } from "../lib/supabaseClient";
 import type { UserInfo, ErrorMessage } from "../types/type";
@@ -15,6 +15,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         async function fetchUser() {
@@ -45,7 +46,13 @@ export default function ProfilePage() {
                     }
                 } else {
                     const { data, error } = await supabase.auth.getUser();
-                    if (error) throw error;
+                    if (error) {
+                        if (error.name === "AuthSessionMissingError"){
+                            router.push('/auth')
+                            return;
+                        }
+                        else throw error
+                    }
 
                     const { data: userData, error: userError } = await supabase
                         .from("users")

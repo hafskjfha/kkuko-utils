@@ -26,7 +26,7 @@ const UserSlice = createSlice({
     name: "user",
     initialState: initialState.user,
     reducers:{
-        setInfo: (state,action:PayloadAction<{username:string, role: "guest" | "r1" | "r2" | "r3" | "r4" | "admin"}>) => {
+        setInfo: (state,action:PayloadAction<{username?:string, role: "guest" | "r1" | "r2" | "r3" | "r4" | "admin"}>) => {
             state.username = action.payload.username;
             state.role = action.payload.role;
         }

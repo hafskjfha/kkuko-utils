@@ -3,9 +3,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useSelector } from 'react-redux';
-import type { RootState } from "./store/store";
-
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from "./store/store";
+import { supabase } from "./lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import { userAction } from "./store/slice";
 
 
 const Header: React.FC = () => {
@@ -14,6 +16,19 @@ const Header: React.FC = () => {
     const isLoggedIn = useSelector((state: RootState) => state.user.username) !== undefined; 
     const username = useSelector((state: RootState) => state.user.username); 
     const pathname = usePathname();
+    const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        dispatch(
+            userAction.setInfo({
+                username: undefined,
+                role: "guest",
+            })
+        );
+        router.push("/");
+    };
 
     return (
         <header className="bg-gray-900 text-white shadow-md">
@@ -57,7 +72,19 @@ const Header: React.FC = () => {
 
                     {/* 모바일 로그인 / 프로필 */}
                     <div className="md:hidden block py-2 hover:text-gray-300">
-                        {isLoggedIn ? <Link href="/profile">{`안녕하세요, ${username}님`}</Link> : <Link href="/auth">로그인</Link>}
+                        {isLoggedIn ? (
+                            <>
+                                <Link href="/profile">{`안녕하세요, ${username}님`}</Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="block w-full text-left py-2 hover:text-gray-300"
+                                >
+                                    로그아웃
+                                </button>
+                            </>
+                        ) : (
+                            <Link href="/auth">로그인</Link>
+                        )}
                     </div>
                 </div>
 
@@ -88,6 +115,14 @@ const Header: React.FC = () => {
                                     {isLoggedIn ? "프로필 페이지" : "로그인"}
                                 </div>
                             </Link>
+                            {isLoggedIn && (
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left p-2 hover:bg-gray-100 cursor-pointer"
+                                >
+                                    로그아웃
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -95,6 +130,5 @@ const Header: React.FC = () => {
         </header>
     );
 };
-
 
 export default Header;
