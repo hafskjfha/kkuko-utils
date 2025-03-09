@@ -1,7 +1,6 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, cache } from 'react';
 import WordCombinerClient from './WordCombinerClient';
 import { supabase } from '../lib/supabaseClient';
-import { cache } from "react";
 import { PostgrestError } from '@supabase/supabase-js';
 import Spinner from '../components/Spinner';
 

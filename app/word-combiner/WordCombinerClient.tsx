@@ -1,6 +1,6 @@
 "use client"
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import CombinationManager from '../lib/CombinationsManger';
 import ErrorModal from '../components/ErrModal';
@@ -37,14 +37,17 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [HtmlHelpModalView, setHtmlHelpModalView] = useState<boolean>(false);
 
-    if (prop.error) {
-        seterrorModalView({
-            ErrName: prop.error.name,
-            ErrMessage: prop.error.message,
-            ErrStackRace: prop.error.stack,
-            inputValue: null
-        });
-    }
+    useEffect(()=>{
+        if (prop.error) {
+            seterrorModalView({
+                ErrName: prop.error.name,
+                ErrMessage: prop.error.message,
+                ErrStackRace: prop.error.stack,
+                inputValue: null
+            });
+        }
+    },[])
+    
 
     const handleHtmlSubmit = () => {
 
