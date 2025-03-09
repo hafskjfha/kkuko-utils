@@ -1,6 +1,6 @@
 "use client"
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import CombinationManager from '../lib/CombinationsManger';
 import ErrorModal from '../components/ErrModal';
