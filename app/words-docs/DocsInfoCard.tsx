@@ -25,8 +25,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
     let relativeTime = formatDistanceToNow(lastUpdateDate, { addSuffix: true, includeSeconds: false });
-    relativeTime = relativeTime.replace(/\babout\b|\b약\b/g, "").trim().replace(' hours ago','시간 전').replace(' days ago', '일 전');
-    relativeTime = `${relativeTime} 마지막 업데이트`;
+    relativeTime = relativeTime.replace(/\babout\b|\b약\b/g, "").trim().replace(' hours ago','시간 전').replace(' days ago', '일 전').replace(' minutes ago','분 전')
+    relativeTime = `${relativeTime}`;
 
     return (
         <div
@@ -41,7 +41,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
                 className="text-sm text-gray-600 cursor-pointer hover:underline"
                 onClick={(e) => {
                     e.stopPropagation();
-                    console.log(`Go to maker: ${maker}`);
+                    if (maker == "알수없음") return;
+                    router.push(`/profile?username=${maker}`)
                 }}
             >
                 {maker}

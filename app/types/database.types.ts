@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          last_update: string
           maker: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
@@ -20,6 +21,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          last_update?: string
           maker?: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
@@ -27,6 +29,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          last_update?: string
           maker?: string | null
           name?: string
           typez?: Database["public"]["Enums"]["document_type"]

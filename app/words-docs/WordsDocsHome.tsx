@@ -8,7 +8,7 @@ interface Document {
     maker: string;
     last_update: string;
     is_manager: boolean;
-    typez: string;
+    typez: "letter" | "theme" | "ect";
 }
 
 interface WordsDocsHomeProps {
@@ -25,7 +25,7 @@ const Button: React.FC<{ onClick: () => void; className?: string; children: Reac
 );
 
 const WordsDocsHome: React.FC<WordsDocsHomeProps> = ({ docs }) => {
-    const typeOrder = ["a", "p", "c"];
+    const typeOrder = ['letter', 'theme', 'ect']; // 
     const [expandedTypes, setExpandedTypes] = useState<{ [key: string]: boolean }>(
         typeOrder.reduce((acc, type) => ({ ...acc, [type]: true }), {})
     );
