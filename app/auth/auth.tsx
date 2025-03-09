@@ -70,7 +70,7 @@ const AuthPage: React.FC = () => {
     
 
     const signInWithGoogle = async () => {
-        const fullUrl = `${window.location.origin}${pathname}${searchParams ? `?${searchParams.toString()}` : ""}`;
+        const fullUrl = `${window.location.origin}${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         const { error: err } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
