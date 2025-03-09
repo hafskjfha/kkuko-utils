@@ -1,6 +1,9 @@
 "use client";
 import DocumentCard from "./DocsInfoCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { PostgrestError } from "@supabase/supabase-js";
+import type { ErrorMessage } from "../types/type";
+import ErrorModal from "../components/ErrModal";
 
 interface Document {
     id: string;
@@ -13,6 +16,7 @@ interface Document {
 
 interface WordsDocsHomeProps {
     docs: Document[];
+    error: null | PostgrestError
 }
 
 const Button: React.FC<{ onClick: () => void; className?: string; children: React.ReactNode }> = ({ onClick, className, children }) => (
@@ -24,11 +28,24 @@ const Button: React.FC<{ onClick: () => void; className?: string; children: Reac
     </button>
 );
 
-const WordsDocsHome: React.FC<WordsDocsHomeProps> = ({ docs }) => {
+const WordsDocsHome: React.FC<WordsDocsHomeProps> = ({ docs, error }) => {
     const typeOrder = ['letter', 'theme', 'ect']; // 
     const [expandedTypes, setExpandedTypes] = useState<{ [key: string]: boolean }>(
         typeOrder.reduce((acc, type) => ({ ...acc, [type]: true }), {})
     );
+    const [errork,setError] = useState<ErrorMessage | null>(null);
+
+    useEffect(()=>{
+        if (error){
+            setError({
+                ErrName: error.name,
+                ErrMessage: error.message,
+                ErrStackRace: error.stack,
+                inputValue: null,
+            })
+        }
+    },[]);
+    
 
     const toggleType = (typez: string) => {
         setExpandedTypes(prev => ({ ...prev, [typez]: !prev[typez] }));
@@ -63,6 +80,7 @@ const WordsDocsHome: React.FC<WordsDocsHomeProps> = ({ docs }) => {
                     )}
                 </div>
             ))}
+            {errork && <ErrorModal error={errork} onClose={() => setError(null)} /> }
         </div>
     );
 };
