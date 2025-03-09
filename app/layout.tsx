@@ -5,6 +5,7 @@ import Footer from "./footer";
 import Header from "./header";
 import Script from 'next/script';
 import { Providers } from "./providers";
+import AutoLogin from "./AutoLogin";
 
 
 const geistSans = Geist({
@@ -72,6 +73,7 @@ export default function RootLayout({
 				/* End Google Tag Manager */)
 				}
 				<Providers>
+					<AutoLogin />
 					<Header />
 					{children}
 				</Providers>
