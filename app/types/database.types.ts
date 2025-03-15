@@ -44,6 +44,66 @@ export type Database = {
           },
         ]
       }
+      docs_wait_words: {
+        Row: {
+          docs_id: number
+          wait_word_id: number
+        }
+        Insert: {
+          docs_id: number
+          wait_word_id: number
+        }
+        Update: {
+          docs_id?: number
+          wait_word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_wait_words_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "docs_wait_words_wait_word_id_fkey"
+            columns: ["wait_word_id"]
+            isOneToOne: false
+            referencedRelation: "wait_words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      docs_words: {
+        Row: {
+          docs_id: number
+          word_id: number
+        }
+        Insert: {
+          docs_id: number
+          word_id: number
+        }
+        Update: {
+          docs_id?: number
+          word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_words_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "docs_words_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       last_update: {
         Row: {
           last_modified: string
@@ -285,31 +345,31 @@ export type Database = {
       }
       words: {
         Row: {
-          first_letter: string
+          first_letter: string | null
           id: number
           k_canuse: boolean
-          last_letter: string
-          length: number
+          last_letter: string | null
+          length: number | null
           noin_canuse: boolean
           word: string
           word_type: Database["public"]["Enums"]["word_type"]
         }
         Insert: {
-          first_letter: string
+          first_letter?: string | null
           id?: never
           k_canuse?: boolean
-          last_letter: string
-          length: number
+          last_letter?: string | null
+          length?: number | null
           noin_canuse?: boolean
           word: string
           word_type?: Database["public"]["Enums"]["word_type"]
         }
         Update: {
-          first_letter?: string
+          first_letter?: string | null
           id?: never
           k_canuse?: boolean
-          last_letter?: string
-          length?: number
+          last_letter?: string | null
+          length?: number | null
           noin_canuse?: boolean
           word?: string
           word_type?: Database["public"]["Enums"]["word_type"]
