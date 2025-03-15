@@ -34,7 +34,7 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
     });
 
     return (
-        <div className="w-full mx-auto p-4">
+        <div className="w-full mx-auto p-3">
             <table className="border-collapse border border-gray-300 w-full text-center">
                 <thead>
                     <tr className="bg-gray-200">
