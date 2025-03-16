@@ -39,7 +39,7 @@ const TableOfContents: React.FC<TocProps> = ({ items }) => {
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <ul className="space-y-2">
+                <ul className="space-y-1">
                     {sortedItems.map((item, index) => (
                         <li key={index}>
                             <button

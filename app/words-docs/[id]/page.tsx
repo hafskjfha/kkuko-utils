@@ -34,9 +34,9 @@ const getDataWaitWords = async (id: number) => {
 const DocsDataHome = async ({ params }: { params: { id: string } }) => {
     const {id} = await params;
 
-    const {data:docsData, error: docsError} = await supabase.from('docs').select('*').eq("id",Number(id)).maybeSingle();
+    const {data:docsDatas, error: docsError} = await supabase.from('docs').select('*').eq("id",Number(id)).maybeSingle();
     
-    if (!docsData || docsError){
+    if (!docsDatas || docsError){
         if (docsError){
             const e:ErrorMessage = {
                 ErrName: docsError.name,
@@ -55,8 +55,8 @@ const DocsDataHome = async ({ params }: { params: { id: string } }) => {
         const [A,B] = await Promise.all([getDataOkWords(Number(id)), getDataWaitWords(Number(id))]);
         const wordsNotInB = A.filter(a => !B.some(b => b.word === a.word)).map((p)=>({word: p.word, status: p.status as "ok", maker: undefined}))
         const wordsData = [...wordsNotInB, ...B]
-
-        return <DocsData id={id} data={wordsData}/>
+        const p = {title: docsDatas.name, lastUpdate: docsDatas.last_update}
+        return <DocsData id={id} data={wordsData} metaData={p}/>
     }
     catch(error){
         if (error instanceof Error) {
