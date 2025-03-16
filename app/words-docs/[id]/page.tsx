@@ -32,9 +32,8 @@ const getDataWaitWords = async (id: number) => {
     return words
 }
 
-const DocsDataHome = async ({ params }: GetServerSidePropsContext<{ id: string }>) => {
-    const { id } = await params ?? { id: undefined }; // ❌ await 제거
-    if (!id || isNaN(Number(id))) return <NotFound />;
+const DocsDataHome = async ({ params }: { params: { id: string } }) => {
+    const {id} = await params;
 
     if (isNaN(Number(id))) return <NotFound />
     const {data:docsDatas, error: docsError} = await supabase.from('docs').select('*').eq("id",Number(id)).maybeSingle();
