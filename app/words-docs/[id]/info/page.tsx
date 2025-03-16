@@ -1,4 +1,3 @@
-import { FC } from "react";
 import { supabase } from "@/app/lib/supabaseClient";
 import NotFound from "@/app/not-found-client";
 import ErrorPage from "@/app/ErrorPage";
