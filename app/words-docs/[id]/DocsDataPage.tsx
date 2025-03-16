@@ -17,6 +17,7 @@ interface DocsPageProp {
 
 const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     const [showWords, setShowWords] = useState(true); // 추가 요청 단어 표시 여부
     const [hideDeleted, setHideDeleted] = useState(false); // 삭제 요청된 단어 숨김 여부

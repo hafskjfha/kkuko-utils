@@ -6,7 +6,7 @@ import type { WordData } from "@/app/types/type";
 
 
 const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
-    const [data, setData] = useState(initialData);
+    const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
 
     const columns: ColumnDef<WordData>[] = [
