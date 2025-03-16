@@ -1,4 +1,4 @@
-import DocsData from "./DocsData";
+import DocsData from "./DocsDataPage";
 
 const DocsDataHome = async ({ params }: { params: { id: string } }) => {
     const {id} = await params

@@ -17,7 +17,7 @@ const TableOfContents: React.FC<TocProps> = ({ items }) => {
     };
 
     return (
-        <div className="w-full max-w-xs p-4 bg-white rounded-2xl shadow-lg">
+        <div className="w-full max-w-40 p-4 bg-white rounded-2xl shadow-lg">
             {/* 목차 헤더 */}
             <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-bold">목차</h2>
