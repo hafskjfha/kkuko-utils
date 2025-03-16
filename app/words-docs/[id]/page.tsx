@@ -1,3 +1,4 @@
+import type { GetServerSidePropsContext } from "next";
 import DocsData from "./DocsDataPage";
 import { supabase } from "@/app/lib/supabaseClient";
 import NotFound from "@/app/not-found-client";
@@ -31,9 +32,11 @@ const getDataWaitWords = async (id: number) => {
     return words
 }
 
-const DocsDataHome = async ({ params }: { params: { id: string } }) => {
-    const {id} = await params;
+const DocsDataHome = async ({ params }: GetServerSidePropsContext<{ id: string }>) => {
+    const { id } = await params ?? { id: undefined }; // ❌ await 제거
+    if (!id || isNaN(Number(id))) return <NotFound />;
 
+    if (isNaN(Number(id))) return <NotFound />
     const {data:docsDatas, error: docsError} = await supabase.from('docs').select('*').eq("id",Number(id)).maybeSingle();
     
     if (!docsDatas || docsError){
