@@ -21,10 +21,10 @@ const getDataOkWords = async (id: number) => {
     return words;
 };
 
-const InfoPage = async ({ params }: { params: { id: string } }) => {
+const InfoPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
 
-    const id = Number(params.id);
-    if (isNaN(id)) return <NotFound />
+    if (isNaN(Number(id))) return <NotFound />
 
     try{
         const data = await getData(Number(id));

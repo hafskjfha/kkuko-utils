@@ -31,7 +31,7 @@ const getDataWaitWords = async (id: number) => {
     return words
 }
 
-const DocsDataHome = async ({ params }: { params: { id: string } }) => {
+const DocsDataHome = async ({ params }: { params: Promise<{ id: string }> }) => {
     const {id} = await params;
 
     if (isNaN(Number(id))) return <NotFound />
