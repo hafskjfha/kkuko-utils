@@ -39,7 +39,7 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                 <thead>
                     <tr className="bg-gray-200">
                         <th
-                            className="border px-4 py-2 w-1/6 cursor-pointer"
+                            className="border px-4 py-2 w-2/10 cursor-pointer whitespace-nowrap"
                             onClick={() => table.getColumn("length")?.toggleSorting()}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -50,7 +50,7 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                         </th>
 
                         <th
-                            className="border px-4 py-2 w-4/6 cursor-pointer"
+                            className="border px-4 py-2 w-6/10 cursor-pointer whitespace-nowrap"
                             onClick={() => table.getColumn("word")?.toggleSorting()}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -60,7 +60,8 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                             </div>
                         </th>
 
-                        <th className="border border-gray-300 px-4 py-2 w-1/6">상태</th>
+                        <th className="border border-gray-300 px-4 py-2 w-1/10">상태</th>
+                        <th className="border border-gray-300 px-4 py-2 w-1/10">작업</th>
                     </tr>
                 </thead>
                 <tbody className="mb-2">
@@ -70,6 +71,7 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                             <TableRow
                                 key={wordData.word}
                                 {...wordData}
+                                openWork={() => { }}
                             />
                         );
                     })}

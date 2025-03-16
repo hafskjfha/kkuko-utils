@@ -7,9 +7,10 @@ type WordStatus = "ok" | "delR" | "addR";
 interface TableRowProps {
     word: string;
     status: WordStatus;
+    openWork?: () => void
 }
 
-const TableRow: React.FC<TableRowProps> = ({ word, status }) => {
+const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
     const wordLength = word.length;
 
     return (
@@ -22,19 +23,26 @@ const TableRow: React.FC<TableRowProps> = ({ word, status }) => {
             )}
         >
             {/* 단어 길이 */}
-            <td className="w-1/10 px-4 py-3 border-r">{wordLength}</td>
+            <td className="w-2/10 px-4 py-3 border-r">{wordLength}</td>
 
             {/* 단어 (링크) */}
-            <td className="w-8/10 px-4 py-3 border-r">
+            <td className="w-6/10 px-4 py-3 border-r">
                 <Link href={`/word/search/${word}`} className="text-blue-600 hover:underline">
                     {word}
                 </Link>
             </td>
 
-            <td className="w-1/10 px-4 py-3">
+            <td className="w-1/10 px-4 py-3 border-r whitespace-nowrap">
                 {status === "ok" ? "" : status === "addR" ? "추가요청" : <div className="text-red-500">삭제요청</div>}
             </td>
 
+            <td className="w-1/10 px-4 py-3">
+                {openWork !== undefined && (
+                    <button className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 transition whitespace-nowrap" onClick={openWork}>
+                        작업
+                    </button>
+                )}
+            </td>
         </tr>
     )
 }

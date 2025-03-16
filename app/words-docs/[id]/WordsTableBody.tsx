@@ -15,9 +15,17 @@ const initialData:WordData[] = [
 
 const WordsTableBody: React.FC<{initialData:WordData[], title: string}> = ({title, initialData}) => {
     return (
-        <div className="w-2/3 mx-auto p-2">
+        <div className="w-4/5 mx-auto p-2">
             {/* 제목 표시 */}
-            <h1 className="text-3xl font-bold mb-0 text-left px-4">{title}</h1>
+            <div className="flex items-center px-4">
+                <h1 className="text-3xl font-bold mb-0 text-left">{title}</h1>
+                <button
+                    className="ml-4 px-3 py-1 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
+                    onClick={() => { }}
+                >
+                    추가
+                </button>
+            </div>
 
             {/* 단어 테이블 */}
             <Table initialData={initialData} />
