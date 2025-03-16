@@ -1,11 +1,8 @@
 "use client";
 
 import Table from './Table';
+import type { WordData } from "@/app/types/type";
 
-interface WordData {
-    word: string;
-    status: "ok" | "delR" | "addR";
-}
 
 
 const WordsTableBody: React.FC<{initialData:WordData[], title: string}> = ({title, initialData}) => {

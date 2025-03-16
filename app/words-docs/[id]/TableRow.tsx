@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { clsx } from "clsx";
 
-type WordStatus = "ok" | "delR" | "addR";
+type WordStatus = "ok" | "delete" | "add";
 
 
 interface TableRowProps {
     word: string;
     status: WordStatus;
+    maker?: string | undefined;
     openWork?: () => void
 }
 
@@ -18,8 +19,8 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
             className={clsx(
                 "border px-4 py-5 my-2 text-center text-lg",
                 status === "ok" && "border-black",
-                status === "delR" && "border-red-500",
-                status === "addR" && "border-gray-500 border-dashed"
+                status === "delete" && "border-red-500",
+                status === "add" && "border-gray-500 border-dashed"
             )}
         >
             {/* 단어 길이 */}
@@ -33,7 +34,7 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
             </td>
 
             <td className="w-1/10 px-4 py-3 border-r whitespace-nowrap">
-                {status === "ok" ? "" : status === "addR" ? "추가요청" : <div className="text-red-500">삭제요청</div>}
+                {status === "ok" ? "" : status === "add" ? "추가요청" : <div className="text-red-500">삭제요청</div>}
             </td>
 
             <td className="w-1/10 px-4 py-3">

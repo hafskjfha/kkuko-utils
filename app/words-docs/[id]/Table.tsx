@@ -2,11 +2,8 @@
 import { useState } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
 import TableRow from "./TableRow";
+import type { WordData } from "@/app/types/type";
 
-interface WordData {
-    word: string;
-    status: "ok" | "delR" | "addR";
-}
 
 const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
     const [data, setData] = useState(initialData);

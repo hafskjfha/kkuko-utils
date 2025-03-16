@@ -3,22 +3,19 @@ import React, { useRef, useState, useEffect } from "react";
 import TableOfContents from "./TableOfContents";
 import WordsTableBody from "./WordsTableBody";
 import Link from "next/link";
+import type { WordData } from "@/app/types/type";
 
-
-interface WordData {
-    word: string;
-    status: "ok" | "delR" | "addR";
-}
 interface DocsPageProp {
     id: string
+    data: WordData[]
 }
 const initialData: WordData[] = [
     { word: "티티티", status: "ok" },
-    { word: "ㅇㅇ", status: "addR" },
-    { word: "인도네시아페칼롱간의바틱박물관과공동수행하는초중고등학교직업학교기술전문학교학생들에대한바틱무형문화유산교육및훈련", status: "delR" },
+    { word: "ㅇㅇ", status: "add" },
+    { word: "인도네시아페칼롱간의바틱박물관과공동수행하는초중고등학교직업학교기술전문학교학생들에대한바틱무형문화유산교육및훈련", status: "delete" },
 ];
 
-const DocsDataPage: React.FC<DocsPageProp> = ({ id }) => {
+const DocsDataPage: React.FC<DocsPageProp> = ({ id, data }) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     const [showWords, setShowWords] = useState(true); // 추가 요청 단어 표시 여부
     const [hideDeleted, setHideDeleted] = useState(false); // 삭제 요청된 단어 숨김 여부
@@ -89,7 +86,7 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id }) => {
             <div>
                 {items.map(({ title, ref }) => (
                     <div key={title} ref={ref} className="mt-4">
-                        <WordsTableBody title={title} initialData={initialData} /> {/* 나중에 추가 */}
+                        <WordsTableBody title={title} initialData={data} /> {/* 나중에 추가 */}
                     </div>
                 ))}
             </div>

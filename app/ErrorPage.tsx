@@ -30,3 +30,5 @@ const ErrorPage:React.FC<{e:ErrorMessage}> = ({e}) => {
         </div>
     )
 }
+
+export default ErrorPage;
