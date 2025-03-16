@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TocProps {
-    items: { title: string; ref: React.RefObject<HTMLDivElement> }[];
+    items: { title: string; ref: React.RefObject<HTMLDivElement | null> }[];
 }
 
 const TableOfContents: React.FC<TocProps> = ({ items }) => {
@@ -12,7 +12,7 @@ const TableOfContents: React.FC<TocProps> = ({ items }) => {
 
     const sortedItems = [...items].sort((a, b) => a.title.localeCompare(b.title, 'ko'));
 
-    const handleScroll = (ref: React.RefObject<HTMLDivElement>) => {
+    const handleScroll = (ref: React.RefObject<HTMLDivElement | null>) => {
         ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
