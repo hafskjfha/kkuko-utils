@@ -7,10 +7,6 @@ import { PostgrestError } from "@supabase/supabase-js";
 import DocsInfoPage from "./DocsInfo";
 
 
-interface InfoPageProps {
-    params: { id: string };
-}
-
 const getData = async (id: number) => {
     const {data,error} = await supabase.from('docs').select('id, created_at, name, users(nickname), typez, last_update').eq('id',id).maybeSingle();
     if (error) throw error;
@@ -25,7 +21,7 @@ const getDataOkWords = async (id: number) => {
     return words;
 };
 
-const InfoPage: FC<InfoPageProps> = async ({ params }) => {
+const InfoPage = async ({ params }: { params: { id: string } }) => {
     const { id } = await params
     try{
         const data = await getData(Number(id));
