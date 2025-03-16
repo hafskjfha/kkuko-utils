@@ -1,4 +1,3 @@
-import type { GetServerSidePropsContext } from "next";
 import DocsData from "./DocsDataPage";
 import { supabase } from "@/app/lib/supabaseClient";
 import NotFound from "@/app/not-found-client";
