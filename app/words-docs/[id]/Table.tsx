@@ -3,11 +3,17 @@ import { useState } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
 import TableRow from "./TableRow";
 import type { WordData } from "@/app/types/type";
+import WorkModal from "./WorkModal";
+import { useSelector } from 'react-redux';
+import { RootState } from "@/app/store/store";
+
 
 
 const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
     const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
+    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok", requer: string }| null>(null);
+    const user = useSelector((state: RootState) => state.user);
 
     const columns: ColumnDef<WordData>[] = [
         {
@@ -29,6 +35,15 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
         state: { sorting },
         onSortingChange: setSorting,
     });
+
+    const openWork = (word: string, status: "add" | "delete" | "ok", requer: string) => {
+        setModal({ word, status, requer });
+        console.log(requer,user.uuid);
+    }
+
+    const closeWork = () => {
+        setModal(null);
+    }
 
     return (
         <div className="w-full mx-auto p-3">
@@ -68,12 +83,29 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                             <TableRow
                                 key={wordData.word}
                                 {...wordData}
-                                openWork={() => { }}
+                                openWork={user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker || "") : undefined}
                             />
                         );
                     })}
                 </tbody>
             </table>
+            {modal && <WorkModal
+                isOpen={true}
+                onClose={closeWork}
+                word={modal.word}
+                status={modal.status}
+                isAdmin={user.role === "admin"}
+                isRequester={user.uuid === modal.requer}
+                onAddAccept={() => { }}
+                onDeleteAccept={() => { }}
+                onAddReject={() => { }}
+                onDeleteReject={() => { }}
+                onCancelAddRequest={() => { }}
+                onCancelDeleteRequest={() => { }}
+                onDelete={() => { }}
+                onRequestDelete={() => { }}
+
+            />}
         </div>
     );
 }
