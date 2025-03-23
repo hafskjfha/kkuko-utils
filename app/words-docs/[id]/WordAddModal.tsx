@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -9,10 +9,11 @@ const words = ["사과", "바나나", "포도", '사자', '사소', '사고', '�
 interface WordAddModalProps {
     isOpen: boolean;
     onClose: () => void;
+    alreadyAddedWords: Set<string>
 }
 
 
-const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose }) => {
+const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose, alreadyAddedWords }) => {
     const [query, setQuery] = useState("");
     const [showAddWord, setShowAddWord] = useState(false);
     const [searchResults, setSearchResults] = useState<string[] | null>(null);
@@ -26,6 +27,12 @@ const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose }) => {
         const filteredWords = words.filter(word => word.includes(query));
         setSearchResults(filteredWords);
     };
+
+    useEffect(() => {
+        if (query.trim() === "") {
+            setSearchResults(null);
+        }
+    }, [query]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -60,7 +67,11 @@ const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose }) => {
                                         {searchResults.map((word) => (
                                             <li key={word} className="flex justify-between items-center p-2 border-b">
                                                 {word}
-                                                <Button size="sm">문서에 추가요청</Button>
+                                                {!alreadyAddedWords.has(word) ? (
+                                                    <Button size="sm" >문서에 추가요청</Button>
+                                                ) : (
+                                                    <span className="text-gray-500">등록된 단어</span>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
