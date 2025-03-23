@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+import WordAddForm from "./WordAddForm";
 
 const words = ["사과", "바나나", "포도", '사자', '사소', '사고', '사슴', '사랑', '사신', '사수']; // test data
 
@@ -99,8 +100,8 @@ const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose, alreadyAdd
 
 const AddWordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     return (
-        <div className="space-y-3">
-            <p>여기에 단어 추가 폼이 들어갑니다.</p>
+        <div className="space-y-3 overflow-y-auto max-w-full">
+            <WordAddForm onSave={(word:string, selectedTopics:string[])=>{}} />
             <Button onClick={onClose}>뒤로가기</Button>
         </div>
     )
