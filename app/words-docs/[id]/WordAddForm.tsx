@@ -54,6 +54,7 @@ const WordAddForm: React.FC<WordAddFormProps> = ({ onSave }) => {
     const [searchTermNoInjung, setSearchTermNoInjung] = useState("");
     const [searchTermOther, setSearchTermOther] = useState("");
     const [invalidWord, setInvalidWord] = useState<boolean>(false);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
 
     const { topicsCode, topicsKo }: {topicsCode:Record<string,string>, topicsKo:Record<string,string>} = {topicsCode:{"BLA":"블루아카이브", "1":"건설"}, topicsKo:{"블루아카이브":"BLA","건설":"1"}}; // 나중에 처리추가
 
@@ -110,7 +111,7 @@ const WordAddForm: React.FC<WordAddFormProps> = ({ onSave }) => {
                             onChange={handleWordChange}
                             placeholder="단어를 입력하세요"
                             className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 mt-1"
-                            // disabled={isSaving}
+                            disabled={isSaving}
                         />
                     </label>
                 </div>
@@ -124,9 +125,13 @@ const WordAddForm: React.FC<WordAddFormProps> = ({ onSave }) => {
 
                         {/* 저장 버튼 */}
                         <button
-                            onClick={()=>onSave(word, selectedTopics)}
-                            disabled={word.length === 0 || selectedTopics.length === 0 || invalidWord}
-                            className={`px-4 py-2 rounded font-medium transition-colors ${word.length > 0 && selectedTopics.length > 0
+                            onClick={()=>{
+                                setIsSaving(true);
+                                onSave(word, selectedTopics);
+                                setIsSaving(false);
+                            }}
+                            disabled={word.length === 0 || selectedTopics.length === 0 || invalidWord || isSaving}
+                            className={`px-4 py-2 rounded font-medium transition-colors ${word.length > 0 && selectedTopics.length > 0 && !isSaving && !invalidWord
                                     ? "bg-green-500 hover:bg-green-600 text-white"
                                     : "bg-gray-400 text-gray-700 cursor-not-allowed"
                                 }`}
