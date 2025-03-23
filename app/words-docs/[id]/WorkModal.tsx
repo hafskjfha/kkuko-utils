@@ -1,7 +1,7 @@
-"use client";
+import Spinner from "@/app/components/Spinner";
 
 type ModalProps = {
-    isOpen: boolean; // 열여있는 상태
+    isSaving: boolean; // 저장 중 여부
     onClose: () => void; // 모달 닫기 버튼 클릭시 발생하는 함수
     word: string; // 단어
     status: "add" | "delete" | "ok"; // 단어 상태
@@ -19,7 +19,7 @@ type ModalProps = {
 
 
 const WorkModal: React.FC<ModalProps> = ({
-    isOpen,
+    isSaving,
     onClose,
     word,
     status,
@@ -34,7 +34,7 @@ const WorkModal: React.FC<ModalProps> = ({
     onDelete,
     onRequestDelete,
 }) => {
-    if (!isOpen) return null;
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -176,6 +176,7 @@ const WorkModal: React.FC<ModalProps> = ({
                         닫기
                     </button>
                 </div>
+                {isSaving && <Spinner />}
             </div>
         </div>
     );

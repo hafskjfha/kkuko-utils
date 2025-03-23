@@ -44,6 +44,45 @@ export type Database = {
           },
         ]
       }
+      docs_logs: {
+        Row: {
+          add_by: string | null
+          date: string
+          docs_id: number
+          type: Database["public"]["Enums"]["request_type_enum"]
+          word: string
+        }
+        Insert: {
+          add_by?: string | null
+          date?: string
+          docs_id: number
+          type?: Database["public"]["Enums"]["request_type_enum"]
+          word: string
+        }
+        Update: {
+          add_by?: string | null
+          date?: string
+          docs_id?: number
+          type?: Database["public"]["Enums"]["request_type_enum"]
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_logs_add_by_fkey"
+            columns: ["add_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "docs_logs_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       docs_wait_words: {
         Row: {
           docs_id: number
@@ -153,25 +192,41 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          user: string | null
+          make_by: string | null
+          processed_by: string | null
+          r_type: Database["public"]["Enums"]["request_type_enum"]
+          state: Database["public"]["Enums"]["request_status_enum"]
           word: string
         }
         Insert: {
           created_at?: string
           id?: number
-          user?: string | null
+          make_by?: string | null
+          processed_by?: string | null
+          r_type: Database["public"]["Enums"]["request_type_enum"]
+          state?: Database["public"]["Enums"]["request_status_enum"]
           word: string
         }
         Update: {
           created_at?: string
           id?: number
-          user?: string | null
+          make_by?: string | null
+          processed_by?: string | null
+          r_type?: Database["public"]["Enums"]["request_type_enum"]
+          state?: Database["public"]["Enums"]["request_status_enum"]
           word?: string
         }
         Relationships: [
           {
-            foreignKeyName: "logs_user_fkey"
-            columns: ["user"]
+            foreignKeyName: "logs_make_by_fkey"
+            columns: ["make_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logs_processed_by_fkey"
+            columns: ["processed_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
