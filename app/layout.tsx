@@ -6,6 +6,7 @@ import Header from "./header";
 import Script from 'next/script';
 import { Providers } from "./providers";
 import AutoLogin from "./AutoLogin";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 
 const geistSans = Geist({
@@ -78,6 +79,7 @@ export default function RootLayout({
 					{children}
 				</Providers>
 				<Footer />
+				<SpeedInsights />
 			</body>
 		</html>
 	);
