@@ -14,8 +14,8 @@ import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
 
 
-const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
-    const [data,setData] = useState(initialData);
+const Table = ({ initialData }: { initialData: WordData[] }) => {
+    const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok", requer: string }| null>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
@@ -124,9 +124,9 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
             word: getWaitWordData.word,
             make_by: getWaitWordData.requested_by,
             processed_by: user.uuid || null,
-            r_type: "add" as "add",
-            state: "approved" as "approved"
-        }
+            r_type: "add",
+            state: "approved"
+        } as const;
         const {error:getAddAcceptLogDataError } = await supabase.from('logs').insert(insertWordLogData);
         if (getAddAcceptLogDataError) {
             makeError(getAddAcceptLogDataError);
@@ -160,8 +160,8 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                     word: getWaitWordData.word,
                     docs_id: d.docs_id,
                     add_by: getWaitWordData.requested_by,
-                    type: "add" as "add"
-                }
+                    type: "add"
+                } as const;
             });
             const {error:insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
             if (insertDocsLogDataError) {
@@ -211,9 +211,9 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
             word: getWaitWordData.word,
             make_by: getWaitWordData.requested_by,
             processed_by: user.uuid || null,
-            r_type: "add" as "add",
-            state: "rejected" as "rejected"
-        }
+            r_type: "add",
+            state: "rejected" 
+        } as const;
         const {error:getAddRejectLogDataError } = await supabase.from('logs').insert(insertWordLogData);
         if (getAddRejectLogDataError) {
             makeError(getAddRejectLogDataError);
@@ -267,9 +267,9 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
             word: getWaitWordData.word,
             make_by: getWaitWordData.requested_by,
             processed_by: user.uuid || null,
-            r_type: "delete" as "delete",
-            state: "approved" as "approved"
-        }
+            r_type: "delete",
+            state: "approved"
+        } as const;
         const {error:getDeleteAcceptLogDataError } = await supabase.from('logs').insert(insertWordLogData);
         if (getDeleteAcceptLogDataError) {
             makeError(getDeleteAcceptLogDataError);
@@ -283,8 +283,8 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                 word: getWaitWordData.word,
                 docs_id: d.docs_id,
                 add_by: getWaitWordData.requested_by,
-                type: "delete" as "delete"
-            }
+                type: "delete"
+            } as const;
         });
         const {error:insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
         if (insertDocsLogDataError) {
@@ -324,9 +324,9 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
             word: getWaitWordData.word,
             make_by: getWaitWordData.requested_by,
             processed_by: user.uuid || null,
-            r_type: "delete" as "delete",
-            state: "rejected" as "rejected"
-        }
+            r_type: "delete",
+            state: "rejected"
+        } as const;
         const {error:getDeleteRejectLogDataError } = await supabase.from('logs').insert(insertWordLogData);
         if (getDeleteRejectLogDataError) {
             makeError(getDeleteRejectLogDataError);
@@ -419,8 +419,8 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
                     word: word,
                     docs_id: d.docs_id,
                     add_by: user.uuid || null,
-                    type: "delete" as "delete"
-                }
+                    type: "delete"
+                } as const;
             });
             const {error:insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
             if (insertDocsLogDataError) {
@@ -435,9 +435,9 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
             word: word,
             make_by: user.uuid || null,
             processed_by: user.uuid || null,
-            r_type: "delete" as "delete",
-            state: "approved" as "approved"
-        }
+            r_type: "delete",
+            state: "approved"
+        } as const;
         const {error:insertWordLogDataError } = await supabase.from('logs').insert(insertWordLogData);
         if (insertWordLogDataError) {
             makeError(insertWordLogDataError);
@@ -476,8 +476,8 @@ const Table: React.FC<{ initialData: WordData[] }> = ({ initialData }) => {
         const insertWaitWordData = {
             word: word,
             requested_by: user.uuid || null,
-            request_type: "delete" as "delete"
-        }
+            request_type: "delete"
+        } as const;
         const {data:insertWaitWordDataA ,error:insertWaitWordDataError } = await supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
         if (insertWaitWordDataError) {
             makeError(insertWaitWordDataError);

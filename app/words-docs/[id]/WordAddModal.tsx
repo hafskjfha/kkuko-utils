@@ -101,7 +101,7 @@ const WordAddModal: React.FC<WordAddModalProps> = ({ isOpen, onClose, alreadyAdd
 const AddWordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     return (
         <div className="space-y-3 overflow-y-auto max-w-full">
-            <WordAddForm onSave={(word:string, selectedTopics:string[])=>{}} />
+            <WordAddForm onSave={(word:string, selectedTopics:string[])=>{console.log(word,selectedTopics)}} />
             <Button onClick={onClose}>뒤로가기</Button>
         </div>
     )
