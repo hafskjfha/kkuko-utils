@@ -6,6 +6,8 @@ import type { ErrorMessage } from "@/app/types/type";
 import { PostgrestError } from "@supabase/supabase-js";
 import DocsInfoPage from "./DocsInfo";
 
+export const revalidate = 0;
+
 
 const getData = async (id: number) => {
     const {data,error} = await supabase.from('docs').select('id, created_at, name, users(nickname), typez, last_update').eq('id',id).maybeSingle();
