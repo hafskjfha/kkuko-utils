@@ -20,22 +20,26 @@ const WordsTableBody = ({
     const user = useSelector((state: RootState) => state.user);
 
     return (
-        <div className="w-full mx-auto p-2">
+        <div className="w-full mx-auto px-3 sm:px-4 py-2">
             {/* 제목 표시 */}
-            <div className="flex items-center px-4">
-                <h1 className="text-3xl font-bold mb-0 text-left">{title}</h1>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-left">{title}</h1>
+
                 <button
-                    className="ml-2 px-3 py-1 text-sm text-white bg-purple-500 hover:bg-purple-600 rounded"
+                    className="px-3 py-1 text-sm text-white bg-purple-500 hover:bg-purple-600 rounded"
                     onClick={() => setIsTableVisible(!isTableVisible)}
                 >
                     {isTableVisible ? "접기" : "펼치기"}
                 </button>
-                {user.uuid && <button
-                    className="ml-4 px-3 py-1 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
-                    onClick={() => setWordAddModalOpen(true)}
-                >
-                    추가
-                </button>}
+
+                {user.uuid && (
+                    <button
+                        className="px-3 py-1 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
+                        onClick={() => setWordAddModalOpen(true)}
+                    >
+                        추가
+                    </button>
+                )}
             </div>
 
             {/* 단어 테이블 (애니메이션 적용) */}
@@ -59,8 +63,10 @@ const WordsTableBody = ({
                     onColse={() => setWordAddModalOpen(false)}
                 />
             )}
+
             <hr className="mt-3 border-gray-400" />
         </div>
+
     );
 };
 

@@ -25,24 +25,24 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
     let relativeTime = formatDistanceToNow(lastUpdateDate, { addSuffix: true, includeSeconds: false });
-    relativeTime = relativeTime.replace(/\babout\b|\b약\b/g, "").trim().replace(' hours ago','시간 전').replace(' days ago', '일 전').replace(' minutes ago','분 전')
+    relativeTime = relativeTime.replace(/\babout\b|\b약\b/g, "").trim().replace(' hours ago', '시간 전').replace(' days ago', '일 전').replace(' minutes ago', '분 전')
     relativeTime = `${relativeTime}`;
 
     return (
         <div
-            className="p-5 border rounded-2xl shadow-lg bg-white w-56 min-h-36 cursor-pointer flex flex-col justify-between"
+            className="p-4 sm:p-5 border rounded-2xl shadow-lg bg-white w-full sm:w-56 min-h-36 cursor-pointer flex flex-col justify-between"
             onClick={() => router.push(`/words-docs/${id}`)}
         >
             {/* 제목 */}
-            <h1 className="text-xl font-bold">{name}</h1>
+            <h1 className="text-xl font-bold break-words">{name}</h1>
 
             {/* 제작자 (클릭 가능) */}
             <p
-                className="text-sm text-gray-600 cursor-pointer hover:underline"
+                className="text-sm text-gray-600 cursor-pointer hover:underline truncate"
                 onClick={(e) => {
                     e.stopPropagation();
                     if (maker == "알수없음") return;
-                    router.push(`/profile?username=${maker}`)
+                    router.push(`/profile?username=${maker}`);
                 }}
             >
                 {maker}
@@ -53,7 +53,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <span className="cursor-pointer">{relativeTime}</span>
+                            <span className="cursor-pointer truncate">{relativeTime}</span>
                         </TooltipTrigger>
                         <TooltipContent side="top">
                             <span className="bg-gray-800 text-white text-xs rounded-md px-2 py-1">
@@ -77,6 +77,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
                 )}
             </div>
         </div>
+
     );
 };
 

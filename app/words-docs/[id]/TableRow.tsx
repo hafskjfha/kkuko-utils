@@ -17,34 +17,44 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
     return (
         <tr
             className={clsx(
-                "border px-4 py-5 my-2 text-center text-lg",
+                "border text-center text-base sm:text-lg", // 반응형 폰트 크기
                 status === "ok" && "border-black",
                 status === "delete" && "border-red-500",
                 status === "add" && "border-gray-500 border-dashed"
             )}
         >
             {/* 단어 길이 */}
-            <td className="w-2/10 px-4 py-3 border-r">{wordLength}</td>
+            <td className="min-w-[60px] px-3 py-2 sm:px-4 sm:py-3 border-r">
+                {wordLength}
+            </td>
 
             {/* 단어 (링크) */}
-            <td className="w-6/10 px-4 py-3 border-r">
-                <Link href={`/word/search/${word}`} className="text-blue-600 hover:underline">
+            <td className="min-w-[150px] px-3 py-2 sm:px-4 sm:py-3 border-r">
+                <Link href={`/word/search/${word}`} className="text-blue-600 hover:underline break-keep">
                     {word}
                 </Link>
             </td>
 
-            <td className="w-1/10 px-4 py-3 border-r whitespace-nowrap">
-                {status === "ok" ? "" : status === "add" ? "추가요청" : <div className="text-red-500">삭제요청</div>}
+            {/* 상태 */}
+            <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 border-r whitespace-nowrap">
+                {status === "ok" ? "" : status === "add" ? "추가요청" : (
+                    <div className="text-red-500">삭제요청</div>
+                )}
             </td>
 
-            <td className="w-1/10 px-4 py-3">
+            {/* 작업 버튼 */}
+            <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                 {openWork !== undefined && (
-                    <button className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 transition whitespace-nowrap" onClick={openWork}>
+                    <button
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                        onClick={openWork}
+                    >
                         작업
                     </button>
                 )}
             </td>
         </tr>
+
     )
 }
 

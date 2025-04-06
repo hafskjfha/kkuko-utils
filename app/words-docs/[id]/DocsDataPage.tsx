@@ -22,7 +22,7 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
     const [showWords, setShowWords] = useState(true); // 추가 요청 단어 표시 여부
     const [hideDeleted, setHideDeleted] = useState(false); // 삭제 요청된 단어 숨김 여부
     const [tocList, setTocList] = useState<string[]>([]);
-    const [wordsData,setWordsData] = useState<WordData[]>(data);
+    const [wordsData, setWordsData] = useState<WordData[]>(data);
     const [grouped, setGrouped] = useState<DefaultDict<string, WordData[]>>(new DefaultDict<string, WordData[]>(() => []));
 
     // `refs` 초기화 및 `tocList` 변경 시 `refs.current` 업데이트
@@ -31,15 +31,15 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
         tocList.forEach((title) => {
             newRefs[title] = refs.current[title] || React.createRef<HTMLDivElement>();
         });
-    
+
         refs.current = newRefs; // 새로운 객체 할당 (불변성 유지)
         setRefsState(newRefs); // 상태 업데이트 → 리렌더링 유도
     }, [tocList]);
 
-    const groupWordsBySyllable = (data: WordData[]) =>{
+    const groupWordsBySyllable = (data: WordData[]) => {
         const grouped: DefaultDict<string, WordData[]> = new DefaultDict<string, WordData[]>(() => []);
 
-        data.forEach((item)=> {
+        data.forEach((item) => {
             const firstSyllable = item.word[0].toLowerCase();
             grouped.get(firstSyllable).push(item)
         });
@@ -48,7 +48,7 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
     }
 
     const updateToc = (data: WordData[]) => {
-        return [...new Set(data.map((v)=>v.word[0]))].sort((a,b)=>a.localeCompare(b,'ko'));
+        return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, 'ko'));
     }
 
     useEffect(() => {
@@ -64,10 +64,10 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
         setWordsData(filteredData);
     }, [showWords, hideDeleted, data]);
 
-    useEffect(()=>{
+    useEffect(() => {
         setTocList(updateToc(wordsData));
         setGrouped(groupWordsBySyllable(wordsData));
-    },[wordsData])
+    }, [wordsData])
 
     const items = tocList.map((title) => ({
         title,
@@ -79,18 +79,18 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
 
     return (
-        <div className="max-w-6xl mx-auto p-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
             {/* 문서 헤더 */}
-            <div className="flex justify-between items-center border-b pb-2">
-                <h1 className="text-3xl font-bold">{metaData.title}</h1>
-                <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b pb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold">{metaData.title}</h1>
+                <div className="flex flex-col sm:flex-row gap-2">
                     <Link href={`/words-docs/${id}/info`}>
-                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto">
                             문서 정보
                         </button>
                     </Link>
                     <Link href={`/words-docs/${id}/logs`}>
-                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto">
                             로그
                         </button>
                     </Link>
@@ -105,8 +105,8 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
                 <TableOfContents items={items} />
             </div>
 
-            {/* 필터 체크박스 (테이블 위) */}
-            <div className="mt-4 flex gap-4 items-center p-2 border rounded-lg">
+            {/* 필터 체크박스 */}
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center p-2 border rounded-lg text-sm">
                 <label className="flex items-center gap-2">
                     <input
                         type="checkbox"
@@ -129,11 +129,12 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
             <div>
                 {items.map(({ title, ref }) => (
                     <div key={title} ref={ref} className="mt-4">
-                        <WordsTableBody title={title} initialData={grouped.get(title)} id={id} /> {/* 나중에 추가 */}
+                        <WordsTableBody title={title} initialData={grouped.get(title)} id={id} />
                     </div>
                 ))}
             </div>
         </div>
+
     );
 };
 

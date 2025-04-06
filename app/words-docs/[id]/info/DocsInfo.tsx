@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 
-interface metadata{
+interface metadata {
     id: number;
     created_at: string;
     name: string;
@@ -12,7 +12,7 @@ interface metadata{
     last_update: string;
 }
 
-const DocsInfoPage: React.FC<{ metaData: metadata, wordsCount: number }> = ({ metaData, wordsCount }) => {
+const DocsInfoPage = ({ metaData, wordsCount }: { metaData: metadata, wordsCount: number }) => {
     const lastUpdateDate = new Date(metaData.last_update); // UTC 기준 Date 객체
     const createdAtDate = new Date(metaData.created_at);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -20,26 +20,29 @@ const DocsInfoPage: React.FC<{ metaData: metadata, wordsCount: number }> = ({ me
     const localTime2 = createdAtDate.toLocaleString(undefined, { timeZone: userTimeZone });
 
     return (
-        <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-6 space-y-6">
             {/* Header Section */}
-            <div className="flex justify-between items-center border-b pb-4">
-                <h1 className="text-3xl font-bold">{metaData.name}</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 gap-2">
+                <Link href={`/words-docs/${metaData.id}`} className="underline">
+                    <h1 className="text-2xl sm:text-3xl font-bold">{metaData.name} - 정보</h1>
+                </Link>
                 <span className="px-3 py-1 text-sm font-semibold bg-blue-100 text-blue-800 rounded-lg">
                     {metaData.typez.toUpperCase()}
                 </span>
             </div>
 
             {/* Metadata Section */}
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg shadow-sm">
                 <div>
                     <p className="text-sm text-gray-600">작성자</p>
-                    <p className="text-lg font-medium">
-                        {metaData.users ? 
-                        <Link href={`/profile?username=${metaData.users.nickname}`}>
-                            {metaData.users.nickname}
-                        </Link>
-                        : 
-                        "알 수 없음"}
+                    <p className="text-lg font-medium break-words">
+                        {metaData.users ? (
+                            <Link href={`/profile?username=${metaData.users.nickname}`} className="hover:underline">
+                                {metaData.users.nickname}
+                            </Link>
+                        ) : (
+                            "알 수 없음"
+                        )}
                     </p>
                 </div>
                 <div>
@@ -56,6 +59,7 @@ const DocsInfoPage: React.FC<{ metaData: metadata, wordsCount: number }> = ({ me
                 </div>
             </div>
         </div>
+
     );
 };
 

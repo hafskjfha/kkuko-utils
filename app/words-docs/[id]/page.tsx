@@ -5,6 +5,14 @@ import ErrorPage from "@/app/ErrorPage";
 import type { ErrorMessage } from "@/app/types/type";
 import { PostgrestError } from "@supabase/supabase-js";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+    const {id} = await params;
+    return {
+        title: "끄코 유틸리티 - 단어장공유",
+        description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서`,
+    };
+}
+
 const getDataOkWords = async (id: number) => {
     const {data:dataA, error:errorA} = await supabase.from('docs_words').select('words(word)').eq('docs_id',id);
     if (errorA) throw errorA;
