@@ -15,7 +15,7 @@ interface DocsPageProp {
     }
 }
 
-const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
+const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
@@ -78,6 +78,29 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
 
+    const handleDownload = () => {
+        const wordsText = data.map((w) => w.word).sort((a, b) => a.localeCompare(b, 'ko')).join("\n");
+      
+        // 파일 이름에 날짜 형식을 정리
+        const formattedDate = new Date(metaData.lastUpdate)
+          .toISOString()
+          .slice(0, 10); // yyyy-mm-dd 형태
+        const fileName = `${metaData.title} 단어장(${formattedDate}).txt`;
+      
+        const blob = new Blob([wordsText], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+      
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+      
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url); // 메모리 해제
+      };
+      
+
     return (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
             {/* 문서 헤더 */}
@@ -94,6 +117,13 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
                             로그
                         </button>
                     </Link>
+                    <button
+                        className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto"
+                        onClick={() => handleDownload()}
+                        >
+                        단어장 다운로드
+                    </button>
+
                 </div>
             </div>
 
