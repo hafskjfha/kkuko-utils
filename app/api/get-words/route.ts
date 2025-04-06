@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import zlib from 'zlib';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_KEY;
 
 const supabase = createClient<Database>(supabaseUrl, serviceKey);
 

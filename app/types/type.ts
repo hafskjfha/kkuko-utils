@@ -8,3 +8,16 @@ export type ErrorMessage = {
     HTTPData?: string | null;
     inputValue: string | null;
 }
+
+export type UserInfo = {
+    nickname: string,
+    role: "r1" | "r2" | "r3" | "r4" | "admin",
+    id: string,
+    contribution: number
+}
+
+export type WordData = {
+    word: string,
+    status: "ok" | "add" | "delete",
+    maker?: string | undefined
+}
