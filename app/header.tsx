@@ -64,7 +64,7 @@ const Header: React.FC = () => {
                         단어장 관리 도구
                     </Link>
                     <Link href="/words-docs" className={`block py-2 md:py-0 hover:text-gray-300 ${ /words-docs/.test(pathname) ? "border-b-2 border-white" : ""}`}>
-                        빌런 단어장 공유
+                        단어장 공유
                     </Link>
                     <Link href="/" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/contact" ? "border-b-2 border-white" : ""}`}>
                         단어 추가 요청 정리

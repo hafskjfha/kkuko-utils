@@ -143,6 +143,49 @@ export type Database = {
           },
         ]
       }
+      docs_words_wait: {
+        Row: {
+          docs_id: number
+          requested_by: string | null
+          typez: Database["public"]["Enums"]["request_type_enum"]
+          word_id: number
+        }
+        Insert: {
+          docs_id: number
+          requested_by?: string | null
+          typez: Database["public"]["Enums"]["request_type_enum"]
+          word_id: number
+        }
+        Update: {
+          docs_id?: number
+          requested_by?: string | null
+          typez?: Database["public"]["Enums"]["request_type_enum"]
+          word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docs_words_wait_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "docs_words_wait_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "docs_words_wait_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       last_update: {
         Row: {
           last_modified: string
@@ -391,6 +434,39 @@ export type Database = {
           },
           {
             foreignKeyName: "word_themes_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      word_themes_wait: {
+        Row: {
+          theme_id: number
+          typez: Database["public"]["Enums"]["request_type_enum"]
+          word_id: number
+        }
+        Insert: {
+          theme_id: number
+          typez: Database["public"]["Enums"]["request_type_enum"]
+          word_id: number
+        }
+        Update: {
+          theme_id?: number
+          typez?: Database["public"]["Enums"]["request_type_enum"]
+          word_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "word_themes_wait_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "word_themes_wait_word_id_fkey"
             columns: ["word_id"]
             isOneToOne: false
             referencedRelation: "words"

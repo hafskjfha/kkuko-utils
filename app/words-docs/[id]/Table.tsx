@@ -12,15 +12,17 @@ import { supabase } from '@/app/lib/supabaseClient';
 import type { PostgrestError } from "@supabase/supabase-js";
 import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
+import UnderConstructionModal from "@/app/components/UnderConstructionModal";
 
 
-const Table = ({ initialData }: { initialData: WordData[] }) => {
+const Table = ({ initialData, id }: { initialData: WordData[], id:string }) => {
     const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok", requer: string }| null>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const user = useSelector((state: RootState) => state.user);
+    const [temp,setTemp] = useState(false);
 
     const columns: ColumnDef<WordData>[] = [
         {
@@ -512,6 +514,79 @@ const Table = ({ initialData }: { initialData: WordData[] }) => {
         return;
     }
 
+    const DeleteWordFromDocsByAdin = async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 문서에서 삭제할 단어의 정보 가지고 오기
+        const { data:getWordData, error:getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        // 2. 해당 문서에서 삭제
+        const { error: deleteWordFromDocsError  } = await supabase.from('docs_words').delete().eq('word_id', getWordData.id).eq('docs_id', Number(id));
+        if (deleteWordFromDocsError) {
+            makeError(deleteWordFromDocsError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 3. 로그 등록
+        const logData =  {
+            word: getWordData.word,
+            docs_id: Number(id),
+            add_by: user.uuid || null,
+            type: "delete" as const
+        }
+        const {error:insertDocsLogDataError } = await supabase.from('docs_logs').insert(logData);
+        if (insertDocsLogDataError) {
+            makeError(insertDocsLogDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        return;
+    }
+
+    const DeleteWordFromDocsRequest = async (word: string) => {
+        // 중복 요청 방지
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제 요청할 단어 정보 가지고 오기
+        const { data:getWordData, error:getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        if (!getWordData) return;
+
+        // 2. 대기큐에 등록
+        const insertWaitWordData = {
+            word_id: getWordData.id,
+            docs_id: Number(id),
+            requested_by: user.uuid || null,
+            typez: "delete"
+        } as const;
+        const {error: insertWaitWordDataError } = await supabase.from('docs_words_wait').insert(insertWaitWordData);
+        if (insertWaitWordDataError) {
+            makeError(insertWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+
+    }
+
     return (
         <div className="w-full mx-auto p-3">
             <table className="border-collapse border border-gray-300 w-full text-center">
@@ -550,7 +625,7 @@ const Table = ({ initialData }: { initialData: WordData[] }) => {
                             <TableRow
                                 key={wordData.word}
                                 {...wordData}
-                                openWork={user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker || "") : undefined}
+                                openWork={user.uuid !== undefined ? ()=> setTemp(true) : undefined}//user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker || "") : undefined}
                             />
                         );
                     })}
@@ -571,6 +646,8 @@ const Table = ({ initialData }: { initialData: WordData[] }) => {
                 onCancelDeleteRequest={() => CancelDeleteRequest(modal.word)}
                 onDelete={() => DeleteByAdmin(modal.word)}
                 onRequestDelete={() => RequestDelete(modal.word)}
+                onDeleteFromDoc={() => DeleteWordFromDocsByAdin(modal.word)}
+                onRequestDeleteFromDoc={() => DeleteWordFromDocsRequest(modal.word)}
 
             />}
             {errorModalView && <ErrorModal
@@ -579,6 +656,7 @@ const Table = ({ initialData }: { initialData: WordData[] }) => {
             />}
 
             {isProcessing && <Spinner />}
+            {temp && <UnderConstructionModal open={temp} onColse={()=>setTemp(false)} />}
         </div>
     );
 }

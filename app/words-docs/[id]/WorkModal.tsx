@@ -15,10 +15,12 @@ type ModalProps = {
     onCancelDeleteRequest?: () => void; // 삭제요청 취소 함수
     onDelete?: () => void; // 관리자가 단어를 삭제하는 함수
     onRequestDelete?: () => void; // 삭제요청을 보내는 함수
+    onRequestDeleteFromDoc?: () => void; // 문서에서 삭제 요청
+    onDeleteFromDoc?: () => void; // 관리자가 문서에서 삭제
 };
 
 
-const WorkModal: React.FC<ModalProps> = ({
+const WorkModal = ({
     isSaving,
     onClose,
     word,
@@ -33,7 +35,9 @@ const WorkModal: React.FC<ModalProps> = ({
     onCancelDeleteRequest,
     onDelete,
     onRequestDelete,
-}) => {
+    onDeleteFromDoc,
+    onRequestDeleteFromDoc
+}: ModalProps) => {
 
 
     return (
@@ -142,15 +146,27 @@ const WorkModal: React.FC<ModalProps> = ({
                     {status === "ok" && (
                         <>
                             {isAdmin && (
-                                <div className="flex items-center justify-between bg-red-50 p-3 rounded-md">
-                                    <span className="text-red-700">단어를 삭제합니다.</span>
-                                    <button
-                                        className="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-600"
-                                        onClick={onDelete}
-                                    >
-                                        삭제
-                                    </button>
-                                </div>
+                                <>
+                                    <div className="flex items-center justify-between bg-red-50 p-3 rounded-md">
+                                        <span className="text-red-700">단어를 삭제합니다.</span>
+                                        <button
+                                            className="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-600"
+                                            onClick={onDelete}
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between bg-red-100 p-3 rounded-md">
+                                        <span className="text-red-600">단어를 문서에서만 삭제합니다.</span>
+                                        <button
+                                            className="bg-red-400 text-white px-4 py-1 rounded-md hover:bg-red-500"
+                                            onClick={onDeleteFromDoc}
+                                        >
+                                            문서에서 삭제
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* 일반 유저와 관리자 모두 삭제 요청 가능 */}
@@ -161,6 +177,16 @@ const WorkModal: React.FC<ModalProps> = ({
                                     onClick={onRequestDelete}
                                 >
                                     삭제 요청
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-yellow-100 p-3 rounded-md">
+                                <span className="text-yellow-700">문서에서만 삭제 요청을 보냅니다.</span>
+                                <button
+                                    className="bg-yellow-400 text-white px-4 py-1 rounded-md hover:bg-yellow-500"
+                                    onClick={onRequestDeleteFromDoc}
+                                >
+                                    문서에서 삭제 요청
                                 </button>
                             </div>
                         </>

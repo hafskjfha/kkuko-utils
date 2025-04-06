@@ -129,7 +129,7 @@ const DocsDataPage: React.FC<DocsPageProp> = ({ id, data, metaData }) => {
             <div>
                 {items.map(({ title, ref }) => (
                     <div key={title} ref={ref} className="mt-4">
-                        <WordsTableBody title={title} initialData={grouped.get(title)} /> {/* 나중에 추가 */}
+                        <WordsTableBody title={title} initialData={grouped.get(title)} id={id} /> {/* 나중에 추가 */}
                     </div>
                 ))}
             </div>

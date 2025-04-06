@@ -3,15 +3,21 @@
 import Table from "./Table";
 import type { WordData } from "@/app/types/type";
 import { useState } from "react";
-import WordAddModal from "./WordAddModal";
+//import WordAddModal from "./WordAddModal";
+import UnderConstructionModal from "@/app/components/UnderConstructionModal";
 import { motion } from "framer-motion";
+import { useSelector } from 'react-redux';
+import { RootState } from "@/app/store/store";
 
-const WordsTableBody: React.FC<{ initialData: WordData[]; title: string }> = ({
+const WordsTableBody = ({
     title,
     initialData,
-}) => {
+    id
+}: { initialData: WordData[]; title: string, id: string }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
+
+    const user = useSelector((state: RootState) => state.user);
 
     return (
         <div className="w-full mx-auto p-2">
@@ -24,12 +30,12 @@ const WordsTableBody: React.FC<{ initialData: WordData[]; title: string }> = ({
                 >
                     {isTableVisible ? "접기" : "펼치기"}
                 </button>
-                <button
+                {user.uuid && <button
                     className="ml-4 px-3 py-1 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
                     onClick={() => setWordAddModalOpen(true)}
                 >
                     추가
-                </button>
+                </button>}
             </div>
 
             {/* 단어 테이블 (애니메이션 적용) */}
@@ -39,14 +45,18 @@ const WordsTableBody: React.FC<{ initialData: WordData[]; title: string }> = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} />
+                <Table initialData={initialData} id={id} />
             </motion.div>
 
             {wordAddModalOpen && (
-                <WordAddModal
+                /*<WordAddModal
                     isOpen={wordAddModalOpen}
                     onClose={() => setWordAddModalOpen(false)}
                     alreadyAddedWords={new Set(initialData.map((d) => d.word))}
+                /> */
+                <UnderConstructionModal
+                    open={wordAddModalOpen}
+                    onColse={() => setWordAddModalOpen(false)}
                 />
             )}
             <hr className="mt-3 border-gray-400" />
