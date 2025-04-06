@@ -15,3 +15,9 @@ export type UserInfo = {
     id: string,
     contribution: number
 }
+
+export type WordData = {
+    word: string,
+    status: "ok" | "add" | "delete",
+    maker?: string | undefined
+}

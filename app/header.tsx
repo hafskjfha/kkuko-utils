@@ -63,10 +63,10 @@ const Header: React.FC = () => {
                     <Link href="/manager-tool" className={`block py-2 md:py-0 hover:text-gray-300 ${/manager-tool/.test(pathname) ? "border-b-2 border-white" : ""}`}>
                         단어장 관리 도구
                     </Link>
-                    <Link href="/blog" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/blog" ? "border-b-2 border-white" : ""}`}>
-                        빌런 단어장 공유
+                    <Link href="/words-docs" className={`block py-2 md:py-0 hover:text-gray-300 ${ /words-docs/.test(pathname) ? "border-b-2 border-white" : ""}`}>
+                        단어장 공유
                     </Link>
-                    <Link href="/contact" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/contact" ? "border-b-2 border-white" : ""}`}>
+                    <Link href="/" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/contact" ? "border-b-2 border-white" : ""}`}>
                         단어 추가 요청 정리
                     </Link>
 

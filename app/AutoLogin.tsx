@@ -25,6 +25,7 @@ const AutoLogin = () => {
                 userAction.setInfo({
                     username: ddata[0].nickname,
                     role: ddata[0].role ?? "guest",
+                    uuid: ddata[0].id,
                 })
             );
         }

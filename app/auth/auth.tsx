@@ -153,6 +153,7 @@ const AuthPage: React.FC = () => {
             userAction.setInfo({
                 username: data.nickname,
                 role: data.role ?? "guest",
+                uuid: data.id,
             })
         );
         router.push("/");
