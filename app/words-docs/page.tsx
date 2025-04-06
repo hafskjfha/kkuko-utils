@@ -2,6 +2,13 @@ import WordsDocsHome from "./WordsDocsHome";
 import { supabase } from "../lib/supabaseClient";
 import { cache } from "react";
 
+export async function generateMetadata() {
+    return {
+        title: "끄코 유틸리티 - 단어장공유",
+        description: `끄코 유틸리티 - 단어장 공유 홈`,
+    };
+}
+
 type DocsType = {
     id: string;
         name: string;
