@@ -5,6 +5,8 @@ import ErrorPage from "@/app/ErrorPage";
 import type { ErrorMessage } from "@/app/types/type";
 import { PostgrestError } from "@supabase/supabase-js";
 
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const {id} = await params;
     return {

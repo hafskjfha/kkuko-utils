@@ -1,6 +1,8 @@
 import WordsDocsHome from "./WordsDocsHome";
 import { supabase } from "../lib/supabaseClient";
 
+export const revalidate = 0;
+
 
 export async function generateMetadata() {
     return {

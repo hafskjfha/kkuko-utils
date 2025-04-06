@@ -2,6 +2,9 @@ import DocsLogs from "./DocsLogs";
 import NotFound from "@/app/not-found-client";
 import { supabase } from "@/app/lib/supabaseClient";
 
+export const revalidate = 0;
+
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     return {
