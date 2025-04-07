@@ -1,9 +1,9 @@
-const Spinner: React.FC = () => {
-    return (
-        <div className="flex justify-center items-center">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-    );
-};
+import { Loader2 } from "lucide-react";
+
+const Spinner = () => (
+  <div className="flex justify-center items-center">
+    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+  </div>
+);
 
 export default Spinner;
