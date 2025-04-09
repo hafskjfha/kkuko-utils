@@ -41,6 +41,18 @@ const getDataWaitWords = async (id: number) => {
     return words
 }
 
+const getDataWaitWordsA = async (id: number) => {
+    const {data, error} = await supabase.from('docs_words_wait').select('words(word), typez, users(id)').eq('docs_id',id);
+    if (error)throw error;
+
+    const words = data.map((wordk)=>({
+        word: wordk.words.word,
+        status: wordk.typez === "add" ? "eadd" : "edlete",
+        maker: wordk.users?.id
+    }))
+    return words
+}
+
 const DocsDataHome = async ({ params }: { params: Promise<{ id: string }> }) => {
     const {id} = await params;
 
@@ -63,9 +75,10 @@ const DocsDataHome = async ({ params }: { params: Promise<{ id: string }> }) => 
     }
 
     try{
-        const [A,B] = await Promise.all([getDataOkWords(Number(id)), getDataWaitWords(Number(id))]);
+        const [A,B,C] = await Promise.all([getDataOkWords(Number(id)), getDataWaitWords(Number(id)),getDataWaitWordsA(Number(id))]);
         const wordsNotInB = A.filter(a => !B.some(b => b.word === a.word)).map((p)=>({word: p.word, status: p.status as "ok", maker: undefined}))
-        const wordsData = [...wordsNotInB, ...B]
+        const wordsNotInC = wordsNotInB.filter(a => !C.some(c => c.word === a.word)).map((p)=>({word: p.word, status: p.status as "ok", maker: undefined}))
+        const wordsData = [...wordsNotInC,...wordsNotInB, ...B]
         const p = {title: docsDatas.name, lastUpdate: docsDatas.last_update}
         return <DocsData id={id} data={wordsData} metaData={p}/>
     }
