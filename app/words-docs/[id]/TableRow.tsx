@@ -12,7 +12,7 @@ interface TableRowProps {
     openWork?: () => void
 }
 
-const TableRow = memo(({ word, status, openWork }:TableRowProps) => {
+const TableRowComponent = ({ word, status, openWork }:TableRowProps) => {
     const wordLength = word.length;
 
     return (
@@ -57,6 +57,8 @@ const TableRow = memo(({ word, status, openWork }:TableRowProps) => {
         </tr>
 
     )
-})
+}
+
+const TableRow = memo(TableRowComponent);
 
 export default TableRow;
