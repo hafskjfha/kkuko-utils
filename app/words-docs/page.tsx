@@ -1,5 +1,6 @@
 import WordsDocsHome from "./WordsDocsHome";
 import { supabase } from "../lib/supabaseClient";
+import ErrorPage from "../components/ErrorPage";
 
 export const revalidate = 0;
 
@@ -40,9 +41,15 @@ const getData = async () => {
 
 const WordsDocsHomePage = async () => {
     const data = await getData();
-    return(
-        <WordsDocsHome docs={"error" in data ? [] : data} error= {"error" in data ? data.error : null} />
-    )
+    if ("error" in data){
+        return <ErrorPage message={"데이터를 가져오는중 에러가 발생했습니다."} />
+    }
+    else{
+        return(
+            <WordsDocsHome docs={data} error= {null} />
+        )
+    }
+    
 }
 
 export default WordsDocsHomePage;

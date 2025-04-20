@@ -55,10 +55,10 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
         let filteredData = data;
 
         if (!showWords) {
-            filteredData = filteredData.filter((v) => v.status !== "add");
+            filteredData = filteredData.filter((v) => v.status !== "add" && v.status !== "eadd");
         }
         if (hideDeleted) {
-            filteredData = filteredData.filter((v) => v.status !== "delete");
+            filteredData = filteredData.filter((v) => v.status !== "delete" && v.status !== "edelete");
         }
 
         setWordsData(filteredData);

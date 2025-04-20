@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { clsx } from "clsx";
 
-type WordStatus = "ok" | "delete" | "add";
+type WordStatus = "ok" | "delete" | "add" | "eadd" | "edelete";
 
 
 interface TableRowProps {

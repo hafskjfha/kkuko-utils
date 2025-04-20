@@ -18,6 +18,6 @@ export type UserInfo = {
 
 export type WordData = {
     word: string,
-    status: "ok" | "add" | "delete",
+    status: "ok" | "add" | "delete" | "eadd" | "edelete",
     maker?: string | undefined
 }

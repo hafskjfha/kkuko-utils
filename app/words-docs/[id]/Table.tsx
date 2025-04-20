@@ -1,7 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
-import TableRow from "./TableRow";
 import type { WordData } from "@/app/types/type";
 import WorkModal from "./WorkModal";
 import { useSelector } from 'react-redux';
@@ -12,17 +11,19 @@ import { supabase } from '@/app/lib/supabaseClient';
 import type { PostgrestError } from "@supabase/supabase-js";
 import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
-import UnderConstructionModal from "@/app/components/UnderConstructionModal";
+import CompleteModal from "@/app/components/CompleteModal";
+
+const TableRow = lazy(() => import("./TableRow"));
 
 
 const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => {
     const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok", requer: string } | null>(null);
+    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
     const user = useSelector((state: RootState) => state.user);
-    const [temp, setTemp] = useState(false);
 
     const columns: ColumnDef<WordData>[] = [
         {
@@ -45,16 +46,22 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         onSortingChange: setSorting,
     });
 
-    /*const openWork = (word: string, status: "add" | "delete" | "ok", requer: string) => {
+    const openWork = (word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string) => {
         setModal({ word, status, requer });
-        console.log(requer,user.uuid);
-    } */
+        console.log(`요청자: ${requer},유저: ${user.uuid}`);
+    } 
 
     const closeWork = () => {
         setModal(null);
     }
 
+    const CompleWork = () => {
+        setModal(null);
+        setIsCompleteModalOpen(true);
+    }
+
     const makeError = (error: PostgrestError) => {
+        closeWork();
         seterrorModalView({
             ErrName: error.name,
             ErrMessage: error.message,
@@ -182,6 +189,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
 
     }
@@ -224,6 +232,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -241,7 +250,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
         if (!getWaitWordData) return;
 
-        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('id', getWaitWordData.id);
+        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('wait_word_id', getWaitWordData.id);
         if (getDeleteDocsDataError) {
             makeError(getDeleteDocsDataError);
             setIsProcessing(false);
@@ -296,6 +305,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -337,6 +347,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -363,6 +374,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -389,6 +401,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -456,6 +469,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
 
     }
@@ -511,6 +525,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -552,6 +567,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
     }
 
@@ -584,7 +600,122 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             return;
         }
 
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    }
 
+    const onCancelDeleteFromDocsRequest = async (word: string) => {
+        // 중복 요청 방지
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제 요청할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+
+    }
+
+    const onDeleteFromDocsAccept = async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_words_wait').select('words(word),docs_id,requested_by').eq('word_id', getWordData.id);
+        if (getDeleteDocsDataError) {
+            makeError(getDeleteDocsDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 3. 문서에서 삭제
+        const { error: deleteWordFromDocsError } = await supabase.from('docs_words').delete().eq('word_id', getWordData.id).eq('docs_id', Number(id));
+        if (deleteWordFromDocsError) {
+            makeError(deleteWordFromDocsError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 2.3 문서 로그 등록
+        const insertDocsLogData = getDeleteDocsData.map((d) => {
+            return {
+                word: d.words.word,
+                docs_id: d.docs_id,
+                add_by: d.requested_by,
+                type: "delete"
+            } as const;
+        });
+        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
+        if (insertDocsLogDataError) {
+            makeError(insertDocsLogDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    }
+
+    const onDeleteFromDocsReject = async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제 요청단어 정보 가져오기
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWaitWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
     }
 
     return (
@@ -625,7 +756,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
                             <TableRow
                                 key={wordData.word}
                                 {...wordData}
-                                openWork={user.uuid !== undefined ? () => setTemp(true) : undefined}
+                                openWork={user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : undefined}
                             />
                         );
                     })}
@@ -634,24 +765,29 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
 
             {/* 모달 영역 */}
             {modal && (
-                <WorkModal
-                    isSaving={isProcessing}
-                    onClose={closeWork}
-                    word={modal.word}
-                    status={modal.status}
-                    isAdmin={user.role === "admin"}
-                    isRequester={user.uuid === modal.requer}
-                    onAddAccept={() => AddAccept(modal.word)}
-                    onDeleteAccept={() => DeleteAccept(modal.word)}
-                    onAddReject={() => AddReject(modal.word)}
-                    onDeleteReject={() => DeleteReject(modal.word)}
-                    onCancelAddRequest={() => CancelAddRequest(modal.word)}
-                    onCancelDeleteRequest={() => CancelDeleteRequest(modal.word)}
-                    onDelete={() => DeleteByAdmin(modal.word)}
-                    onRequestDelete={() => RequestDelete(modal.word)}
-                    onDeleteFromDoc={() => DeleteWordFromDocsByAdin(modal.word)}
-                    onRequestDeleteFromDoc={() => DeleteWordFromDocsRequest(modal.word)}
-                />
+                <Suspense fallback={<Spinner />}>
+                    <WorkModal
+                        isSaving={isProcessing}
+                        onClose={closeWork}
+                        word={modal.word}
+                        status={modal.status}
+                        isAdmin={user.role === "admin"}
+                        isRequester={user.uuid === modal.requer}
+                        onAddAccept={() => AddAccept(modal.word)}
+                        onDeleteAccept={() => DeleteAccept(modal.word)}
+                        onAddReject={() => AddReject(modal.word)}
+                        onDeleteReject={() => DeleteReject(modal.word)}
+                        onCancelAddRequest={() => CancelAddRequest(modal.word)}
+                        onCancelDeleteRequest={() => CancelDeleteRequest(modal.word)}
+                        onDelete={() => DeleteByAdmin(modal.word)}
+                        onRequestDelete={() => RequestDelete(modal.word)}
+                        onDeleteFromDoc={() => DeleteWordFromDocsByAdin(modal.word)}
+                        onRequestDeleteFromDoc={() => DeleteWordFromDocsRequest(modal.word)}
+                        onCancelDeleteFromDocsRequest={() => onCancelDeleteFromDocsRequest(modal.word)}
+                        onDeleteFromDocsAccept={() => onDeleteFromDocsAccept(modal.word)}
+                        onDeleteFromDocsReject={() => onDeleteFromDocsReject(modal.word)}
+                    />
+                </Suspense>
             )}
 
             {errorModalView && (
@@ -662,7 +798,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             )}
 
             {isProcessing && <Spinner />}
-            {temp && <UnderConstructionModal open={temp} onColse={() => setTemp(false)} />}
+            {isCompleteModalOpen && <CompleteModal onClose={() => setIsCompleteModalOpen(false)} open={isCompleteModalOpen}/>}
         </div>
 
     );
