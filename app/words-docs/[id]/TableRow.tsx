@@ -37,7 +37,7 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
 
             {/* 상태 */}
             <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 border-r whitespace-nowrap">
-                {status === "ok" ? "" : status === "add" ? "추가요청" : (
+                {status === "ok" ? "" : (status === "add" || status === "eadd") ? "추가요청" : (
                     <div className="text-red-500">삭제요청</div>
                 )}
             </td>

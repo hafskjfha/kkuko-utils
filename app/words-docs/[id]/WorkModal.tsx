@@ -29,6 +29,9 @@ type ModalProps = {
 	onCancelDeleteFromDocsRequest?: () => void;
 	onDeleteFromDocsAccept?: () => void;
 	onDeleteFromDocsReject?: () => void;
+	onCancelAddFromDocsRequest?: () => void;
+	onAddFromDocsAccept?: () => void;
+	onAddFromDocsReject?: () => void;
 };
 
 const WorkModal = ({
@@ -50,7 +53,10 @@ const WorkModal = ({
 	onDeleteFromDoc,
 	onCancelDeleteFromDocsRequest,
 	onDeleteFromDocsAccept,
-	onDeleteFromDocsReject
+	onDeleteFromDocsReject,
+	onCancelAddFromDocsRequest,
+	onAddFromDocsAccept,
+	onAddFromDocsReject,
 }: ModalProps) => {
 	return (
 		<Dialog open onOpenChange={onClose}>
@@ -72,6 +78,7 @@ const WorkModal = ({
 							{status === "add" && "현재 이 단어는 추가 요청 상태입니다."}
 							{status === "delete" && "현재 이 단어는 삭제 요청 상태입니다."}
 							{status === "ok" && "현재 등록된 단어입니다."}
+							{status === "eadd" && "현재 문서에 추가 요청인 상태입니다."}
 							{status === "edelete" && "현재 문서에서만 삭제 요청 상태입니다."}
 						</span>
 					</div>
@@ -184,6 +191,31 @@ const WorkModal = ({
 								/>
 							)}
 						</>
+						)}
+						{status === "eadd" && (
+							<>
+								{isAdmin && (
+									<>
+										<ActionBlock
+											text="추가 요청을 수락합니다."
+											color="green"
+											onClick={onAddFromDocsAccept}
+										/>
+										<ActionBlock
+											text="추가 요청을 거절합니다."
+											color="red"
+											onClick={onAddFromDocsReject}
+										/>
+									</>
+								)}
+								{isRequester && (
+									<ActionBlock
+										text="추가 요청을 취소합니다."
+										color="gray"
+										onClick={onCancelAddFromDocsRequest}
+									/>
+								)}
+							</>
 						)}
 				</div>
 

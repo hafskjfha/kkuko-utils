@@ -105,6 +105,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                 requested_by: user.uuid
             });
             if (error) throw error;
+            alreadyAddedWords.add(WorkWord.word);
             setShowCompleteModal(true);
             setShowConfirmModal(false);
             setIsLoading(false);

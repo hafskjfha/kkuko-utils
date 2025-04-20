@@ -2,7 +2,7 @@
 import { useState, lazy, Suspense } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
 import type { WordData } from "@/app/types/type";
-import WorkModal from "./WorkModal";
+import TableRow from "./TableRow";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
@@ -13,7 +13,7 @@ import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
 import CompleteModal from "@/app/components/CompleteModal";
 
-const TableRow = lazy(() => import("./TableRow"));
+const WorkModal = lazy(() => import("./WorkModal"));
 
 
 const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => {
@@ -718,6 +718,94 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         return;
     }
 
+    const onAddFromDocsAccept = async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 추가할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('docs_words_wait').select('*').eq('word_id', getWordData.id).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 3. 문서에 등록
+        const insertDocsData = {
+            docs_id: Number(id),
+            word_id: getWordData.id
+        } as const;
+        const { error: insertDocsDataError } = await supabase.from('docs_words').insert(insertDocsData);
+        if (insertDocsDataError) {
+            makeError(insertDocsDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 4. 문서 로그 등록
+        const insertDocsLogData = {
+            word: getWordData.word,
+            docs_id: Number(id),
+            add_by: getWaitWordData.requested_by,
+            type: "add"
+        } as const;
+        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
+        if (insertDocsLogDataError) {
+            makeError(insertDocsLogDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    }
+
+    const onAddFromDocsReject = async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 추가 요청단어 정보 가져오기
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWaitWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    }
+
     return (
         <div className="w-full mx-auto px-2 sm:px-3 overflow-x-auto">
             <table className="border-collapse border border-gray-300 w-full min-w-[600px] text-center">
@@ -786,6 +874,9 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
                         onCancelDeleteFromDocsRequest={() => onCancelDeleteFromDocsRequest(modal.word)}
                         onDeleteFromDocsAccept={() => onDeleteFromDocsAccept(modal.word)}
                         onDeleteFromDocsReject={() => onDeleteFromDocsReject(modal.word)}
+                        onCancelAddFromDocsRequest={()=> onCancelDeleteFromDocsRequest(modal.word)}
+                        onAddFromDocsAccept={() => onAddFromDocsAccept(modal.word)}
+                        onAddFromDocsReject={() => onAddFromDocsReject(modal.word)}
                     />
                 </Suspense>
             )}
