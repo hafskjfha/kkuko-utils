@@ -8,6 +8,13 @@ import DocsInfoPage from "./DocsInfo";
 
 export const revalidate = 0;
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    return {
+        title: "끄코 유틸리티 - 단어장공유",
+        description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서 장보`,
+    };
+}
 
 const getData = async (id: number) => {
     const {data,error} = await supabase.from('docs').select('id, created_at, name, users(nickname), typez, last_update').eq('id',id).maybeSingle();

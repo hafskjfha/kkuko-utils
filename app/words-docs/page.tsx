@@ -17,7 +17,8 @@ type DocsType = {
         maker: string;
         last_update: string; // timestampz (ISO string)
         is_manager: boolean;
-        typez: "letter" | "theme" | "ect"
+        typez: "letter" | "theme" | "ect";
+        created_at: string;
 }[]
 const getData = async () => {
     const { data: lastUpdateData, error: lastUpdateError } = await supabase.from('last_update').select('*').eq('table_name','docs').maybeSingle();
@@ -25,13 +26,13 @@ const getData = async () => {
 
 
     const docss:DocsType = [];
-    const { data: docsData, error: docsError} = await supabase.from('docs').select('id, name, users(nickname),typez, last_update');
+    const { data: docsData, error: docsError} = await supabase.from('docs').select('id, name, users(nickname),typez, last_update,created_at');
     if (docsError){
         // 처리 추가
         return [];
     }
-    for (const {id, name, users, typez, last_update} of docsData){
-        docss.push({id: `${id}`, name, maker: users?.nickname ?? "알수없음", last_update, is_manager: false, typez})
+    for (const {id, name, users, typez, last_update, created_at} of docsData){
+        docss.push({id: `${id}`, name, maker: users?.nickname ?? "알수없음", last_update, is_manager: false, typez, created_at})
     }
 
     return docss

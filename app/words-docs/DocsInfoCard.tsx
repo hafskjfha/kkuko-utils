@@ -8,7 +8,6 @@ import { Trash2 } from "lucide-react";
 interface DocumentCardProps {
     id: string;
     name: string;
-    maker: string;
     last_update: string; // timestampz (ISO string)
     is_manager: boolean;
 }
@@ -16,7 +15,6 @@ interface DocumentCardProps {
 const DocumentCard: React.FC<DocumentCardProps> = ({
     id,
     name,
-    maker,
     last_update,
     is_manager,
 }) => {
@@ -35,18 +33,6 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
         >
             {/* 제목 */}
             <h1 className="text-xl font-bold break-words">{name}</h1>
-
-            {/* 제작자 (클릭 가능) */}
-            <p
-                className="text-sm text-gray-600 cursor-pointer hover:underline truncate"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (maker == "알수없음") return;
-                    router.push(`/profile?username=${maker}`);
-                }}
-            >
-                {maker}
-            </p>
 
             <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
                 {/* 마지막 업데이트 (툴팁 포함) */}
