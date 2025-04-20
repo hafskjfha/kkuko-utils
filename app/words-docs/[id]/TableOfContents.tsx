@@ -8,7 +8,7 @@ interface TocProps {
 }
 
 const TableOfContents = ({ items }: { items: { title: string; ref: React.RefObject<HTMLDivElement | null> }[] }) => {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
 
     // 초성 리스트 (ㄱ과 ㄲ, ㄷ과 ㄸ 등은 같은 그룹으로 묶기 위함)
     const CHOSEONG_GROUP_MAP: Record<string, string> = {
@@ -71,7 +71,7 @@ const TableOfContents = ({ items }: { items: { title: string; ref: React.RefObje
     };
 
     return (
-        <div className="w-full max-w-full sm:max-w-2xl md:max-w-4xl xl:max-w-5xl p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg max-h-[32rem] overflow-y-auto transition-colors duration-300">
+        <div className="w-full max-w-full sm:max-w-2xl md:max-w-4xl xl:max-w-5xl p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg max-h-[20rem] overflow-y-auto transition-colors duration-300">
             <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">목차</h2>
                 <button
