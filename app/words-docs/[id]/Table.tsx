@@ -765,7 +765,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
 
             {/* 모달 영역 */}
             {modal && (
-                <Suspense fallback={<Spinner />}>
+                <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" ><Spinner /></div>}>
                     <WorkModal
                         isSaving={isProcessing}
                         onClose={closeWork}

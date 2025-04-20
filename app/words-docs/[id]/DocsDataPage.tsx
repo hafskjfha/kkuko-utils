@@ -19,6 +19,7 @@ interface DocsPageProp {
 
 const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     const [showWords, setShowWords] = useState(true);
     const [hideDeleted, setHideDeleted] = useState(false);
