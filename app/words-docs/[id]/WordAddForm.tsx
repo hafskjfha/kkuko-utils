@@ -25,7 +25,7 @@ const filterTopi = (a: string, b: string) => {
 };
 
 // ToggleButton 컴포넌트
-const ToggleButton: React.FC<{ isOpen: boolean; onClick: () => void; label: string }> = ({ isOpen, onClick, label }) => (
+const ToggleButton = ({ isOpen, onClick, label }: { isOpen: boolean; onClick: () => void; label: string }) => (
     <button
         onClick={onClick}
         className="flex items-center text-blue-500 dark:text-blue-400 font-semibold py-1 px-2 sm:py-2 sm:px-4 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { clsx } from "clsx";
+import { memo } from "react";
 
 type WordStatus = "ok" | "delete" | "add" | "eadd" | "edelete";
 
@@ -11,7 +12,7 @@ interface TableRowProps {
     openWork?: () => void
 }
 
-const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
+const TableRow = memo(({ word, status, openWork }:TableRowProps) => {
     const wordLength = word.length;
 
     return (
@@ -56,6 +57,6 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
         </tr>
 
     )
-}
+})
 
 export default TableRow;
