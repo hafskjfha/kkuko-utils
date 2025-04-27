@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import WordAddForm from "./WordAddForm";
 import { supabase } from "@/app/lib/supabaseClient";
 import Spinner from "@/app/components/Spinner";
 import { PostgrestError } from "@supabase/supabase-js";
@@ -11,6 +10,7 @@ import CompleteModal from "@/app/components/CompleteModal";
 import ConfirmModal from "@/app/components/ConfirmModal";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
+import { useRouter } from "next/navigation";
 
 
 interface WordAddModalProps {
@@ -24,12 +24,12 @@ interface WordAddModalProps {
 const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalProps) => {
     const [query, setQuery] = useState("");
     const [showAddWord, setShowAddWord] = useState(false);
-    const [searchResults, setSearchResults] = useState<{word:string, id:number}[] | null>(null);
+    const [searchResults, setSearchResults] = useState<{ word: string, id: number }[] | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [showCompleteModal, setShowCompleteModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [WorkWord, setWorkWord] = useState<{word:string, id:number} | null>(null);
+    const [WorkWord, setWorkWord] = useState<{ word: string, id: number } | null>(null);
     const user = useSelector((state: RootState) => state.user);
 
     const handleSearchA = async (querys: string) => {
@@ -38,20 +38,20 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
             return [];
         }
         if (querys.length < 5) {
-            const { data: words, error: err} = await supabase.from('words').select('word,id').eq('word', querys);
+            const { data: words, error: err } = await supabase.from('words').select('word,id').eq('word', querys);
             if (err) {
                 throw err;
             }
             return words;
         }
-        else{
-            const { data: words, error: err} = await supabase.from('words').select('word,id').ilike('word', `%${querys}%`);
+        else {
+            const { data: words, error: err } = await supabase.from('words').select('word,id').ilike('word', `%${querys}%`);
             if (err) {
                 throw err;
             }
             return words;
         }
-        
+
     }
 
     const handleSearchB = async (querys: string) => {
@@ -60,18 +60,18 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
             return [];
         }
         if (querys.length < 5) {
-            const { data: words, error: err} = await supabase.from('wait_words').select('word,id,request_type').eq('word', querys);
+            const { data: words, error: err } = await supabase.from('wait_words').select('word,id,request_type').eq('word', querys);
             if (err) {
                 throw err;
             }
-            return words.filter((word)=>word.request_type === "add");
+            return words.filter((word) => word.request_type === "add");
         }
-        else{
-            const { data: words, error: err} = await supabase.from('wait_words').select('word,id,request_type').ilike('word', `%${querys}%`);
+        else {
+            const { data: words, error: err } = await supabase.from('wait_words').select('word,id,request_type').ilike('word', `%${querys}%`);
             if (err) {
                 throw err;
             }
-            return words.filter((word)=>word.request_type === "add");
+            return words.filter((word) => word.request_type === "add");
         }
     }
 
@@ -82,8 +82,8 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
         }
         try {
             setIsLoading(true);
-            const [A,B] = await Promise.all([handleSearchA(query), handleSearchB(query)]);
-            setSearchResults([...A.map(({word, id})=>({word, id})), ...B.map(({word, id})=>({word, id}))]);
+            const [A, B] = await Promise.all([handleSearchA(query), handleSearchB(query)]);
+            setSearchResults([...A.map(({ word, id }) => ({ word, id })), ...B.map(({ word, id }) => ({ word, id }))]);
             setIsLoading(false);
         }
         catch (error) {
@@ -117,7 +117,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
         }
     }
 
-    const handleAddClick = (word: {word:string, id:number}) => {
+    const handleAddClick = (word: { word: string, id: number }) => {
         setWorkWord(word);
         setShowConfirmModal(true);
     }
@@ -136,7 +136,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                     <DialogTitle>{!showAddWord ? "문서에" : ""} 단어 추가</DialogTitle>
                 </DialogHeader>
 
-                { showConfirmModal && (
+                {showConfirmModal && (
                     <ConfirmModal
                         title={`문서에 추가 요청`}
                         description={`"${WorkWord?.word}" 단어를 문서에 추가 요청하시겠습니까?`}
@@ -148,7 +148,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                     />
                 )}
 
-                { showCompleteModal && (
+                {showCompleteModal && (
                     <CompleteModal
                         title="단어 추가 요청 완료"
                         description="단어 추가 요청이 완료되었습니다."
@@ -183,11 +183,11 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                                     <p className="text-gray-500 text-center">{!isLoading ? "검색어를 입력하세요." : ""}</p>
                                 ) : searchResults.length > 0 ? (
                                     <ul className="space-y-2">
-                                        {searchResults.map(({word,id}) => (
+                                        {searchResults.map(({ word, id }) => (
                                             <li key={word} className="flex justify-between items-center p-2 border-b">
                                                 {word}
                                                 {!alreadyAddedWords.has(word) ? (
-                                                    <Button size="sm" onClick={()=>handleAddClick({word, id})} >문서에 추가요청</Button>
+                                                    <Button size="sm" onClick={() => handleAddClick({ word, id })} >문서에 추가요청</Button>
                                                 ) : (
                                                     <span className="text-gray-500">등록된 단어</span>
                                                 )}
@@ -207,7 +207,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                     </div>
                 ) : (
                     <div>
-                        <AddWordForm onClose={() => setShowAddWord(false)} />
+                        <AddWordForm onClose={() => setShowAddWord(false)} docsID={id} />
                     </div>
                 )}
             </DialogContent>
@@ -216,12 +216,24 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
 }
 
 
-const AddWordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const AddWordForm = ({ onClose, docsID }: { onClose: () => void, docsID: number }) => {
+    const router = useRouter();
+    const onMoveToAddPage = () => {
+        router.push('/word/add?docsID=' + docsID);
+    };
+    
     return (
-        <div className="space-y-3 overflow-y-auto max-w-full">
-            <WordAddForm onSave={(word:string, selectedTopics:string[])=>{console.log(word,selectedTopics)}} />
-            <Button onClick={onClose}>뒤로가기</Button>
+        <div className="space-y-3 overflow-y-auto w-full max-w-[600px] mx-auto p-4 text-center">
+            <div className="text-lg font-semibold">단어 추가는 별도 페이지에서 진행됩니다.</div>
+            <div className="text-sm text-muted-foreground">페이지로 이동해서 단어를 입력해주세요.</div>
+            <Button onClick={onMoveToAddPage} className="w-full">
+                단어 추가 페이지로 이동
+            </Button>
+            <Button onClick={onClose} variant="outline" className="w-full">
+                뒤로가기
+            </Button>
         </div>
+
     )
 }
 

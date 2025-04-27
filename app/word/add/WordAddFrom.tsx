@@ -16,6 +16,13 @@ import { Card, CardContent, CardHeader } from "@/app/components/ui/card";
 import { supabase } from "@/app/lib/supabaseClient";
 import useSWR from "swr";
 import Spinner from "@/app/components/Spinner";
+import { useSelector } from 'react-redux';
+import { RootState } from "@/app/store/store";
+import ErrorModal from "@/app/components/ErrModal";
+import CompleteModal from "@/app/components/CompleteModal";
+import LoginRequiredModal from "@/app/components/LoginRequiredModal";
+import { useRouter } from 'next/navigation';
+import FailModal from "@/app/components/FailModal";
 
 
 const calculateKoreanInitials = (word: string): string => {
@@ -51,31 +58,33 @@ const fetcher = async () => {
 const TopicFlexList = React.memo(({ topics, selectedTopics, onChange }: {
     topics: [string, string][],
     selectedTopics: string[],
-    onChange: (topicCode: string) => void
+    onChange: (topicCode: string) => void 
 }) => {
-
     return (
-        <div className="flex flex-wrap gap-2 overflow-y-auto h-48">
+        <div className="grid grid-cols-2 gap-2 w-full">
             {topics.map(([label, code]) => (
                 <label
                     key={code}
-                    className="text-sm font-medium flex items-center w-1/4 text-gray-800 dark:text-gray-100"
+                    className="flex flex-row items-center p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100"
                 >
                     <input
                         type="checkbox"
                         onChange={() => onChange(code)}
                         checked={selectedTopics.includes(code)}
-                        className="mr-2"
+                        className="mr-2 flex-shrink-0"
                     />
-                    {label}
+                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">{label}</span>
                 </label>
-
             ))}
         </div>
     );
-})
+});
 
-const WordAddForm = ({ }) => {
+interface WordAddFormProp {
+    compleSave?: (wordID: number, errorP: (value: React.SetStateAction<ErrorMessage | null>) => void) => Promise<(() => void) | undefined>;
+}
+
+const WordAddForm = ({ compleSave }: WordAddFormProp) => {
     const [word, setWord] = useState<string>("");
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
     const [groupVisibility, setGroupVisibility] = useState({
@@ -86,19 +95,107 @@ const WordAddForm = ({ }) => {
     const [searchTermOther, setSearchTermOther] = useState("");
     const [invalidWord, setInvalidWord] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
-    const { data, isLoading } = useSWR("themes", fetcher);
-    const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string> }>({ topicsCode: {}, topicsKo: {} })
+    const { data, error,isLoading } = useSWR("themes", fetcher);
+    const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string>, topicsID: Record<string, number> }>({ topicsCode: {}, topicsKo: {}, topicsID: {} })
+    const [errorModalView,setErrorModalView] = useState<ErrorMessage|null>(null);
+    const [completeState, setCompleteState] = useState<{word:string, selectedTheme:string,onClose:()=> void}|null>(null);
+    const [workFail,setWorkFail] = useState<string|null>(null);
+    const user = useSelector((state: RootState) => state.user);
+    const Router = useRouter();
+    const [isLogin, setIsLogin] = useState<boolean>(!!user.uuid);
+
+    useEffect(()=>{
+        if (!user.uuid) {
+            setIsLogin(false);
+        } else {
+            setIsLogin(true);
+        }
+    },[user])
+
+    if (error){
+        setErrorModalView({
+            ErrMessage:"An error occurred while fetching data.",
+            ErrName:"ErrorFetchingData",
+            ErrStackRace:"",
+            inputValue:"themes fetch"});
+    }
+
+    const onSave = async (word: string, selectedTopics: string[]) => {
+        if (isSaving) return;
+        if (!user.uuid) return // 별도 처리 추가
+        const {data,error:exstedCheckError} = await supabase.from('words').select('id').eq('word',word);
+        if (exstedCheckError) {
+            setErrorModalView({
+                ErrName: exstedCheckError.name,
+                ErrMessage: exstedCheckError.message,
+                ErrStackRace: exstedCheckError.stack,
+                inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
+            })
+            return;
+        }
+
+        if (data.length > 0) {
+            setWorkFail("이미 존재하는 단어입니다.");
+            return;
+        }
 
 
-    const onSave = (word: string, selectedTopics: string[]) => {
+        const insertWaitWordData = {
+            word,
+            requested_by: user.uuid,
+            request_type: "add" as const
+        }
+        const { data: insertedWaitWord, error: insertedWaitWordError } = await supabase.from('wait_words').insert(insertWaitWordData).select('*');
+        if (insertedWaitWordError) {
+            if (insertedWaitWordError.code === '23505') {
+                setWorkFail("이미 요청이 들어온 단어입니다. ");
+                return;
+            }
+            setErrorModalView({
+                ErrName: insertedWaitWordError.name,
+                ErrMessage: insertedWaitWordError.message,
+                ErrStackRace: insertedWaitWordError.stack,
+                inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
+            })
+            return;
+        }
+        const insertWaitWordTopicsData = selectedTopics
+            .filter(tc => topicInfo.topicsID[tc])
+            .map(tc => ({
+                wait_word_id: insertedWaitWord[0].id,
+                theme_id: topicInfo.topicsID[tc]
+            }));
+        const {error: insertWaitWordTopicsDataError} = await supabase.from('wait_word_themes').insert(insertWaitWordTopicsData)
+        if(insertWaitWordTopicsDataError){
+            setErrorModalView({
+                ErrName: insertWaitWordTopicsDataError.name,
+                ErrMessage: insertWaitWordTopicsDataError.message,
+                ErrStackRace: insertWaitWordTopicsDataError.stack,
+                inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
+            })
+        }
+
+        const ress = await compleSave?.(insertedWaitWord[0].id, setErrorModalView);
+        setCompleteState({word:word, selectedTheme: selectedTopics.join(', '), onClose:()=>{
+            setCompleteState(null);
+            ress?.();
+        }});
+        setWord("");
+        setSelectedTopics([]);
+
     }
 
     useEffect(() => {
         if (!data) return;
         const newTopicsCode = data.reduce((acc, d) => ({ ...acc, [d.code]: d.name }), {});
         const newTopicsKo = data.reduce((acc, d) => ({ ...acc, [d.name]: d.code }), {});
-        setTopicInfo({ topicsCode: newTopicsCode, topicsKo: newTopicsKo })
+        const newTopicID = data.reduce((acc, d) => ({ ...acc, [d.code]: d.id }), {});
+        setTopicInfo({ topicsCode: newTopicsCode, topicsKo: newTopicsKo, topicsID: newTopicID })
     }, [data]);
+
+    useEffect(()=>{
+        setIsSaving(isLoading);
+    },[isLoading])
 
 
     const groupedTopics = useMemo(() => {
@@ -146,7 +243,7 @@ const WordAddForm = ({ }) => {
 
     return (
         <div className="flex flex-col lg:flex-row lg:flex-wrap gap-6 flex-1 min-h-0">
-            {isLoading && (
+            {isSaving && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" >
                     <Spinner />
                 </div>
@@ -285,6 +382,13 @@ const WordAddForm = ({ }) => {
                     </div>
                 </CardContent>
             </Card>
+            {errorModalView && <ErrorModal error={errorModalView} onClose={()=>{setErrorModalView(null)}}/>}
+            {completeState && <CompleteModal open={completeState!==null} 
+                                            onClose={completeState.onClose} 
+                                            title={"단어 추가 요청이 완료되었습니다."} 
+                                            description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 추가요청이 완료되었습니다.`}/>}
+            {workFail && <FailModal open={workFail!==null} onClose={()=>{setWorkFail(null)}} description={workFail} />}
+            {!isLogin && <LoginRequiredModal open={!isLogin} onClose={()=>{setIsLogin(true)}} />}
         </div>
 
 
