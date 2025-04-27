@@ -14,8 +14,23 @@ export default function WordSearch() {
         if (!query) return;
         setLoading(true);
         setResults([]);
-        const { data: getWords, error: getWordsError } = await supabase.from('words').select('word').ilike('word', `${query}%`);
-        const { data: getWaitWords, error: getWaitWordsError } = await supabase.from('wait_words').select('word').ilike('word', `${query}%`);
+        let dbqueryA =  supabase.from('words').select('word');
+        if (query.length > 4){
+            dbqueryA = dbqueryA.ilike('word', `${query}%`);
+        }
+        else{
+            dbqueryA = dbqueryA.eq('word',query);
+        }
+        const { data: getWords, error: getWordsError } = await dbqueryA;
+        
+        let dbqueryB = supabase.from('wait_words').select('word');    
+        if (query.length > 4){
+            dbqueryB = dbqueryB.ilike('word', `${query}%`);
+        }
+        else{
+            dbqueryB = dbqueryB.eq('word',query);
+        }
+        const { data: getWaitWords, error: getWaitWordsError } = await dbqueryB;
         if (getWordsError || getWaitWordsError) {
             console.error('Error fetching words:', getWordsError || getWaitWordsError);
             setLoading(false);
