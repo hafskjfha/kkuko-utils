@@ -184,6 +184,13 @@ export default function WordInfoPage({ query }: { query: string }) {
         <Spinner />
     }
 
+    if (errorView) {
+            
+            return (
+                <ErrorModal error={errorView} onClose={()=>{}} />
+            )
+        }
+
     if (wordInfo){
         return (
             <WordInfo wordInfo={wordInfo} />

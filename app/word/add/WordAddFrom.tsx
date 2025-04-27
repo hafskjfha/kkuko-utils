@@ -79,6 +79,8 @@ const TopicFlexList = React.memo(({ topics, selectedTopics, onChange }: {
     );
 });
 
+TopicFlexList.displayName = "TopicFlexList";
+
 interface WordAddFormProp {
     compleSave?: (wordID: number, errorP: (value: React.SetStateAction<ErrorMessage | null>) => void) => Promise<(() => void) | undefined>;
 }

@@ -37,7 +37,7 @@ export default function LogPage() {
     const [filterType, setFilterType] = useState<string>("all");
     const [logs, setLogs] = useState<LogItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [errorModalView, setErrorModalView] = useState<ErrorMessage|null>(null);
+    const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
     const user = useSelector((state: RootState) => state.user);
     const router = useRouter();
 
@@ -157,9 +157,14 @@ export default function LogPage() {
                                 <TableRow key={log.id} className={isMyRequest ? "bg-blue-50" : ""}>
                                     <TableCell>{log.id}</TableCell>
                                     <TableCell>{localTime}</TableCell>
-                                    <TableCell className={log.r_type === "add" ? "text-blue-600 underline hover:cursor-pointer" : ""} onClick={() => { log.r_type === "add" && router.push(`/word/search/${log.word}`) }} >{log.word}</TableCell>
-                                    <TableCell className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { log.make_by_user && router.push(`/profile?username=${log.make_by_user?.nickname}`) }} >{log.make_by_user?.nickname || "-"}</TableCell>
-                                    <TableCell className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { log.processed_by_user && router.push(`/profile?username=${log.processed_by_user?.nickname}`) }}>{log.processed_by_user?.nickname || "-"}</TableCell>
+                                    <TableCell className={log.r_type === "add" ? "text-blue-600 underline hover:cursor-pointer" : ""} onClick={() => {
+                                        if (log.r_type === "add") {
+                                            router.push(`/word/search/${log.word}`);
+                                        }
+                                    }
+                                    } >{log.word}</TableCell>
+                                    <TableCell className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.make_by_user) { router.push(`/profile?username=${log.make_by_user?.nickname}`); } }} >{log.make_by_user?.nickname || "-"}</TableCell>
+                                    <TableCell className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.processed_by_user) { router.push(`/profile?username=${log.processed_by_user?.nickname}`); } }}>{log.processed_by_user?.nickname || "-"}</TableCell>
                                     <TableCell>
                                         {log.state === "approved" ? (
                                             <span className="text-green-600 font-semibold">승인</span>
@@ -198,7 +203,7 @@ export default function LogPage() {
 
                 <Button
                     variant="outline"
-                    disabled={page === totalPages || isLoading} 
+                    disabled={page === totalPages || isLoading}
                     onClick={() => setPage((prev) => prev + 1)}
                 >
                     다음

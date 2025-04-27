@@ -169,7 +169,7 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <p className="text-gray-700 italic">
-                                    <strong className="text-blue-600">"{wordInfo.word}"</strong>으로 시작하여 <strong className="text-blue-600">"{wordInfo.word}"</strong>로 끝나는 단어입니다.
+                                    <strong className="text-blue-600">&quot;{wordInfo.word}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word}&quot;</strong>로 끝나는 단어입니다.
                                 </p>
                             </CardContent>
                         </Card>
