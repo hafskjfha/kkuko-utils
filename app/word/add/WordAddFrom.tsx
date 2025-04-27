@@ -101,7 +101,6 @@ const WordAddForm = ({ compleSave }: WordAddFormProp) => {
     const [completeState, setCompleteState] = useState<{word:string, selectedTheme:string,onClose:()=> void}|null>(null);
     const [workFail,setWorkFail] = useState<string|null>(null);
     const user = useSelector((state: RootState) => state.user);
-    const Router = useRouter();
     const [isLogin, setIsLogin] = useState<boolean>(!!user.uuid);
 
     useEffect(()=>{
