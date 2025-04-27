@@ -343,7 +343,7 @@ export type Database = {
         Row: {
           id: number
           request_type: Database["public"]["Enums"]["request_type_enum"]
-          requested_at: string | null
+          requested_at: string
           requested_by: string | null
           status: Database["public"]["Enums"]["request_status_enum"]
           word: string
@@ -352,7 +352,7 @@ export type Database = {
         Insert: {
           id?: never
           request_type: Database["public"]["Enums"]["request_type_enum"]
-          requested_at?: string | null
+          requested_at?: string
           requested_by?: string | null
           status?: Database["public"]["Enums"]["request_status_enum"]
           word: string
@@ -361,7 +361,7 @@ export type Database = {
         Update: {
           id?: never
           request_type?: Database["public"]["Enums"]["request_type_enum"]
-          requested_at?: string | null
+          requested_at?: string
           requested_by?: string | null
           status?: Database["public"]["Enums"]["request_status_enum"]
           word?: string
