@@ -21,10 +21,8 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
-    const [showWords, setShowWords] = useState(true);
-    const [hideDeleted, setHideDeleted] = useState(false);
     const [tocList, setTocList] = useState<string[]>([]);
-    const [wordsData, setWordsData] = useState<WordData[]>(data);
+    const [wordsData] = useState<WordData[]>(data);
     const [grouped, setGrouped] = useState<DefaultDict<string, WordData[]>>(new DefaultDict<string, WordData[]>(() => []));
     const [isLoading, setIsLoading] = useState(true); // ✅ 스켈레톤 상태
 
@@ -52,18 +50,6 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
         return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
     };
 
-    useEffect(() => {
-        let filteredData = data;
-
-        if (!showWords) {
-            filteredData = filteredData.filter((v) => v.status !== "add" && v.status !== "eadd");
-        }
-        if (hideDeleted) {
-            filteredData = filteredData.filter((v) => v.status !== "delete" && v.status !== "edelete");
-        }
-
-        setWordsData(filteredData);
-    }, [showWords, hideDeleted, data]);
 
     useEffect(() => {
         setTocList(updateToc(wordsData));
@@ -81,7 +67,7 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
 
     const handleDownload = () => {
-        const wordsText = data
+        const wordsText = wordsData
             .map((w) => w.word)
             .sort((a, b) => a.localeCompare(b, "ko"))
             .join("\n");
@@ -133,20 +119,6 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
             {/* 목차 */}
             <div className="mt-4 p-2">
                 <TableOfContents items={items} />
-            </div>
-
-            {/* 필터 */}
-            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center p-2 border rounded-lg text-sm">
-                {!isLoading && (<>
-                    <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={showWords} onChange={() => setShowWords(!showWords)} />
-                        추가 요청 단어 표시
-                    </label>
-                    <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={hideDeleted} onChange={() => setHideDeleted(!hideDeleted)} />
-                        삭제 요청된 단어 미표시
-                    </label>
-                </>)}
             </div>
 
             {/* 단어 테이블 or 스켈레톤 */}
