@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const { id } = await params;
     return {
         title: "끄코 유틸리티 - 단어장공유",
-        description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서 장보`,
+        description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서 정보`,
     };
 }
 
