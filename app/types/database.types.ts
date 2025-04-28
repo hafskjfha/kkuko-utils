@@ -449,6 +449,8 @@ export type Database = {
       }
       words: {
         Row: {
+          added_at: string
+          added_by: string | null
           first_letter: string | null
           id: number
           k_canuse: boolean
@@ -456,9 +458,10 @@ export type Database = {
           length: number | null
           noin_canuse: boolean
           word: string
-          word_type: Database["public"]["Enums"]["word_type"]
         }
         Insert: {
+          added_at?: string
+          added_by?: string | null
           first_letter?: string | null
           id?: never
           k_canuse?: boolean
@@ -466,9 +469,10 @@ export type Database = {
           length?: number | null
           noin_canuse?: boolean
           word: string
-          word_type?: Database["public"]["Enums"]["word_type"]
         }
         Update: {
+          added_at?: string
+          added_by?: string | null
           first_letter?: string | null
           id?: never
           k_canuse?: boolean
@@ -476,9 +480,16 @@ export type Database = {
           length?: number | null
           noin_canuse?: boolean
           word?: string
-          word_type?: Database["public"]["Enums"]["word_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "words_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

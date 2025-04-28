@@ -7,7 +7,7 @@ import { FileText, Edit, Trash2, AlertCircle, CheckCircle, Info } from "lucide-r
 
 interface WordInfoProps {
     word: string;
-    missionLetter: string; // "가*2 나*1" 형태 
+    missionLetter: [string,number][]; // [["가", 1], ["나", 2]] 형태
     initial: string;
     length: number;
     topic: {
@@ -20,11 +20,12 @@ interface WordInfoProps {
     status: "ok" | "추가요청" | "삭제요청";
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
+    requester_uuid?: string;
     requester?: string;
     requestTime?: string;
 }
 
-const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
+const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
         switch (wordInfo.status) {
@@ -41,15 +42,14 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
 
     // 미션 글자 표시를 위한 포맷팅
     const formatMissionLetters = () => {
-        if (!wordInfo.missionLetter) return "없음";
+        if (wordInfo.missionLetter.length === 0) return "없음";
 
-        const missionParts = wordInfo.missionLetter.split(" ");
         return (
             <div className="flex flex-wrap gap-2">
-                {missionParts.map((part, index) => {
-                    const [letter, count] = part.split("*");
+                {wordInfo.missionLetter.map((part, index) => {
+                    const [letter, count] = part;
                     return (
-                        <Badge key={index} variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                        <Badge key={`mission-${index}`} variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
                             {letter} × {count || 1}
                         </Badge>
                     );
@@ -63,6 +63,10 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
         wordInfo.topic.ok.length === 0 &&
         wordInfo.topic.waitAdd.length === 0 &&
         wordInfo.topic.waitDel.length === 0;
+
+    const utcRequestTime = wordInfo.requestTime ? new Date(wordInfo.requestTime) : null;
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localTime = utcRequestTime?.toLocaleString(undefined, { timeZone: userTimeZone });
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -96,28 +100,27 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
                     {/* 왼쪽 칼럼 - 상태 및 문서 정보 */}
                     <div className="md:col-span-1">
                         {/* 상태 정보 카드 */}
-                        {(wordInfo.status === "추가요청" || wordInfo.status === "삭제요청") && (
-                            <Card className="mb-6 shadow-sm">
-                                <CardHeader className={`pb-2 ${wordInfo.status === "추가요청" ? "bg-blue-50" : "bg-red-50"}`}>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <AlertCircle size={18} className={wordInfo.status === "추가요청" ? "text-blue-500" : "text-red-500"} />
-                                        {wordInfo.status === "추가요청" ? "추가 요청 정보" : "삭제 요청 정보"}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-4">
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <span className="font-medium text-gray-600">요청자:</span>
-                                            <span>{wordInfo.requester || "알 수 없음"}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="font-medium text-gray-600">요청 시간:</span>
-                                            <span>{wordInfo.requestTime || "알 수 없음"}</span>
-                                        </div>
+                        <Card className="mb-6 shadow-sm">
+                            <CardHeader className={`pb-2 ${wordInfo.status === "추가요청" ? "bg-blue-50" : wordInfo.status === "ok" ? "bg-green-50" : "bg-red-50"}`}>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <AlertCircle size={18} className={wordInfo.status === "추가요청" ? "text-blue-500" : wordInfo.status === "ok" ? "text-green-500" : "text-red-500"} />
+                                    {wordInfo.status === "추가요청" ? "추가 요청 정보" : wordInfo.status === "ok" ? "단어 등록 정보" : "삭제 요청 정보"}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="font-medium text-gray-600">{wordInfo.status === "ok" ? "추가자" : "요청자:"}</span>
+                                        <span>{wordInfo.requester || "알 수 없음"}</span>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                                    <div className="flex justify-between">
+                                        <span className="font-medium text-gray-600">{ wordInfo.status === "ok" ? "추가 시각" : "요청 시간:"}</span>
+                                        <span>{localTime || "알 수 없음"}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
 
                         {/* 미션 글자 카드 - 새로 추가 */}
                         <Card className="mb-6 shadow-sm">
@@ -169,7 +172,7 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <p className="text-gray-700 italic">
-                                    <strong className="text-blue-600">&quot;{wordInfo.word}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word}&quot;</strong>로 끝나는 단어입니다.
+                                    <strong className="text-blue-600">&quot;{wordInfo.word[0]}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word[wordInfo.word.length-1]}&quot;</strong>로 끝나는 단어입니다.
                                 </p>
                             </CardContent>
                         </Card>
@@ -284,4 +287,4 @@ const WordInfoPage: React.FC<{ wordInfo: WordInfoProps }> = ({ wordInfo }) => {
     );
 };
 
-export default WordInfoPage;
+export default WordInfo;

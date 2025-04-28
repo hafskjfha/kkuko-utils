@@ -10,7 +10,7 @@ import Spinner from '@/app/components/Spinner';
 
 interface WordInfoProps {
     word: string;
-    missionLetter: string;
+    missionLetter: [string, number][];
     initial: string;
     length: number;
     topic: {
@@ -24,6 +24,7 @@ interface WordInfoProps {
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
     requester?: string;
+    requester_uuid?: string;
     requestTime?: string;
 }
 
@@ -54,6 +55,7 @@ export default function WordInfoPage({ query }: { query: string }) {
             k_canuse?: boolean,
             typez: "ok" | "add" | "delete",
             requested_by?: string | null,
+            requested_by_uuid?: string | null,
             requested_at?: string | null,
             documents: { doc_id: number; doc_name: string }[],
             themes: {
@@ -62,11 +64,11 @@ export default function WordInfoPage({ query }: { query: string }) {
                 waitDel: string[];
             };
         }) => {
-            let mission= "";
+            const mission:[string,number][] = [];
             for (const c of "가나다라마바사아자차카타파하"){
                 const pp = (wordInfo.word.match(new RegExp(c, "gi")) || []).length
                 if (pp){
-                    mission += `${c}*${pp} `
+                    mission.push([c, pp]);
                 }
             }
             setWordInfo({
@@ -79,6 +81,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                 missionLetter: mission,
                 status: wordInfo.typez === "ok" ? "ok" : wordInfo.typez === "add" ? "추가요청" : "삭제요청",
                 requester: wordInfo.requested_by ?? undefined,
+                requester_uuid: wordInfo.requested_by_uuid ?? undefined,
                 requestTime: wordInfo.requested_at ?? undefined,
                 documents: wordInfo.documents,
                 topic: wordInfo.themes,
@@ -87,7 +90,13 @@ export default function WordInfoPage({ query }: { query: string }) {
 
     useEffect(()=>{
         const fetchWordInfo = async () => {
-            const { data: wordTableCehck, error: wordTableCehckError} = await supabase.from('words').select('*').eq('word',query).maybeSingle();
+            const { data: wordTableCehck, error: wordTableCehckError} = await supabase.from('words').select('*,users(nickname)').eq('word',query).maybeSingle();
+            const { data: waitTableCheck, error: waitTableCheckError} = await supabase.from('wait_words').select('*,users(nickname)').eq('word',query).maybeSingle();
+            if (waitTableCheckError) {
+                makeError(waitTableCheckError);
+                return;
+            }
+            
             if (wordTableCehckError) {
                 makeError(wordTableCehckError);
                 return;
@@ -117,7 +126,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                 wordSetFunc({
                     id: wordTableCehck.id,
                     word: wordTableCehck.word,
-                    typez: "ok",
+                    typez: waitTableCheck && waitTableCheck.request_type==="delete" ? "delete" : "ok",
                     documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name }))],
                     themes: {
                         ok: wordThemes ? wordThemes.map(theme => theme.themes.name) : [],
@@ -126,16 +135,19 @@ export default function WordInfoPage({ query }: { query: string }) {
                     },
                     noin_canuse: wordTableCehck.noin_canuse,
                     k_canuse: wordTableCehck.k_canuse,
+                    requested_by: waitTableCheck && waitTableCheck.request_type==="delete" ? waitTableCheck.users?.nickname : wordTableCehck.users?.nickname,
+                    requested_by_uuid: waitTableCheck && waitTableCheck.request_type==="delete" ? waitTableCheck.requested_by : wordTableCehck.added_by,
+                    requested_at: waitTableCheck && waitTableCheck.request_type==="delete" ? waitTableCheck.requested_at : wordTableCehck.added_at,
                 })
 
             } else {
-                const { data: waitTableCheck, error: waitTableCheckError} = await supabase.from('wait_words').select('*').eq('word',query).maybeSingle();
+                const { data: waitTableCheck, error: waitTableCheckError} = await supabase.from('wait_words').select('*,users(nickname)').eq('word',query).maybeSingle();
                 if (waitTableCheckError) {
                     makeError(waitTableCheckError);
                     return;
                 }
                 if (waitTableCheck) {
-                    const {data: waitWordThemes, error: waitWordThemesError} = await supabase.from('word_themes_wait').select('themes(name)').eq('word_id', waitTableCheck.id);
+                    const {data: waitWordThemes, error: waitWordThemesError} = await supabase.from('wait_word_themes').select('themes(name)').eq('wait_word_id', waitTableCheck.id);
                     if (waitWordThemesError) {
                         
                         makeError(waitWordThemesError);
@@ -149,7 +161,6 @@ export default function WordInfoPage({ query }: { query: string }) {
                     }
 
                     wordSetFunc({
-                            
                             id: waitTableCheck.id,
                             word: waitTableCheck.word,
                             typez: waitTableCheck.request_type,
@@ -159,7 +170,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                                 waitAdd: waitWordThemes ? waitWordThemes.map(theme => theme.themes.name) : [],
                                 waitDel: [],
                             },
-                            requested_by: waitTableCheck.requested_by,
+                            requested_by: waitTableCheck.users?.nickname,
+                            requested_by_uuid: waitTableCheck.requested_by,
                             requested_at: waitTableCheck.requested_at,
                     });
 
