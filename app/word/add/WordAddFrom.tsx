@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { disassemble } from "es-hangul";
-import { noInjungTopic } from "./const";
+import { noInjungTopic } from "../const";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
@@ -22,6 +22,7 @@ import ErrorModal from "@/app/components/ErrModal";
 import CompleteModal from "@/app/components/CompleteModal";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import FailModal from "@/app/components/FailModal";
+import { fetcher } from "../lib"
 
 
 const calculateKoreanInitials = (word: string): string => {
@@ -48,11 +49,7 @@ const filterTopi = (a: string, b: string) => {
     return indexB === b.length;
 };
 
-const fetcher = async () => {
-    const { data, error } = await supabase.from("themes").select("*");
-    if (error) throw error;
-    return data;
-}
+
 
 const TopicFlexList = React.memo(({ topics, selectedTopics, onChange }: {
     topics: [string, string][],

@@ -1,9 +1,18 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import Link from "next/link";
 import { FileText, Edit, Trash2, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { useSelector } from 'react-redux';
+import { RootState } from "@/app/store/store";
+import useSWR from "swr";
+import { fetcher } from "../../lib";
+import Spinner from "@/app/components/Spinner";
+import ErrorModal from "@/app/components/ErrModal";
+import WordThemeEditModal from "./WordhemeEditModal";
+import { noInjungTopic } from "../../const";
 
 interface WordInfoProps {
     word: string;
@@ -26,6 +35,12 @@ interface WordInfoProps {
 }
 
 const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
+    const user = useSelector((state: RootState) => state.user);
+    const { data, error,isLoading } = useSWR("themes", fetcher);
+    const [errorModalView,setErrorModalView] = useState<ErrorMessage|null>(null);
+    const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string>, topicsID: Record<string, number> }>({ topicsCode: {}, topicsKo: {}, topicsID: {} })
+    const [editModalOpen, setEditModalOpen] = useState(false);
+
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
         switch (wordInfo.status) {
@@ -39,6 +54,31 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                 return null;
         }
     };
+
+    if (error){
+        setErrorModalView({
+            ErrMessage:"An error occurred while fetching data.",
+            ErrName:"ErrorFetchingData",
+            ErrStackRace:"",
+            inputValue:"themes fetch"});
+    }
+
+    useEffect(() => {
+            if (!data) return;
+            const newTopicsCode = data.reduce((acc, d) => ({ ...acc, [d.code]: d.name }), {});
+            const newTopicsKo = data.reduce((acc, d) => ({ ...acc, [d.name]: d.code }), {});
+            const newTopicID = data.reduce((acc, d) => ({ ...acc, [d.code]: d.id }), {});
+            setTopicInfo({ topicsCode: newTopicsCode, topicsKo: newTopicsKo, topicsID: newTopicID })
+        }, [data]);
+    
+        const injungTheme = Object.entries(topicInfo.topicsKo)
+                    .filter(([label]) => !noInjungTopic.includes(label))
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map((lable)=>lable[0]);
+        const noInjungTheme = Object.entries(topicInfo.topicsKo)
+                    .filter(([label]) => noInjungTopic.includes(label))
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map((lable)=>lable[0])
 
     // 미션 글자 표시를 위한 포맷팅
     const formatMissionLetters = () => {
@@ -70,6 +110,11 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
+            {isLoading && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" >
+                        <Spinner />
+                    </div>
+                )}
             <div className="max-w-4xl mx-auto">
                 {/* 헤더 섹션 */}
                 <Card className="mb-6 shadow-md border-none overflow-hidden">
@@ -84,12 +129,16 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                                 </p>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="secondary" className="flex items-center gap-1">
-                                    <Edit size={16} /> 수정
-                                </Button>
-                                <Button variant="destructive" className="flex items-center gap-1">
-                                    <Trash2 size={16} /> 삭제요청
-                                </Button>
+                                {(wordInfo.status === "ok" && user.uuid) &&
+                                    <Button variant="secondary" className="flex items-center gap-1" onClick={()=>setEditModalOpen(true)}>
+                                        <Edit size={16}  /> 수정
+                                    </Button>
+                                }
+                                {((wordInfo.status === "ok" && user.uuid) || (wordInfo.status !== "ok" && wordInfo.requester_uuid === user.uuid)) &&
+                                    (<Button variant="destructive" className="flex items-center gap-1">
+                                        <Trash2 size={16} /> {wordInfo.status === "ok" ? "삭제요청" : "요청취소"}
+                                    </Button>)
+                                }
                             </div>
                         </div>
                     </CardHeader>
@@ -283,6 +332,9 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                     </div>
                 </div>
             </div>
+            {errorModalView && 
+                <ErrorModal error={errorModalView} onClose={()=>{setErrorModalView(null)}}/>}
+            { editModalOpen && <WordThemeEditModal wordInfo={wordInfo} onClose={() => setEditModalOpen(false)} isOpen={editModalOpen} onSave={()=>{}} injungTheme={injungTheme} noInjungTheme={noInjungTheme} /> }
         </div>
     );
 };
