@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation'
 
 interface WordInfoProps {
     word: string;
-    missionLetter: [string,number][]; // [["가", 1], ["나", 2]] 형태
+    missionLetter: [string, number][]; // [["가", 1], ["나", 2]] 형태
     initial: string;
     length: number;
     topic: {
@@ -31,6 +31,8 @@ interface WordInfoProps {
     };
     isChainable: boolean;
     isSeniorApproved: boolean;
+    goFirstLetterWords: string[];
+    goLastLetterWords: string[];
     status: "ok" | "추가요청" | "삭제요청";
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
@@ -39,13 +41,13 @@ interface WordInfoProps {
     requestTime?: string;
 }
 
-const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
+const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const user = useSelector((state: RootState) => state.user);
-    const { data, error,isLoading } = useSWR("themes", fetcher);
-    const [errorModalView,setErrorModalView] = useState<ErrorMessage|null>(null);
+    const { data, error, isLoading } = useSWR("themes", fetcher);
+    const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
     const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string>, topicsID: Record<string, number> }>({ topicsCode: {}, topicsKo: {}, topicsID: {} })
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [completeModalOpen, setCompleteModalOpen] = useState<{word: string, isOpen: boolean, addThemes: string[], delThemes: string[], s:"t"}|{word: string, work: "dr"|"ca" ,s:"r"}|null>(null);
+    const [completeModalOpen, setCompleteModalOpen] = useState<{ word: string, isOpen: boolean, addThemes: string[], delThemes: string[], s: "t" } | { word: string, work: "dr" | "ca", s: "r" } | null>(null);
     const [conFirmModalOpen, setConFirmModalOpen] = useState(false);
     const router = useRouter()
 
@@ -63,30 +65,31 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
         }
     };
 
-    if (error){
+    if (error) {
         setErrorModalView({
-            ErrMessage:"An error occurred while fetching data.",
-            ErrName:"ErrorFetchingData",
-            ErrStackRace:"",
-            inputValue:"themes fetch"});
+            ErrMessage: "An error occurred while fetching data.",
+            ErrName: "ErrorFetchingData",
+            ErrStackRace: "",
+            inputValue: "themes fetch"
+        });
     }
 
     useEffect(() => {
-            if (!data) return;
-            const newTopicsCode = data.reduce((acc, d) => ({ ...acc, [d.code]: d.name }), {});
-            const newTopicsKo = data.reduce((acc, d) => ({ ...acc, [d.name]: d.code }), {});
-            const newTopicID = data.reduce((acc, d) => ({ ...acc, [d.code]: d.id }), {});
-            setTopicInfo({ topicsCode: newTopicsCode, topicsKo: newTopicsKo, topicsID: newTopicID })
-        }, [data]);
-    
-        const injungTheme = Object.entries(topicInfo.topicsKo)
-                    .filter(([label]) => !noInjungTopic.includes(label))
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map((lable)=>lable[0]);
-        const noInjungTheme = Object.entries(topicInfo.topicsKo)
-                    .filter(([label]) => noInjungTopic.includes(label))
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map((lable)=>lable[0])
+        if (!data) return;
+        const newTopicsCode = data.reduce((acc, d) => ({ ...acc, [d.code]: d.name }), {});
+        const newTopicsKo = data.reduce((acc, d) => ({ ...acc, [d.name]: d.code }), {});
+        const newTopicID = data.reduce((acc, d) => ({ ...acc, [d.code]: d.id }), {});
+        setTopicInfo({ topicsCode: newTopicsCode, topicsKo: newTopicsKo, topicsID: newTopicID })
+    }, [data]);
+
+    const injungTheme = Object.entries(topicInfo.topicsKo)
+        .filter(([label]) => !noInjungTopic.includes(label))
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map((lable) => lable[0]);
+    const noInjungTheme = Object.entries(topicInfo.topicsKo)
+        .filter(([label]) => noInjungTopic.includes(label))
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map((lable) => lable[0])
 
     // 미션 글자 표시를 위한 포맷팅
     const formatMissionLetters = () => {
@@ -107,10 +110,10 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
     };
 
     const handleThemeEditSave = async (newThemes: string[], delThemes: string[]) => {
-        const delThemesQuery = delThemes.map((theme)=> ({word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const}));
-        const newThemesQuery = newThemes.map((theme) => ({word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const}));
-        
-        const {data: editRequestData ,error: editRequestError} = await supabase.from('word_themes_wait').upsert([...delThemesQuery, ...newThemesQuery], { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
+        const delThemesQuery = delThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const }));
+        const newThemesQuery = newThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const }));
+
+        const { data: editRequestData, error: editRequestError } = await supabase.from('word_themes_wait').upsert([...delThemesQuery, ...newThemesQuery], { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
         if (editRequestError) {
             setErrorModalView({
                 ErrMessage: "An error occurred while saving the theme edit.",
@@ -121,14 +124,14 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
             return;
         }
 
-        const addThemesA = editRequestData.filter((item)=> item.typez === "add").map((item) => item.themes.name);
-        const delThemesA = editRequestData.filter((item)=> item.typez === "delete").map((item) => item.themes.name);
-        
-        wordInfo.topic.ok = wordInfo.topic.ok.filter((t)=>!addThemesA.includes(t) && !delThemesA.includes(t));
-        wordInfo.topic.waitAdd = [...new Set([...wordInfo.topic.waitAdd, ...addThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
-        wordInfo.topic.waitDel = [...new Set([...wordInfo.topic.waitDel, ...delThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
-        
-        setCompleteModalOpen({word: wordInfo.word, isOpen: true, addThemes: addThemesA, delThemes: delThemesA, s:"t"});
+        const addThemesA = editRequestData.filter((item) => item.typez === "add").map((item) => item.themes.name);
+        const delThemesA = editRequestData.filter((item) => item.typez === "delete").map((item) => item.themes.name);
+
+        wordInfo.topic.ok = wordInfo.topic.ok.filter((t) => !addThemesA.includes(t) && !delThemesA.includes(t));
+        wordInfo.topic.waitAdd = [...new Set([...wordInfo.topic.waitAdd, ...addThemesA])].sort((a, b) => a.localeCompare(b, "ko"));
+        wordInfo.topic.waitDel = [...new Set([...wordInfo.topic.waitDel, ...delThemesA])].sort((a, b) => a.localeCompare(b, "ko"));
+
+        setCompleteModalOpen({ word: wordInfo.word, isOpen: true, addThemes: addThemesA, delThemes: delThemesA, s: "t" });
 
     }
 
@@ -143,14 +146,14 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
 
     const onCancelOrDeleteRequest = async () => {
         setConFirmModalOpen(false)
-        if (wordInfo.status === "ok" && user.uuid){
-            const {data: requestDeleteData ,error: requestDeleteError} = await supabase.from('wait_words').insert({
+        if (wordInfo.status === "ok" && user.uuid) {
+            const { data: requestDeleteData, error: requestDeleteError } = await supabase.from('wait_words').insert({
                 word: wordInfo.word,
                 request_type: "delete" as const,
                 requested_by: user.uuid
             }).select('*');
 
-            if (requestDeleteError){
+            if (requestDeleteError) {
                 setErrorModalView({
                     ErrMessage: "An error occurred while delete request",
                     ErrName: "ErrorDeleteRequest",
@@ -160,13 +163,13 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                 return;
             };
 
-            wordInfo.status="삭제요청"
+            wordInfo.status = "삭제요청"
             wordInfo.requestTime = requestDeleteData[0].requested_at;
-            setCompleteModalOpen({word: wordInfo.word, work: "dr", s:"r"});
+            setCompleteModalOpen({ word: wordInfo.word, work: "dr", s: "r" });
         }
-        else if(wordInfo.status !== "ok" && user.uuid && wordInfo.requester_uuid === user.uuid){
-            const { error: requestCancelError} = await supabase.from('wait_words').delete().eq("word",wordInfo.word);
-            if (requestCancelError){
+        else if (wordInfo.status !== "ok" && user.uuid && wordInfo.requester_uuid === user.uuid) {
+            const { error: requestCancelError } = await supabase.from('wait_words').delete().eq("word", wordInfo.word);
+            if (requestCancelError) {
                 setErrorModalView({
                     ErrMessage: "An error occurred while cancel request",
                     ErrName: "ErrorCancelRequest",
@@ -175,10 +178,10 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                 });
                 return;
             };
-            if (wordInfo.status === "삭제요청"){
+            if (wordInfo.status === "삭제요청") {
                 wordInfo.status = "ok"
-                const { data: originData, error: originDataError} = await supabase.from('words').select('*').eq('word',wordInfo.word).maybeSingle();
-                if (originDataError){
+                const { data: originData, error: originDataError } = await supabase.from('words').select('*').eq('word', wordInfo.word).maybeSingle();
+                if (originDataError) {
                     setErrorModalView({
                         ErrMessage: "An error occurred while cancel request",
                         ErrName: "ErrorCancelRequest",
@@ -190,9 +193,21 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
 
                 wordInfo.requestTime = originData?.added_at;
             }
-            setCompleteModalOpen({word: wordInfo.word, work: "ca", s:"r"})
+            setCompleteModalOpen({ word: wordInfo.word, work: "ca", s: "r" })
         }
     }
+
+    const handleWordChainClick = (wordList: string[]) => {
+        if (wordList.length === 0) return;
+
+        // Select a random word from the list
+        const randomIndex = Math.floor(Math.random() * wordList.length);
+        const randomWord = wordList[randomIndex];
+
+        // Navigate to the selected word
+        router.push(`/word/search/${randomWord}`);
+    };
+
 
     // 주제가 모두 비어있는지 확인
     const isTopicEmpty =
@@ -207,13 +222,13 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             {isLoading && (
-                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" >
-                        <Spinner />
-                    </div>
-                )}
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" >
+                    <Spinner />
+                </div>
+            )}
             <div className="max-w-4xl mx-auto">
                 {/* 헤더 섹션 */}
-                <Card className="mb-6 shadow-md border-none overflow-hidden">
+                <Card className="mb-3 shadow-md border-none overflow-hidden">
                     <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-700 text-white">
                         <div className="flex justify-between items-center">
                             <div>
@@ -226,18 +241,61 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                             </div>
                             <div className="flex gap-2">
                                 {(wordInfo.status === "ok" && user.uuid) &&
-                                    <Button variant="secondary" className="flex items-center gap-1" onClick={()=>setEditModalOpen(true)}>
-                                        <Edit size={16}  /> 수정
+                                    <Button variant="secondary" className="flex items-center gap-1" onClick={() => setEditModalOpen(true)}>
+                                        <Edit size={16} /> 수정
                                     </Button>
                                 }
                                 {((wordInfo.status === "ok" && user.uuid) || (wordInfo.status !== "ok" && wordInfo.requester_uuid === user.uuid)) &&
-                                    (<Button variant="destructive" className="flex items-center gap-1" onClick={()=>setConFirmModalOpen(true)}>
+                                    (<Button variant="destructive" className="flex items-center gap-1" onClick={() => setConFirmModalOpen(true)}>
                                         <Trash2 size={16} /> {wordInfo.status === "ok" ? "삭제요청" : "요청취소"}
                                     </Button>)
                                 }
                             </div>
                         </div>
                     </CardHeader>
+                </Card>
+
+                <Card className="mb-6 shadow-md border-none overflow-hidden">
+                    <CardContent className="py-4 flex items-center justify-center gap-6">
+                        {/* 첫 글자로 시작하는 단어 버튼 */}
+                        {wordInfo.goFirstLetterWords.length > 0 ? (
+                            <Button
+                                variant="outline"
+                                className="flex items-center gap-1 text-green-600 border-green-300 hover:bg-green-50"
+                                onClick={() => handleWordChainClick(wordInfo.goFirstLetterWords)}
+                            >
+                                <span className="font-bold">&lt;{wordInfo.word[0]}</span>
+                                <span className="text-sm ml-1">({wordInfo.goFirstLetterWords.length})</span>
+                            </Button>
+                        ) : (
+                            <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2">
+                                <AlertCircle size={16} />
+                                <span className="font-bold">&lt;{wordInfo.word[0]}</span>
+                            </div>
+                        )}
+
+                        {/* 연결 표시 */}
+                        <div className="flex items-center">
+                            <span className="text-gray-400 text-sm">단어 연결</span>
+                        </div>
+
+                        {/* 마지막 글자로 끝나는 단어 버튼 */}
+                        {wordInfo.goLastLetterWords.length > 0 ? (
+                            <Button
+                                variant="outline"
+                                className="flex items-center gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                                onClick={() => handleWordChainClick(wordInfo.goLastLetterWords)}
+                            >
+                                <span className="font-bold">{wordInfo.word[wordInfo.word.length - 1]}&gt;</span>
+                                <span className="text-sm ml-1">({wordInfo.goLastLetterWords.length})</span>
+                            </Button>
+                        ) : (
+                            <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2">
+                                <AlertCircle size={16} />
+                                <span className="font-bold">{wordInfo.word[wordInfo.word.length - 1]}&gt;</span>
+                            </div>
+                        )}
+                    </CardContent>
                 </Card>
 
                 {/* 메인 콘텐츠 */}
@@ -259,13 +317,12 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                                         <span>{wordInfo.requester || "알 수 없음"}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="font-medium text-gray-600">{ wordInfo.status === "ok" ? "추가 시각" : "요청 시간:"}</span>
+                                        <span className="font-medium text-gray-600">{wordInfo.status === "ok" ? "추가 시각" : "요청 시간:"}</span>
                                         <span>{localTime || "알 수 없음"}</span>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
-                        
 
                         {/* 미션 글자 카드 - 새로 추가 */}
                         <Card className="mb-6 shadow-sm">
@@ -317,7 +374,7 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                             </CardHeader>
                             <CardContent className="pt-4">
                                 <p className="text-gray-700 italic">
-                                    <strong className="text-blue-600">&quot;{wordInfo.word[0]}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word[wordInfo.word.length-1]}&quot;</strong>로 끝나는 단어입니다.
+                                    <strong className="text-blue-600">&quot;{wordInfo.word[0]}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word[wordInfo.word.length - 1]}&quot;</strong>로 끝나는 단어입니다.
                                 </p>
                             </CardContent>
                         </Card>
@@ -428,23 +485,23 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                     </div>
                 </div>
             </div>
-            {errorModalView && 
-                <ErrorModal error={errorModalView} onClose={()=>{setErrorModalView(null)}}/>}
-            { editModalOpen && <WordThemeEditModal wordInfo={wordInfo} onClose={() => setEditModalOpen(false)} isOpen={editModalOpen} onSave={handleThemeEditSave} injungTheme={injungTheme} noInjungTheme={noInjungTheme} /> }
-            { completeModalOpen && 
-                <CompleteModal 
-                    open={completeModalOpen!==null} 
-                    onClose={onCompleteModalClose} 
-                    title={completeModalOpen.s === "t" ? `단어 "${completeModalOpen.word}"에 대한 주제 수정 완료` : `${josa(wordInfo.word,"을/를")} ${wordInfo.status === "ok" ? "삭제 요청을" : (wordInfo.status === "삭제요청" ? "삭제 요청취소" : "추가 요청취소")+"를"} 하였습니다`} 
-                    description={completeModalOpen.s === "t" ? `주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length >0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}` : ``}
+            {errorModalView &&
+                <ErrorModal error={errorModalView} onClose={() => { setErrorModalView(null) }} />}
+            {editModalOpen && <WordThemeEditModal wordInfo={wordInfo} onClose={() => setEditModalOpen(false)} isOpen={editModalOpen} onSave={handleThemeEditSave} injungTheme={injungTheme} noInjungTheme={noInjungTheme} />}
+            {completeModalOpen &&
+                <CompleteModal
+                    open={completeModalOpen !== null}
+                    onClose={onCompleteModalClose}
+                    title={completeModalOpen.s === "t" ? `단어 "${completeModalOpen.word}"에 대한 주제 수정 완료` : `${josa(wordInfo.word, "을/를")} ${wordInfo.status === "ok" ? "삭제 요청을" : (wordInfo.status === "삭제요청" ? "삭제 요청취소" : "추가 요청취소") + "를"} 하였습니다`}
+                    description={completeModalOpen.s === "t" ? `주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length > 0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}` : ``}
                 />
             }
-            { conFirmModalOpen && 
+            {conFirmModalOpen &&
                 <ConfirmModal
-                    title={`"${wordInfo.word}"${josa(wordInfo.word,"을/를")[wordInfo.word.length]} ${wordInfo.status === "ok" ? "삭제 요청" : `${wordInfo.status === "삭제요청" ? "삭제" : "추가"} 요청 취소`}를 하시겠습니까?`}
+                    title={`"${wordInfo.word}"${josa(wordInfo.word, "을/를")[wordInfo.word.length]} ${wordInfo.status === "ok" ? "삭제 요청" : `${wordInfo.status === "삭제요청" ? "삭제" : "추가"} 요청 취소`}를 하시겠습니까?`}
                     description={"요청후 취소 할 수 " + (wordInfo.status === "ok" ? "있습니다." : "없습니다.")}
                     open={conFirmModalOpen}
-                    onClose={()=>setConFirmModalOpen(false)}
+                    onClose={() => setConFirmModalOpen(false)}
                     onConfirm={onCancelOrDeleteRequest}
                 />
             }
