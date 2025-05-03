@@ -6,22 +6,7 @@ import { useEffect, useState } from 'react';
 import NotFound from '@/app/not-found-client';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { disassemble } from 'es-hangul';
-import Spinner from '@/app/components/Spinner';
-
-// 커스텀 프로그레스 바 컴포넌트
-const ProgressBar = ({ completed, label }: { completed: number, label?: string }) => {
-    return (
-        <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
-            <div
-                className="bg-blue-600 h-4 rounded-full text-xs text-white flex items-center justify-center transition-all duration-300"
-                style={{ width: `${completed}%` }}
-            >
-                {completed > 10 && `${completed}%`}
-            </div>
-            {label && <div className="text-xs text-center mt-1">{label}</div>}
-        </div>
-    );
-};
+import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 
 interface WordInfoProps {
     word: string;
@@ -45,12 +30,6 @@ interface WordInfoProps {
     requestTime?: string;
 }
 
-interface LoadingState {
-    isLoading: boolean;
-    progress: number;
-    currentTask: string;
-}
-
 const calculateKoreanInitials = (word: string): string => {
     return word.split("").map((c) => disassemble(c)[0]).join("");
 };
@@ -61,20 +40,7 @@ export default function WordInfoPage({ query }: { query: string }) {
     const [isNotFound, setIsNotFound] = useState(false);
 
     // 로딩 상태를 더 상세하게 관리하기 위한 상태
-    const [loadingState, setLoadingState] = useState<LoadingState>({
-        isLoading: true,
-        progress: 0,
-        currentTask: "초기화 중..."
-    });
-
-    // 로딩 상태와 진행률 업데이트 함수
-    const updateLoadingState = (progress: number, task: string) => {
-        setLoadingState({
-            isLoading: progress < 100,
-            progress,
-            currentTask: task
-        });
-    };
+    const { loadingState, updateLoadingState } = useLoadingState();
 
     const makeError = (error: PostgrestError) => {
         setErrorView({
@@ -281,11 +247,10 @@ export default function WordInfoPage({ query }: { query: string }) {
                 updateLoadingState(100, "완료!");
             } catch (error) {
                 console.error("데이터 로딩 중 오류 발생:", error);
-                setLoadingState({
-                    isLoading: false,
-                    progress: 0,
-                    currentTask: "오류 발생"
-                });
+                updateLoadingState(
+                    100,
+                    "오류 발생"
+                );
             }
         };
 
@@ -298,19 +263,7 @@ export default function WordInfoPage({ query }: { query: string }) {
 
     if (loadingState.isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow min-h-screen min-w-full">
-                <h2 className="text-xl font-bold mb-4">단어 정보 로딩 중</h2>
-                <div className="w-full max-w-md mb-4">
-                    <ProgressBar
-                        completed={loadingState.progress}
-                        label={`${loadingState.progress}% 완료`}
-                    />
-                </div>
-                <p className="text-gray-600 mt-2">{loadingState.currentTask}</p>
-                <div className="mt-4">
-                    <Spinner />
-                </div>
-            </div>
+            <LoadingPage title={'단어 정보'} />
         );
     }
 

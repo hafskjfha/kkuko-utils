@@ -2,10 +2,8 @@
 import { useEffect, useState } from "react";
 import WordsDocsHome from "./WordsDocsHome";
 import { supabase } from "@/app/lib/supabaseClient";
-import ProgressBar from "../components/ProgressBar";
-import type { LoadingState } from "../types/type";
-import Spinner from "../components/Spinner";
 import ErrorPage from "../components/ErrorPage";
+import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 
 type DocsType = {
     id: string;
@@ -18,22 +16,10 @@ type DocsType = {
 };
 
 export default function WordsDocsHomePage(){
-    const [loadingState, setLoadingState] = useState<LoadingState>({
-            isLoading: true,
-            progress: 0,
-            currentTask: "초기화 중..."
-        });
+    const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
     const [docsDatas, setDocsDatas] = useState<DocsType[] | null>(null);
 
-    // 로딩 상태와 진행률 업데이트 함수
-    const updateLoadingState = (progress: number, task: string) => {
-        setLoadingState({
-            isLoading: progress < 100,
-            progress,
-            currentTask: task
-        });
-    };
 
     const setDataFunc = (docs: DocsType[]) => {
         setDocsDatas(docs);
@@ -64,19 +50,7 @@ export default function WordsDocsHomePage(){
     
     if (loadingState.isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow min-h-screen min-w-full">
-                <h2 className="text-xl font-bold mb-4">단어 정보 로딩 중</h2>
-                <div className="w-full max-w-md mb-4">
-                    <ProgressBar
-                        completed={loadingState.progress}
-                        label={`${loadingState.progress}% 완료`}
-                    />
-                </div>
-                <p className="text-gray-600 mt-2">{loadingState.currentTask}</p>
-                <div className="mt-4">
-                    <Spinner />
-                </div>
-            </div>
+            <LoadingPage title={"문서 목록"} />
         );
     }
 
