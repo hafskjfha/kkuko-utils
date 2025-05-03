@@ -15,6 +15,9 @@ import WordThemeEditModal from "./WordhemeEditModal";
 import { noInjungTopic } from "../../const";
 import CompleteModal from "@/app/components/CompleteModal";
 import { supabase } from "@/app/lib/supabaseClient"
+import ConfirmModal from "@/app/components/ConfirmModal";
+import { josa } from "es-hangul";
+import { useRouter } from 'next/navigation'
 
 interface WordInfoProps {
     word: string;
@@ -42,7 +45,9 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
     const [errorModalView,setErrorModalView] = useState<ErrorMessage|null>(null);
     const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string>, topicsID: Record<string, number> }>({ topicsCode: {}, topicsKo: {}, topicsID: {} })
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [completeModalOpen, setCompleteModalOpen] = useState<{word: string, isOpen: boolean, addThemes: string[], delThemes: string[]}|null>(null);
+    const [completeModalOpen, setCompleteModalOpen] = useState<{word: string, isOpen: boolean, addThemes: string[], delThemes: string[], s:"t"}|{word: string, work: "dr"|"ca" ,s:"r"}|null>(null);
+    const [conFirmModalOpen, setConFirmModalOpen] = useState(false);
+    const router = useRouter()
 
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
@@ -123,13 +128,70 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
         wordInfo.topic.waitAdd = [...new Set([...wordInfo.topic.waitAdd, ...addThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
         wordInfo.topic.waitDel = [...new Set([...wordInfo.topic.waitDel, ...delThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
         
-        setCompleteModalOpen({word: wordInfo.word, isOpen: true, addThemes: addThemesA, delThemes: delThemesA});
+        setCompleteModalOpen({word: wordInfo.word, isOpen: true, addThemes: addThemesA, delThemes: delThemesA, s:"t"});
 
     }
 
     const onCompleteModalClose = () => {
+        if (completeModalOpen?.s === "r" && completeModalOpen?.work === "ca" && wordInfo.status === "추가요청") {
+            router.back();
+            return;
+        }
         setCompleteModalOpen(null);
 
+    }
+
+    const onCancelOrDeleteRequest = async () => {
+        setConFirmModalOpen(false)
+        if (wordInfo.status === "ok" && user.uuid){
+            const {data: requestDeleteData ,error: requestDeleteError} = await supabase.from('wait_words').insert({
+                word: wordInfo.word,
+                request_type: "delete" as const,
+                requested_by: user.uuid
+            }).select('*');
+
+            if (requestDeleteError){
+                setErrorModalView({
+                    ErrMessage: "An error occurred while delete request",
+                    ErrName: "ErrorDeleteRequest",
+                    ErrStackRace: requestDeleteError.message,
+                    inputValue: "delete request"
+                });
+                return;
+            };
+
+            wordInfo.status="삭제요청"
+            wordInfo.requestTime = requestDeleteData[0].requested_at;
+            setCompleteModalOpen({word: wordInfo.word, work: "dr", s:"r"});
+        }
+        else if(wordInfo.status !== "ok" && user.uuid && wordInfo.requester_uuid === user.uuid){
+            const { error: requestCancelError} = await supabase.from('wait_words').delete().eq("word",wordInfo.word);
+            if (requestCancelError){
+                setErrorModalView({
+                    ErrMessage: "An error occurred while cancel request",
+                    ErrName: "ErrorCancelRequest",
+                    ErrStackRace: requestCancelError.message,
+                    inputValue: "cancel request"
+                });
+                return;
+            };
+            if (wordInfo.status === "삭제요청"){
+                wordInfo.status = "ok"
+                const { data: originData, error: originDataError} = await supabase.from('words').select('*').eq('word',wordInfo.word).maybeSingle();
+                if (originDataError){
+                    setErrorModalView({
+                        ErrMessage: "An error occurred while cancel request",
+                        ErrName: "ErrorCancelRequest",
+                        ErrStackRace: originDataError.message,
+                        inputValue: "cancel request"
+                    });
+                    return;
+                }
+
+                wordInfo.requestTime = originData?.added_at;
+            }
+            setCompleteModalOpen({word: wordInfo.word, work: "ca", s:"r"})
+        }
     }
 
     // 주제가 모두 비어있는지 확인
@@ -169,7 +231,7 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                                     </Button>
                                 }
                                 {((wordInfo.status === "ok" && user.uuid) || (wordInfo.status !== "ok" && wordInfo.requester_uuid === user.uuid)) &&
-                                    (<Button variant="destructive" className="flex items-center gap-1">
+                                    (<Button variant="destructive" className="flex items-center gap-1" onClick={()=>setConFirmModalOpen(true)}>
                                         <Trash2 size={16} /> {wordInfo.status === "ok" ? "삭제요청" : "요청취소"}
                                     </Button>)
                                 }
@@ -373,8 +435,17 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                 <CompleteModal 
                     open={completeModalOpen!==null} 
                     onClose={onCompleteModalClose} 
-                    title={`단어 "${completeModalOpen.word}"에 대한 주제 수정 완료`} 
-                    description={`주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length >0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}`}
+                    title={completeModalOpen.s === "t" ? `단어 "${completeModalOpen.word}"에 대한 주제 수정 완료` : `${josa(wordInfo.word,"을/를")} ${wordInfo.status === "ok" ? "삭제 요청을" : (wordInfo.status === "삭제요청" ? "삭제 요청취소" : "추가 요청취소")+"를"} 하였습니다`} 
+                    description={completeModalOpen.s === "t" ? `주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length >0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}` : ``}
+                />
+            }
+            { conFirmModalOpen && 
+                <ConfirmModal
+                    title={`"${wordInfo.word}"${josa(wordInfo.word,"을/를")[wordInfo.word.length]} ${wordInfo.status === "ok" ? "삭제 요청" : `${wordInfo.status === "삭제요청" ? "삭제" : "추가"} 요청 취소`}를 하시겠습니까?`}
+                    description={"요청후 취소 할 수 " + (wordInfo.status === "ok" ? "있습니다." : "없습니다.")}
+                    open={conFirmModalOpen}
+                    onClose={()=>setConFirmModalOpen(false)}
+                    onConfirm={onCancelOrDeleteRequest}
                 />
             }
         </div>
