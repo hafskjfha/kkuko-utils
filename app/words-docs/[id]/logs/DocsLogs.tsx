@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { Button } from "@/app/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
+import { ArrowLeft } from "lucide-react";
 
 interface DocsLogsProps {
     id: number;
@@ -41,14 +42,15 @@ const DocsLogs = ({ id, name, Logs }: DocsLogsProps) => {
 
     return (
         <div className="p-6 max-w-6xl mx-auto bg-gray-50 min-h-screen">
+            <Link href={`/words-docs/${id}`} className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                <ArrowLeft size={18} className="mr-2" />
+                <span>문서로 돌아가기</span>
+            </Link>
+
             {/* 문서 제목 섹션 */}
-            <div className="mb-6">
-                <Link href={`/words-docs/${id}`}>
-                    <h1 className="text-3xl font-bold text-gray-800 hover:underline">
-                        {name} - 로그
-                    </h1>
-                </Link>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-3 mt-3">
+                {name} - 로그
+            </h1>
 
             {/* 필터링 섹션 */}
             <div className="flex gap-4 mb-4">
