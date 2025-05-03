@@ -187,7 +187,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         typez: waitTableCheck && waitTableCheck.request_type==="delete" ? "delete" : "ok",
                         documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name }))],
                         themes: {
-                            ok: wordThemes ? wordThemes.map(theme => theme.themes.name) : [],
+                            ok: wordThemes ? wordThemes.filter(theme => !wordThemes2.map(t => t.themes.name).includes(theme.themes.name)).map(theme => theme.themes.name) : [],
                             waitAdd: wordThemes2 ? wordThemes2.filter(theme => theme.typez === 'add').map(theme => theme.themes.name) : [],
                             waitDel: wordThemes2 ? wordThemes2.filter(theme => theme.typez === 'delete').map(theme => theme.themes.name) : [],
                         },

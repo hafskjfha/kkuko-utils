@@ -13,6 +13,8 @@ import Spinner from "@/app/components/Spinner";
 import ErrorModal from "@/app/components/ErrModal";
 import WordThemeEditModal from "./WordhemeEditModal";
 import { noInjungTopic } from "../../const";
+import CompleteModal from "@/app/components/CompleteModal";
+import { supabase } from "@/app/lib/supabaseClient"
 
 interface WordInfoProps {
     word: string;
@@ -40,6 +42,7 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
     const [errorModalView,setErrorModalView] = useState<ErrorMessage|null>(null);
     const [topicInfo, setTopicInfo] = useState<{ topicsCode: Record<string, string>, topicsKo: Record<string, string>, topicsID: Record<string, number> }>({ topicsCode: {}, topicsKo: {}, topicsID: {} })
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [completeModalOpen, setCompleteModalOpen] = useState<{word: string, isOpen: boolean, addThemes: string[], delThemes: string[]}|null>(null);
 
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
@@ -97,6 +100,37 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
             </div>
         );
     };
+
+    const handleThemeEditSave = async (newThemes: string[], delThemes: string[]) => {
+        const delThemesQuery = delThemes.map((theme)=> ({word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const}));
+        const newThemesQuery = newThemes.map((theme) => ({word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const}));
+        
+        const {data: editRequestData ,error: editRequestError} = await supabase.from('word_themes_wait').upsert([...delThemesQuery, ...newThemesQuery], { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
+        if (editRequestError) {
+            setErrorModalView({
+                ErrMessage: "An error occurred while saving the theme edit.",
+                ErrName: "ErrorSavingThemeEdit",
+                ErrStackRace: editRequestError.message,
+                inputValue: "theme edit save"
+            });
+            return;
+        }
+
+        const addThemesA = editRequestData.filter((item)=> item.typez === "add").map((item) => item.themes.name);
+        const delThemesA = editRequestData.filter((item)=> item.typez === "delete").map((item) => item.themes.name);
+        
+        wordInfo.topic.ok = wordInfo.topic.ok.filter((t)=>!addThemesA.includes(t) && !delThemesA.includes(t));
+        wordInfo.topic.waitAdd = [...new Set([...wordInfo.topic.waitAdd, ...addThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
+        wordInfo.topic.waitDel = [...new Set([...wordInfo.topic.waitDel, ...delThemesA])].sort((a,b)=>a.localeCompare(b,"ko"));
+        
+        setCompleteModalOpen({word: wordInfo.word, isOpen: true, addThemes: addThemesA, delThemes: delThemesA});
+
+    }
+
+    const onCompleteModalClose = () => {
+        setCompleteModalOpen(null);
+
+    }
 
     // 주제가 모두 비어있는지 확인
     const isTopicEmpty =
@@ -247,7 +281,7 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
                                                 <h4 className="text-sm font-medium text-gray-500 mb-2">승인된 주제</h4>
                                                 <div className="flex flex-wrap gap-2">
                                                     {wordInfo.topic.ok.map((t, index) => (
-                                                        <Badge key={index} variant="secondary" className="bg-gray-200 text-gray-800">
+                                                        <Badge key={t} variant="secondary" className="bg-gray-200 text-gray-800">
                                                             {t}
                                                         </Badge>
                                                     ))}
@@ -334,7 +368,15 @@ const WordInfo = ({ wordInfo }:{ wordInfo: WordInfoProps }) => {
             </div>
             {errorModalView && 
                 <ErrorModal error={errorModalView} onClose={()=>{setErrorModalView(null)}}/>}
-            { editModalOpen && <WordThemeEditModal wordInfo={wordInfo} onClose={() => setEditModalOpen(false)} isOpen={editModalOpen} onSave={()=>{}} injungTheme={injungTheme} noInjungTheme={noInjungTheme} /> }
+            { editModalOpen && <WordThemeEditModal wordInfo={wordInfo} onClose={() => setEditModalOpen(false)} isOpen={editModalOpen} onSave={handleThemeEditSave} injungTheme={injungTheme} noInjungTheme={noInjungTheme} /> }
+            { completeModalOpen && 
+                <CompleteModal 
+                    open={completeModalOpen!==null} 
+                    onClose={onCompleteModalClose} 
+                    title={`단어 "${completeModalOpen.word}"에 대한 주제 수정 완료`} 
+                    description={`주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length >0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}`}
+                />
+            }
         </div>
     );
 };

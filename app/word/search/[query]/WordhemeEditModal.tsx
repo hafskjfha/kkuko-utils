@@ -10,16 +10,13 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { fetcher } from "../../lib";
+import ConfirmModal from "@/app/components/ConfirmModal";
 
 interface EditModalProps {
     isOpen: boolean;
     onClose: () => void;
     wordInfo: WordInfoProps;
-    onSave: (updatedTopics: {
-        injungTheme: string[];
-        noInjungTheme: string[];
-    }) => void;
+    onSave: (newThemes: string[], delThemes: string[]) => Promise<void>;
     injungTheme: string[];
     noInjungTheme: string[];
 }
@@ -74,20 +71,12 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
             injungTheme.includes(topic)
         )
     );
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
     // 주제 선택 가능 여부 확인 함수
     const isTopicInteractable = (topic: string) => {
         // 추가/삭제 요청 상태인 주제는 선택 불가능
         return !wordInfo.topic.waitAdd.includes(topic) && !wordInfo.topic.waitDel.includes(topic);
-    };
-
-    // 주제가 선택되었는지 확인하는 함수
-    const isTopicSelected = (topic: string) => {
-        if (injungTheme.includes(topic)) {
-            return selectedSeniorTopics.includes(topic);
-        } else {
-            return selectedYouthTopics.includes(topic);
-        }
     };
 
     // 주제 선택/해제 핸들러
@@ -111,11 +100,26 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
     };
 
     // 저장 핸들러
-    const handleSave = () => {
-        onSave({
-            injungTheme: selectedSeniorTopics,
-            noInjungTheme: selectedYouthTopics
-        });
+    const handleSave = async () => {
+        const newThemes: string[] = [];
+        for (const topic of selectedSeniorTopics) {
+            if (!wordInfo.topic.ok.includes(topic)) {
+                newThemes.push(topic);
+            }
+        }
+        for (const topic of selectedYouthTopics) {
+            if (!wordInfo.topic.ok.includes(topic)) {
+                newThemes.push(topic);
+            }
+        }
+        const delThemes: string[] = [];
+        for (const topic of wordInfo.topic.ok) {
+            if (!selectedSeniorTopics.includes(topic) && !selectedYouthTopics.includes(topic)) {
+                delThemes.push(topic);
+            }
+        }
+
+        await onSave(newThemes, delThemes);
         onClose();
     };
 
@@ -265,7 +269,7 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                         취소
                     </Button>
                     <Button
-                        onClick={handleSave}
+                        onClick={()=> setConfirmModalOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
                     >
                         <Save size={16} />
@@ -273,6 +277,15 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                     </Button>
                 </DialogFooter>
             </DialogContent>
+            {confirmModalOpen && (
+                <ConfirmModal
+                    open={confirmModalOpen}
+                    title={`"${wordInfo.word}" 단어의 주제 수정 요청을 넣으시겠습니까?`}
+                    description={"요청 후 취소할 수 없습니다."}
+                    onConfirm={handleSave}
+                    onClose={() => setConfirmModalOpen(false)}
+                />
+            )}
         </Dialog>
     );
 }
