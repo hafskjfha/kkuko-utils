@@ -19,7 +19,7 @@ export type UserInfo = {
 export type WordData = {
     word: string,
     status: "ok" | "add" | "delete" | "eadd" | "edelete",
-    maker?: string | undefined
+    maker?: string | undefined | null
 }
 export interface LoadingState {
     isLoading: boolean;
