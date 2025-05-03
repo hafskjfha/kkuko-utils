@@ -21,3 +21,8 @@ export type WordData = {
     status: "ok" | "add" | "delete" | "eadd" | "edelete",
     maker?: string | undefined
 }
+export interface LoadingState {
+    isLoading: boolean;
+    progress: number;
+    currentTask: string;
+}
