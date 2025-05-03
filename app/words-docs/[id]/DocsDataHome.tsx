@@ -25,7 +25,7 @@ export default function DocsDataHome({id}:{id:number}){
     const [isNotFound,setIsNotFound] = useState(false);
     const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
-    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string}} | null>(null);
+    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}} | null>(null);
 
     const getDataOkWords = useCallback(async () => {
         const {data:dataA, error:error} = await supabase.from('docs_words').select('words(word)').eq('docs_id',id);
@@ -91,7 +91,7 @@ export default function DocsDataHome({id}:{id:number}){
                 updateLoadingState(70, "데이터를 가공중...")
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
                 const wordsData = [...wordsNotInB, ...LetterDatas2.map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
-                const p = {title: docsData.name, lastUpdate: docsData.last_update}
+                const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
                 setWordsData({words: wordsData, metadata: p});
                 updateLoadingState(100, "완료!");
                 return;
@@ -113,7 +113,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsNotInC = wordsNotInB.filter(a => !C.some(c => c.word === a.word)).map((p)=>({word: p.word, status: p.status as "ok", maker: undefined}))
                 const CwordsNotInB = C.filter(c => !B.some(b => b.word === c.word)).map((p)=>({word: p.word, status: p.status as "eadd" | "edelete", maker: p.maker}))
                 const wordsData = [...wordsNotInC,...CwordsNotInB, ...B]
-                const p = {title: docsData.name, lastUpdate: docsData.last_update}
+                const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 
                 setWordsData({words:wordsData, metadata:p});
                 updateLoadingState(100, "완료!");

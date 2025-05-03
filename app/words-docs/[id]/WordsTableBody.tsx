@@ -13,8 +13,9 @@ const WordAddModal = lazy(() => import("./WordAddModal"));
 const WordsTableBody = ({
     title,
     initialData,
-    id
-}: { initialData: WordData[]; title: string, id: string }) => {
+    id,
+    aoK
+}: { initialData: WordData[]; title: string, id: string, aoK: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 
@@ -50,7 +51,7 @@ const WordsTableBody = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} id={id} />
+                <Table initialData={initialData} id={id} isEct={aoK}/>
             </motion.div>
 
             {wordAddModalOpen && (
@@ -60,6 +61,7 @@ const WordsTableBody = ({
                         onClose={() => setWordAddModalOpen(false)}
                         alreadyAddedWords={new Set(initialData.map((d) => d.word))}
                         id = {Number(id)}
+                        isAddok={aoK}
                     /> 
                 </Suspense>
             )}

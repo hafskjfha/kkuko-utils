@@ -34,7 +34,7 @@ type DocsLogDatas = DocsLogData[];
 type WordLogDatas = WordLogData[];
 
 
-const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => {
+const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string, isEct: boolean }) => {
     const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
@@ -146,7 +146,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
 
             // 3. 단어 데이터 추가
             const isNoinWord = getWordThemesData.some((t) => noInjungTopicID.includes(t.theme_id));
-            const insertWordData = { word: getWaitWordData.word, noin_canuse: isNoinWord };
+            const insertWordData = { word: getWaitWordData.word, noin_canuse: isNoinWord, added_by: getWaitWordData.requested_by};
             const { data: getAddAcceptData, error: getAddAcceptDataError } = await supabase
                 .from('words')
                 .insert(insertWordData)
@@ -830,6 +830,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             {modal && (
                 <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" ><Spinner /></div>}>
                     <WorkModal
+                        isEct={isEct}
                         isSaving={isProcessing}
                         onClose={closeWork}
                         word={modal.word}

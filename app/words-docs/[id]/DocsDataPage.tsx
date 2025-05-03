@@ -14,6 +14,7 @@ interface DocsPageProp {
     metaData: {
         title: string;
         lastUpdate: string;
+        typez: "letter" | "theme" | "ect"
     };
 }
 
@@ -135,7 +136,7 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
                     // ✅ 실제 데이터 렌더링
                     items.map(({ title, ref }) => (
                         <div key={title} ref={ref} className="mt-4">
-                            <WordsTableBody title={title} initialData={grouped.get(title)} id={`${id}`} />
+                            <WordsTableBody title={title} initialData={grouped.get(title)} id={`${id}`} aoK={metaData.typez === "ect"}/>
                         </div>
                     ))
                 )}

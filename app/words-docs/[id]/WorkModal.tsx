@@ -10,6 +10,7 @@ import {
 import Spinner from "@/app/components/Spinner";
 
 type ModalProps = {
+	isEct: boolean;
 	isSaving: boolean;
 	onClose: () => void;
 	word: string;
@@ -35,6 +36,7 @@ type ModalProps = {
 };
 
 const WorkModal = ({
+	isEct,
 	isSaving,
 	onClose,
 	word,
@@ -145,12 +147,14 @@ const WorkModal = ({
 										color="red"
 										onClick={onDelete}
 									/>
-									<ActionBlock
-										text="단어를 문서에서만 삭제합니다."
-										color="red"
-										bg="bg-red-100"
-										onClick={onDeleteFromDoc}
-									/>
+									{isEct && 
+										<ActionBlock
+											text="단어를 문서에서만 삭제합니다."
+											color="red"
+											bg="bg-red-100"
+											onClick={onDeleteFromDoc}
+										/>
+									}
 								</>
 							)}
 							<ActionBlock
@@ -158,12 +162,14 @@ const WorkModal = ({
 								color="yellow"
 								onClick={onRequestDelete}
 							/>
-							<ActionBlock
-								text="문서에서만 삭제 요청을 보냅니다."
-								color="yellow"
-								bg="bg-yellow-100"
-								onClick={onRequestDeleteFromDoc}
-							/>
+							{isEct &&
+								<ActionBlock
+									text="문서에서만 삭제 요청을 보냅니다."
+									color="yellow"
+									bg="bg-yellow-100"
+									onClick={onRequestDeleteFromDoc}
+								/>
+							}
 						</>
 					)}
 

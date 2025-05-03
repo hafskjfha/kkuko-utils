@@ -16,12 +16,13 @@ import { useRouter } from "next/navigation";
 interface WordAddModalProps {
     isOpen: boolean;
     onClose: () => void;
-    alreadyAddedWords: Set<string>
-    id: number
+    alreadyAddedWords: Set<string>;
+    id: number;
+    isAddok: boolean
 }
 
 
-const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalProps) => {
+const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordAddModalProps) => {
     const [query, setQuery] = useState("");
     const [showAddWord, setShowAddWord] = useState(false);
     const [searchResults, setSearchResults] = useState<{ word: string, id: number }[] | null>(null);
@@ -157,7 +158,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
                         open={showCompleteModal}
                     />
                 )}
-                {!showAddWord ? (
+                {(!showAddWord && isAddok) ? (
                     <div className="flex flex-col gap-3 flex-grow">
                         {/* 검색 입력 필드 */}
                         <div className="flex gap-2 p-2">

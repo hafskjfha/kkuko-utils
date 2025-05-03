@@ -8,7 +8,7 @@ type WordStatus = "ok" | "delete" | "add" | "eadd" | "edelete";
 interface TableRowProps {
     word: string;
     status: WordStatus;
-    maker?: string | undefined;
+    maker?: string | undefined | null;
     openWork?: () => void
 }
 
