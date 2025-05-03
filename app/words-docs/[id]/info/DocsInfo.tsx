@@ -12,7 +12,7 @@ interface metadata {
     last_update: string;
 }
 
-const DocsInfoPage = ({ metaData, wordsCount }: { metaData: metadata, wordsCount: number }) => {
+const DocsInfo = ({ metaData, wordsCount }: { metaData: metadata, wordsCount: number }) => {
     const lastUpdateDate = new Date(metaData.last_update); // UTC 기준 Date 객체
     const createdAtDate = new Date(metaData.created_at);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -64,4 +64,4 @@ const DocsInfoPage = ({ metaData, wordsCount }: { metaData: metadata, wordsCount
 };
 
 
-export default DocsInfoPage;
+export default DocsInfo;
