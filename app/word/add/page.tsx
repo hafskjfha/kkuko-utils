@@ -2,6 +2,13 @@ import WordAddForm from './WordAddFrom';
 import WordAddWrapper from './WordAddWrapper';
 import { Suspense } from 'react';
 
+export async function generateMetadata() {
+    return {
+        title: "끄코 유틸리티 - 단어 추가",
+        description: `끄코 유틸리티 - 오픈DB 단어 추가`,
+    };
+}
+
 export default async function WordAddPage({ searchParams }:{searchParams:Promise<{docsID?: string}>}) {
     const docsID = (await searchParams).docsID ? Number((await searchParams).docsID) : undefined;
     return (

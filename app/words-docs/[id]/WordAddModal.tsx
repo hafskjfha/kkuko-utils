@@ -33,6 +33,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id }: WordAddModalPr
     const user = useSelector((state: RootState) => state.user);
 
     const handleSearchA = async (querys: string) => {
+        setQuery((prev)=>prev.replace(/[^가-힣a-zA-Z0-9]/g, ''));
         if (querys.trim() === "") {
             setSearchResults(null);
             return [];

@@ -12,6 +12,7 @@ export default function WordSearch() {
 
     const handleSearch = async () => {
         if (!query) return;
+        setQuery((prev)=>prev.replace(/[^가-힣a-zA-Z0-9]/g, ''));
         setLoading(true);
         setResults([]);
         let dbqueryA =  supabase.from('words').select('word');

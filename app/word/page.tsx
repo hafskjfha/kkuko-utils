@@ -1,5 +1,12 @@
 import Link from "next/link";
 
+export async function generateMetadata() {
+    return {
+        title: "끄코 유틸리티 - 오픈DB",
+        description: `끄코 유틸리티 - 오픈DB 홈`,
+    };
+}
+
 const features = [
     { title: "단어 검색", description: "DB에 저장된 단어를 검색합니다.", link: "/word/search" },
     { title: "단어 추가", description: "새로운 단어를 오픈DB에 등록합니다.", link: "/word/add" },
