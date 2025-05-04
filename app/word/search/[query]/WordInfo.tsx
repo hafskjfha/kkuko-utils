@@ -399,7 +399,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                                             <div>
                                                 <h4 className="text-sm font-medium text-gray-500 mb-2">승인된 주제</h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {wordInfo.topic.ok.map((t, index) => (
+                                                    {wordInfo.topic.ok.map((t) => (
                                                         <Badge key={t} variant="secondary" className="bg-gray-200 text-gray-800">
                                                             {t}
                                                         </Badge>

@@ -34,6 +34,7 @@ import { supabase } from '../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
+import ErrorModal from '../components/ErrModal'
 
 // 타입 정의
 type Theme = {
@@ -390,7 +391,10 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
                                 <Button
                                     variant="outline"
                                     className="bg-green-100 hover:bg-green-200"
-                                    onClick={approveSelected}
+                                    onClick={()=>{
+                                        return;
+                                        approveSelected()
+                                    }}
                                 >
                                     선택 승인
                                 </Button>
@@ -534,6 +538,7 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
                     </div>
                 </CardFooter>
             </Card>
+            {errorModalView && <ErrorModal error={errorModalView} onClose={()=>setErrorModalView(null)} />}
         </div>
     )
 }

@@ -142,7 +142,7 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                         <span className="text-xl font-bold">
-                            "{wordInfo.word}" 주제 수정
+                            &quot;{wordInfo.word}&quot; 주제 수정
                         </span>
 
                     </DialogTitle>

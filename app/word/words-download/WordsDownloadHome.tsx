@@ -73,9 +73,8 @@ const fetchWordStats = async (params:{
         let deletedCount = 0;
         
         if (includeAdded || includeDeleted) {
-            let requestQuery = supabase.from('wait_words').select('request_type');
             
-            const { data: requestData, error: requestError } = await requestQuery;
+            const { data: requestData, error: requestError } = await supabase.from('wait_words').select('request_type');;
             
             if (requestError) throw requestError;
             

@@ -87,7 +87,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
     const formatDate = (dateString: string) => {
         try {
             return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-        } catch (err) {
+        } catch {
             return dateString;
         }
     };

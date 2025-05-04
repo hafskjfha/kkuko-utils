@@ -37,17 +37,6 @@ export default function AdminHomeWrapper(){
 
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const formatDate = (date: Date) => {
-        return date.toLocaleString(undefined, {
-            timeZone: userTimeZone,
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     const MakeError = (error: PostgrestError) => {
         setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
         updateLoadingState(100,"ERR");
