@@ -457,8 +457,8 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-200">
-                                                {wordInfo.documents.map((doc) => (
-                                                    <tr key={doc.doc_id} className="hover:bg-gray-50">
+                                                {wordInfo.documents.map((doc,index) => (
+                                                    <tr key={`${doc.doc_id}-${index}`} className="hover:bg-gray-50">
                                                         <td className="py-3 px-4 text-sm text-gray-500">{doc.doc_id}</td>
                                                         <td className="py-3 px-4">
                                                             <Link href={`/words-docs/${doc.doc_id}`} className="text-blue-600 hover:underline hover:text-blue-800 flex items-center gap-1">

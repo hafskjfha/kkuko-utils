@@ -150,6 +150,13 @@ export default function WordInfoPage({ query }: { query: string }) {
                         return;
                     }
 
+                    const { data: docsData3, error: docsData3Error} = await supabase.from('docs').select('*').eq('name',wordTableCheck.word[wordTableCheck.word.length - 1]);
+                    if (docsData3Error){
+                        return makeError(docsData3Error);
+                    }
+                    const docc = docsData3.map(({id,name})=>({doc_id: id, doc_name: name}))
+                    
+
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
                     const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', wordTableCheck.word[0]);
@@ -172,7 +179,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: wordTableCheck.id,
                         word: wordTableCheck.word,
                         typez: waitTableCheck && waitTableCheck.request_type === "delete" ? "delete" : "ok",
-                        documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name }))],
+                        documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
                         themes: {
                             ok: wordThemes ? wordThemes.filter(theme => !wordThemes2.map(t => t.themes.name).includes(theme.themes.name)).map(theme => theme.themes.name) : [],
                             waitAdd: wordThemes2 ? wordThemes2.filter(theme => theme.typez === 'add').map(theme => theme.themes.name) : [],
@@ -206,6 +213,12 @@ export default function WordInfoPage({ query }: { query: string }) {
                         return;
                     }
 
+                    const { data: waitDocsData2, error: waitDocsData2Error} = await supabase.from('docs').select('*').eq('name',waitTableCheck.word[waitTableCheck.word.length - 1]);
+                    if (waitDocsData2Error){
+                        return makeError(waitDocsData2Error);
+                    }
+                    const docc = waitDocsData2.map(({id,name})=>({doc_id: id, doc_name: name}))
+
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
                     const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', waitTableCheck.word[0]);
@@ -228,7 +241,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: waitTableCheck.id,
                         word: waitTableCheck.word,
                         typez: waitTableCheck.request_type,
-                        documents: waitDocsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })),
+                        documents: [...waitDocsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
                         themes: {
                             ok: [],
                             waitAdd: waitWordThemes ? waitWordThemes.map(theme => theme.themes.name) : [],
