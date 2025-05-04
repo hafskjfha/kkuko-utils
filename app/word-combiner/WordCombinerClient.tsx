@@ -1,28 +1,18 @@
 "use client"
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import CombinationManager from '../lib/CombinationsManger';
 import ErrorModal from '../components/ErrModal';
 import HelpModal from './WordCombinerHelpModal';
 import Spinner from '../components/Spinner';
-import type { PostgrestError } from '@supabase/supabase-js';
 
 interface WordCombinerWithData {
     len5: string[];
     len6: string[];
-    error: null;
 }
 
-interface WordCombinerWithError {
-    len5: never[];
-    len6: never[];
-    error: PostgrestError;
-}
-
-type WordCombinerClientProp = WordCombinerWithData | WordCombinerWithError;
-
-export default function WordCombinerClient({ prop }: { prop: WordCombinerClientProp }) {
+export default function WordCombinerClient({ prop }: { prop: WordCombinerWithData }) {
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [nomalJOKAK, setNomalJOKAK] = useState<string>("");
     const [highJOKAK, setHighJOKAK] = useState<string>("");
@@ -37,16 +27,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [HtmlHelpModalView, setHtmlHelpModalView] = useState<boolean>(false);
 
-    useEffect(()=>{
-        if (prop.error) {
-            seterrorModalView({
-                ErrName: prop.error.name,
-                ErrMessage: prop.error.message,
-                ErrStackRace: prop.error.stack,
-                inputValue: null
-            });
-        }
-    },[])
     
 
     const handleHtmlSubmit = () => {
