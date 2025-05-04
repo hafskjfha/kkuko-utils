@@ -35,8 +35,6 @@ export default function AdminHomeWrapper(){
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
     const [waitDatas,setWaitDatas] = useState<WordRequest[] | null>(null);
 
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
     const MakeError = (error: PostgrestError) => {
         setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
         updateLoadingState(100,"ERR");
