@@ -83,14 +83,14 @@ export default function DocsDataHome({id}:{id:number}){
 
             if (docsData.typez === "letter"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
-                const {data:LetterDatas1, error:error1} = await supabase.from('words').select('*').eq('last_letter',docsData.name.trim()).eq('k_canuse',true);
+                const {data:LetterDatas1, error:error1} = await supabase.from('words').select('*').eq('last_letter',docsData.name.trim()).eq('k_canuse',true).neq('length',1);
                 if (error1) return MakeError(error1);
                 const {data:LetterDatas2, error:error2} = await supabase.from('wait_words').select('*').ilike('word',`%${docsData.name.trim()}`);
                 if (error2) return MakeError(error2);
                 
                 updateLoadingState(70, "데이터를 가공중...")
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
-                const wordsData = [...wordsNotInB, ...LetterDatas2.map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
+                const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
                 setWordsData({words: wordsData, metadata: p});
                 updateLoadingState(100, "완료!");
