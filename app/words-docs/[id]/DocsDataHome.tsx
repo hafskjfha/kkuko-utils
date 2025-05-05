@@ -100,7 +100,7 @@ export default function DocsDataHome({id}:{id:number}){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
                 const {data: themeData, error: themeDataError} = await supabase.from('themes').select('*').eq('name',docsData.name).maybeSingle();
                 if (themeDataError) return MakeError(themeDataError);
-                if (!themeData) return 
+                if (!themeData) return setIsNotFound(true)
                 const {data: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
                 if (themeWordsError1) return MakeError(themeWordsError1);
                 const {data: themeWordsData2, error: themeWordsError2} = await supabase.from('word_themes_wait').select('words(*),typez').eq('theme_id', themeData.id)
