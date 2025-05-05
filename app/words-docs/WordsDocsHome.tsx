@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon } from "@radix-ui/react-icons";
+import { ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -42,6 +42,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
     );
 
     const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     const toggleType = (typez: string) => {
         setExpandedTypes(prev => ({ ...prev, [typez]: !prev[typez] }));
@@ -57,6 +58,14 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
             };
         });
     };
+
+    const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    }, []);
+
+    const clearSearch = useCallback(() => {
+        setSearchQuery("");
+    }, []);
 
     const sortDocs = (docs: Document[], sortType: { field: string; direction: 'asc' | 'desc' }) => {
         const sorted = [...docs];
@@ -92,21 +101,76 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
         }
     };
 
-    const groupedDocs = docs.reduce<{ [key: string]: Document[] }>((acc, doc) => {
-        acc[doc.typez] = acc[doc.typez] || [];
-        acc[doc.typez].push(doc);
-        return acc;
-    }, {});
+    // 검색 쿼리에 따른 필터링된 문서 목록
+    const filteredDocs = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return docs;
+        }
+        
+        const query = searchQuery.toLowerCase().trim();
+        return docs.filter(doc => 
+            doc.name.toLowerCase().includes(query)
+        );
+    }, [docs, searchQuery]);
+
+    // 필터링된 문서를 타입별로 그룹화
+    const groupedDocs = useMemo(() => {
+        return filteredDocs.reduce<{ [key: string]: Document[] }>((acc, doc) => {
+            acc[doc.typez] = acc[doc.typez] || [];
+            acc[doc.typez].push(doc);
+            return acc;
+        }, {});
+    }, [filteredDocs]);
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4">
+            {/* 검색창 */}
+            <div className="w-full max-w-6xl mb-6">
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                        placeholder="문서명 검색..."
+                        className="w-full p-4 pl-10 pr-10 bg-white border border-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={clearSearch}
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+                
+                {searchQuery && (
+                    <div className="mt-2 text-sm text-gray-600">
+                        검색 결과: {filteredDocs.length}개의 문서
+                    </div>
+                )}
+            </div>
+
+            {/* 필터링된 결과가 없을 때 보여줄 메시지 */}
+            {searchQuery && filteredDocs.length === 0 && (
+                <div className="w-full max-w-6xl p-8 bg-white shadow rounded-md text-center">
+                    <p className="text-gray-500">검색 결과가 없습니다.</p>
+                </div>
+            )}
+
+            {/* 문서 목록 */}
             {typeOrder.map((typez) => (
                 <div key={typez} className="w-full max-w-6xl mb-6">
                     <button
                         onClick={() => toggleType(typez)}
                         className="w-full text-left font-semibold text-lg p-4 bg-white shadow rounded-md flex items-center justify-between hover:bg-gray-50 transition"
                     >
-                        <span>{typeNames[typez as keyof typeof typeNames] || typez} ({groupedDocs[typez]?.length || 0})</span>
+                        <span>
+                            {typeNames[typez as keyof typeof typeNames] || typez} ({groupedDocs[typez]?.length || 0})
+                        </span>
                         {expandedTypes[typez] ? <ChevronUpIcon /> : <ChevronDownIcon />}
                     </button>
 
@@ -166,7 +230,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {sortDocs(groupedDocs[typez], sortOptions[typez]).map((doc) => (
+                                            {sortDocs(groupedDocs[typez] || [], sortOptions[typez]).map((doc) => (
                                                 <tr 
                                                     key={doc.id}
                                                     className={`border-t border-gray-200 hover:bg-blue-50 ${hoveredRow === doc.id ? 'bg-blue-50' : ''}`}
@@ -180,6 +244,9 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
                                                         >
                                                             <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
                                                             {doc.name}
+                                                            {searchQuery && doc.name.toLowerCase().includes(searchQuery.toLowerCase()) && (
+                                                                <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">검색 일치</span>
+                                                            )}
                                                         </Link>
                                                     </td>
                                                     <td className="px-4 py-3 text-gray-500">
@@ -193,9 +260,9 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
                                         </tbody>
                                     </table>
                                 </div>
-                                {groupedDocs[typez]?.length === 0 && (
+                                {(groupedDocs[typez]?.length === 0) && (
                                     <div className="text-center py-8 text-gray-500">
-                                        문서가 없습니다.
+                                        {searchQuery ? '검색 결과가 없습니다.' : '문서가 없습니다.'}
                                     </div>
                                 )}
                             </motion.div>
