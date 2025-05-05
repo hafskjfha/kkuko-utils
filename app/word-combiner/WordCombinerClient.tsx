@@ -220,6 +220,16 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
         return placeholderArray[idx];
     };
 
+    const handleClick = () => {
+        const fn = getProcessFunction();
+        setLoading(true);
+        setTimeout(() => {
+          fn();
+          setLoading(false);
+        }, 0);
+      };
+      
+
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100">
             {/* Header with help button */}
@@ -302,7 +312,7 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
                                               hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
                                               transition duration-200 transform hover:scale-105
                                               ${loading ? "bg-gray-500 dark:bg-gray-600 cursor-not-allowed" : ""}`}
-                                    onClick={getProcessFunction()}
+                                    onClick={handleClick}
                                     disabled={loading}
                                 >
                                     {loading ? (
