@@ -154,8 +154,12 @@ export default function WordInfoPage({ query }: { query: string }) {
                     if (docsData3Error){
                         return makeError(docsData3Error);
                     }
-                    const docc = docsData3.map(({id,name})=>({doc_id: id, doc_name: name}))
                     
+                    const {data: docsData4, error: docsData4Error} = await supabase.from('docs').select('*').eq('typez','theme').in('name',[...wordThemes.map(d=>d.themes.name),...wordThemes2.map(d=>d.themes.name)]);
+                    if (docsData4Error){
+                        return makeError(docsData4Error);
+                    }
+                    const docc = docsData3.concat(docsData4).map(({id,name})=>({doc_id: id, doc_name: name}))
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
@@ -213,11 +217,16 @@ export default function WordInfoPage({ query }: { query: string }) {
                         return;
                     }
 
+                    const {data: waitDocsData4, error: waitDocsData4Error} = await supabase.from('docs').select('*').eq('typez','theme').in('name',[...waitWordThemes.map(d=>d.themes.name)]);
+                    if (waitDocsData4Error){
+                        return makeError(waitDocsData4Error);
+                    }
+
                     const { data: waitDocsData2, error: waitDocsData2Error} = await supabase.from('docs').select('*').eq('name',waitTableCheck.word[waitTableCheck.word.length - 1]);
                     if (waitDocsData2Error){
                         return makeError(waitDocsData2Error);
                     }
-                    const docc = waitDocsData2.map(({id,name})=>({doc_id: id, doc_name: name}))
+                    const docc = waitDocsData2.concat(waitDocsData4).map(({id,name})=>({doc_id: id, doc_name: name}))
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
