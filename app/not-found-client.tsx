@@ -23,9 +23,7 @@ export default function NotFound() {
               size={60}
               className="text-red-500 dark:text-red-400"
             />
-            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white dark:text-gray-900 font-bold text-xl">
-              !
-            </span>
+            
           </div>
         </div>
 
