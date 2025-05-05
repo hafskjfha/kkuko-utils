@@ -98,7 +98,34 @@ export default function DocsDataHome({id}:{id:number}){
             }
             else if (docsData.typez === "theme"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
-                // 추가 예정
+                const {data: themeData, error: themeDataError} = await supabase.from('themes').select('*').eq('name',docsData.name).maybeSingle();
+                if (themeDataError) return MakeError(themeDataError);
+                if (!themeData) return 
+                const {data: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
+                if (themeWordsError1) return MakeError(themeWordsError1);
+                const {data: themeWordsData2, error: themeWordsError2} = await supabase.from('word_themes_wait').select('words(*),typez').eq('theme_id', themeData.id)
+                if (themeWordsError2) return MakeError(themeWordsError2);
+                const {data: themeWordsData3, error: themeWordsError3} = await supabase.from('wait_word_themes').select('wait_words(*)').eq('theme_id', themeData.id)
+                if (themeWordsError3) return MakeError(themeWordsError3);
+
+                updateLoadingState(70, "데이터를 가공중...");
+                const Data1NotInData2And3 = themeWordsData1
+                    .filter(a=>!themeWordsData2.some(b=> b.words.word === a.words.word) && !themeWordsData3.some(c=>c.wait_words.word === a.words.word))
+                    .map(d=>({word: d.words.word, status: "ok" as const, maker: undefined}));
+                const Data2InWaitAdd = themeWordsData2
+                    .filter(d=>d.typez === "add" && !themeWordsData3.some(c=>c.wait_words.word === d.words.word))
+                    .map(({words})=>({word: words.word, status: "add" as const, maker: undefined}));
+                const Data2InWaitDelete = themeWordsData2
+                    .filter(d=>d.typez === "delete" && !themeWordsData3.some(c=>c.wait_words.word === d.words.word))
+                    .map(({words})=>({word: words.word, status: "delete" as const, maker: undefined}));
+                const Data3InWait = themeWordsData3
+                    .map(({wait_words})=>({word: wait_words.word, status: wait_words.request_type, maker: wait_words.requested_by ?? undefined}))
+
+                const wordsData = [...Data1NotInData2And3, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data3InWait];
+                const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
+                setWordsData({words:wordsData, metadata:p});
+                updateLoadingState(100, "완료!");
+                return
 
             }
             else{
