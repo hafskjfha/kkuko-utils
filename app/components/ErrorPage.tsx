@@ -18,7 +18,7 @@ export default function ErrorPage({ message }: { message?: string }) {
                 오류가 발생했습니다
             </motion.h1>
             <motion.p
-                className="text-base text-red-500 dark:text-red-200 mb-6"
+                className="text-base text-red-500 dark:text-red-200 mb-6 whitespace-pre-line"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
