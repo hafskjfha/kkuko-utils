@@ -8,7 +8,7 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import { disassemble } from 'es-hangul';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import axios from 'axios';
-import { reverDuemLaw } from '@/app/lib/DuemLaw';
+import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 
 interface WordInfoProps {
     word: string;
@@ -185,7 +185,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                     const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
                     const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
 
-                    const las1 = reverDuemLaw(wordTableCheck.word[wordTableCheck.word.length - 1])
+                    const las1 = [DuemRaw(wordTableCheck.word[wordTableCheck.word.length - 1])]
                     const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
                     const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
@@ -204,8 +204,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                           if (response.status === 200){
                             kkukoWikiok = true
                           }
-                    } catch{
-
+                    } catch(error){
+                        console.log(error)
                     }
 
                     updateLoadingState(90, "정보 가공 중...");
@@ -268,7 +268,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                     const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
                     const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
 
-                    const las1 = reverDuemLaw(waitTableCheck.word[waitTableCheck.word.length - 1])
+                    const las1 = [DuemRaw(waitTableCheck.word[waitTableCheck.word.length - 1])]
                     const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
                     const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
@@ -312,7 +312,23 @@ export default function WordInfoPage({ query }: { query: string }) {
             }
         };
 
-        fetchWordInfo();
+        try{
+            fetchWordInfo();
+        } catch(error){
+            if (error instanceof Error){
+                updateLoadingState(
+                    100,
+                    "오류 발생"
+                );
+                setErrorView({
+                    ErrName: error.name,
+                    ErrMessage: error.message,
+                    ErrStackRace: error.stack,
+                    inputValue: "getDocData"
+                })
+            }
+        }
+        
     }, [query]);
 
     if (isNotFound) {

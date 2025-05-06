@@ -53,6 +53,7 @@ export function reverDuemLaw(c: string): string[]{
         reversDuemLetter.push(i_letter)
         jamos_list[0] = 'ㅇ'
     }
+    console.log(c,reversDuemLetter)
 
     return reversDuemLetter
 

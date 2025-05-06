@@ -2,10 +2,8 @@
 
 import { Button } from "@/app/components/ui/button";
 import { motion } from "framer-motion";
-import { useRouter } from 'next/navigation';
 
 export default function ErrorPage({ message }: { message?: string }) {
-    const router = useRouter();
 
     return (
         <div className="flex h-screen w-full flex-col items-center justify-center bg-red-50 dark:bg-red-950 p-4 text-center">
@@ -32,7 +30,7 @@ export default function ErrorPage({ message }: { message?: string }) {
             >
                 <Button
                     variant="destructive"
-                    onClick={() => router.refresh()}
+                    onClick={() => window.location.reload()}
                     className="text-base px-6 py-3"
                 >
                     새로고침
