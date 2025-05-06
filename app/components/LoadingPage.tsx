@@ -1,26 +1,23 @@
 "use client";
-import type { LoadingState } from "@/app/types/type";
 import Spinner from "@/app/components/Spinner";
 import ProgressBar from "@/app/components/ProgressBar";
-import { useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { updateLoadingState } from '@/app/store/slice';
+import type { RootState } from '@/app/store/store';
 
 export const useLoadingState = () => {
-    const [loadingState, setLoadingState] = useState<LoadingState>({
-        isLoading: true,
-        progress: 0,
-        currentTask: "초기화 중..."
-    });
-
-    const updateLoadingState = (progress: number, task: string) => {
-        setLoadingState({
-            isLoading: progress < 100,
-            progress,
-            currentTask: task
-        });
+    const dispatch = useDispatch();
+    const loadingState = useSelector((state: RootState) => state.loading);
+  
+    const updateState = (progress: number, task: string) => {
+      dispatch(updateLoadingState({ progress, task }));
     };
-
-    return { loadingState, updateLoadingState };
-};
+  
+    return {
+      loadingState,
+      updateLoadingState: updateState,
+    };
+  };
 
 export default function LoadingPage({ title }: { title: string }){
     const { loadingState } = useLoadingState();
