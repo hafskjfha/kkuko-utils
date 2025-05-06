@@ -24,6 +24,7 @@ import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
+import { PostgrestError } from "@supabase/supabase-js";
 
 // Define type for ErrorMessage
 interface ErrorMessage {
@@ -478,13 +479,14 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                 setSelectedTopics([]);
             }
             
-        } catch (error: any) {
-            setErrorModalView({
-                ErrName: error.name || "Unknown Error",
-                ErrMessage: error.message || "An unknown error occurred",
-                ErrStackRace: error.stack || "",
-                inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
-            });
+        } catch (error) {
+            if (error instanceof PostgrestError)
+                setErrorModalView({
+                    ErrName: error.name || "Unknown Error",
+                    ErrMessage: error.message || "An unknown error occurred",
+                    ErrStackRace: error.stack || "",
+                    inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
+                });
         } finally {
             setIsSaving(false);
         }

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const targetUrl = `https://kkukowiki.kr/index.php?title=${encodedTitle}`;
 
     try {
-        const response = await axios.get(targetUrl, {
+        await axios.get(targetUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9',
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
         return new NextResponse("ok");
 
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: '' }, { status: 404 });
     }
 }

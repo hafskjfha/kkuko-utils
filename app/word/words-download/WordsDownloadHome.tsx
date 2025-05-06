@@ -12,7 +12,7 @@ import {
 import { Label } from '@/app/components/ui/label';
 import { Button } from '@/app/components/ui/button';
 import { Checkbox } from '@/app/components/ui/checkbox';
-import { Download, Filter, AlertCircle, Loader2, BarChart3, Database, ChevronRight } from 'lucide-react';
+import { Download, Filter, AlertCircle, Loader2, BarChart3, Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/app/components/ui/alert';
 import { supabase } from '@/app/lib/supabaseClient';
 

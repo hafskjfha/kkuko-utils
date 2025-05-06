@@ -14,7 +14,14 @@ const eslintConfig = [
     extends: ["next/core-web-vitals", "next/typescript"],
     rules: {
       'react-hooks/exhaustive-deps': 'off'
-    }
+    },
+    ignorePatterns: [
+      'node_modules/',
+      '.next/',
+      'public/',
+      'dist/',
+      'test/'
+    ]
   })
 ]
 
