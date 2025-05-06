@@ -2,18 +2,20 @@
 
 import Table from "./Table";
 import type { WordData } from "@/app/types/type";
-import { useState } from "react";
-//import WordAddModal from "./WordAddModal";
-import UnderConstructionModal from "@/app/components/UnderConstructionModal";
+import { useState, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
+import Spinner from "@/app/components/Spinner";
+
+const WordAddModal = lazy(() => import("./WordAddModal"));
 
 const WordsTableBody = ({
     title,
     initialData,
-    id
-}: { initialData: WordData[]; title: string, id: string }) => {
+    id,
+    aoK
+}: { initialData: WordData[]; title: string, id: string, aoK: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 
@@ -49,19 +51,19 @@ const WordsTableBody = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} id={id} />
+                <Table initialData={initialData} id={id} isEct={aoK}/>
             </motion.div>
 
             {wordAddModalOpen && (
-                /*<WordAddModal
-                    isOpen={wordAddModalOpen}
-                    onClose={() => setWordAddModalOpen(false)}
-                    alreadyAddedWords={new Set(initialData.map((d) => d.word))}
-                /> */
-                <UnderConstructionModal
-                    open={wordAddModalOpen}
-                    onColse={() => setWordAddModalOpen(false)}
-                />
+                <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg"><Spinner /></div>}>
+                    <WordAddModal
+                        isOpen={wordAddModalOpen}
+                        onClose={() => setWordAddModalOpen(false)}
+                        alreadyAddedWords={new Set(initialData.map((d) => d.word))}
+                        id = {Number(id)}
+                        isAddok={aoK}
+                    /> 
+                </Suspense>
             )}
 
             <hr className="mt-3 border-gray-400" />

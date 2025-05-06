@@ -44,25 +44,28 @@ const Home: React.FC = () => {
                         </div>
                     </Link>
 
-                    <div className="p-5 bg-white dark:bg-gray-800 shadow-md rounded-lg">
-                        <h3 className="text-lg sm:text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
-                            기능 3: 매달 단어추가 요청 정리
-                        </h3>
-                        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
-                            매달 끄코 단어추가 요청을 엑셀형식으로 정리 (개발 예정).
-                        </p>
-                    </div>
-
                     <Link href={"/words-docs"}>
                         <div className="p-5 bg-white dark:bg-gray-800 shadow-md rounded-lg">
                             <h3 className="text-lg sm:text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
-                                기능 4: 빌런 단어장 게시
+                                기능 3: 단어장 게시
                             </h3>
                             <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
-                                빌런 단어장을 공유하고 사용하며 수정할 수 있게 하는 기능 (개발 예정).
+                                단어장을 공유하고 사용하며 수정할 수 있게 하는 기능.
                             </p>
                         </div>
                     </Link>
+
+                    <Link href={"/extra-features"}>
+                        <div className="p-5 bg-white dark:bg-gray-800 shadow-md rounded-lg">
+                            <h3 className="text-lg sm:text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+                                기타 기능
+                            </h3>
+                            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
+                                기타 기능. 오픈 DB확인, 타자연습(추가예정) 등.
+                            </p>
+                        </div>
+                    </Link>
+                    
                 </div>
             </main>
         </div>

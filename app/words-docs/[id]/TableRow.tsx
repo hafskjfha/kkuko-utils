@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { clsx } from "clsx";
+import { memo } from "react";
 
-type WordStatus = "ok" | "delete" | "add";
+type WordStatus = "ok" | "delete" | "add" | "eadd" | "edelete";
 
 
 interface TableRowProps {
     word: string;
     status: WordStatus;
-    maker?: string | undefined;
+    maker?: string | undefined | null;
     openWork?: () => void
 }
 
-const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
+const TableRowComponent = ({ word, status, openWork }:TableRowProps) => {
     const wordLength = word.length;
 
     return (
@@ -37,7 +38,7 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
 
             {/* 상태 */}
             <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 border-r whitespace-nowrap">
-                {status === "ok" ? "" : status === "add" ? "추가요청" : (
+                {status === "ok" ? "" : (status === "add" || status === "eadd") ? "추가요청" : (
                     <div className="text-red-500">삭제요청</div>
                 )}
             </td>
@@ -57,5 +58,7 @@ const TableRow: React.FC<TableRowProps> = ({ word, status, openWork }) => {
 
     )
 }
+
+const TableRow = memo(TableRowComponent);
 
 export default TableRow;

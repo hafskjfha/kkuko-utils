@@ -3,7 +3,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 
-export default function UnderConstructionModal({open, onColse}:{open: boolean, onColse: () => void}) {
+export default function UnderConstructionModal({open, onClose}:{open: boolean, onClose: () => void}) {
     if (!open) return null
     return (
         <Dialog.Root defaultOpen>
@@ -14,7 +14,7 @@ export default function UnderConstructionModal({open, onColse}:{open: boolean, o
                         <Dialog.Title className="text-xl font-semibold">알림</Dialog.Title>
                         <Dialog.Close asChild>
                             <button className="text-gray-500 hover:text-gray-700 transition">
-                                <X className="w-5 h-5" onClick={onColse} />
+                                <X className="w-5 h-5" onClick={onClose} />
                             </button>
                         </Dialog.Close>
                     </div>

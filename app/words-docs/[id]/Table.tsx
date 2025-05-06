@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, lazy, Suspense, useCallback } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
-import TableRow from "./TableRow";
 import type { WordData } from "@/app/types/type";
-import WorkModal from "./WorkModal";
+import TableRow from "./TableRow";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
@@ -12,17 +11,37 @@ import { supabase } from '@/app/lib/supabaseClient';
 import type { PostgrestError } from "@supabase/supabase-js";
 import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
-import UnderConstructionModal from "@/app/components/UnderConstructionModal";
+import CompleteModal from "@/app/components/CompleteModal";
+
+const WorkModal = lazy(() => import("./WorkModal"));
+
+interface DocsLogData {
+    readonly word: string;
+    readonly docs_id: number;
+    readonly add_by: string | null;
+    readonly type: "add" | "delete";
+}
+
+interface WordLogData {
+    readonly word: string;
+    readonly make_by: string | null;
+    readonly processed_by: string | null;
+    readonly r_type: "add" | "delete";
+    readonly state: "approved" | "rejected";
+}
+
+type DocsLogDatas = DocsLogData[];
+type WordLogDatas = WordLogData[];
 
 
-const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => {
+const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string, isEct: boolean }) => {
     const [data] = useState(initialData);
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok", requer: string } | null>(null);
+    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
     const user = useSelector((state: RootState) => state.user);
-    const [temp, setTemp] = useState(false);
 
     const columns: ColumnDef<WordData>[] = [
         {
@@ -45,148 +64,157 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         onSortingChange: setSorting,
     });
 
-    /*const openWork = (word: string, status: "add" | "delete" | "ok", requer: string) => {
+    const openWork = useCallback((word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string) => {
         setModal({ word, status, requer });
-        console.log(requer,user.uuid);
-    } */
+    },[]) 
 
     const closeWork = () => {
         setModal(null);
     }
 
+    const CompleWork = () => {
+        setModal(null);
+        setIsCompleteModalOpen(true);
+    }
+
     const makeError = (error: PostgrestError) => {
+        closeWork();
         seterrorModalView({
             ErrName: error.name,
             ErrMessage: error.message,
             ErrStackRace: error.stack,
             inputValue: null
         });
-    }
+    };
 
-    const AddAccept = async (word: string) => {
-        // 권한 체크 및 중복 요청 방지
-        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
-        setIsProcessing(true);
-
-        // 1. 추가 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('wait_words').select('*').eq('word', word).maybeSingle();
-        if (getWaitWordDataError) {
-            makeError(getWaitWordDataError);
-            setIsProcessing(false);
-            return;
-        }
-        if (!getWaitWordData) return;
-
-        // 2.1 추가 요청 단어의 주제 정보 가져오기
-        const { data: getWordThemesData, error: getWordThemesDataError } = await supabase.from('wait_word_themes').select('*').eq('theme_id', getWaitWordData.id);
-        if (getWordThemesDataError) {
-            makeError(getWordThemesDataError);
-            setIsProcessing(false);
-            return;
-        }
-        if (!getWordThemesData) return;
-
-        // 2.2 단어의 노인정 여부 체크
-        let isNoinWord = false;
-        for (const t of getWordThemesData) {
-            if (noInjungTopicID.includes(t.theme_id)) {
-                isNoinWord = true;
-                break;
-            }
-        }
-
-        // 3.1 단어 데이터 추가
-        const insertWordData = {
-            word: getWaitWordData.word,
-            noin_canuse: isNoinWord
-        }
-        const { data: getAddAcceptData, error: getAddAcceptDataError } = await supabase.from('words').insert(insertWordData).select('*').single();
-        if (getAddAcceptDataError) {
-            makeError(getAddAcceptDataError);
-            setIsProcessing(false);
-            return;
-        }
-
-        // 3.2 단어 주제 데이터 추가
-        const insertWordThemesData = getWordThemesData.map((t) => {
-            return {
-                word_id: getAddAcceptData.id,
-                theme_id: t.theme_id
-            }
-        });
-        const { error: getAddAcceptThemesDataError } = await supabase.from('word_themes').insert(insertWordThemesData);
-        if (getAddAcceptThemesDataError) {
-            makeError(getAddAcceptThemesDataError);
-            setIsProcessing(false);
-            return;
-        }
-
-        // 3.3 단어 추가 로그 등록
-        const insertWordLogData = {
-            word: getWaitWordData.word,
-            make_by: getWaitWordData.requested_by,
-            processed_by: user.uuid || null,
-            r_type: "add",
-            state: "approved"
-        } as const;
-        const { error: getAddAcceptLogDataError } = await supabase.from('logs').insert(insertWordLogData);
-        if (getAddAcceptLogDataError) {
-            makeError(getAddAcceptLogDataError);
-            setIsProcessing(false);
-            return;
-        }
-
-        // 4. 문서와 추가 요청있으면 처리
-        const { data: getAddAcceptDocsData, error: getAddAcceptDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('wait_word_id', getWaitWordData.id);
-        if (getAddAcceptDocsDataError) {
-            makeError(getAddAcceptDocsDataError);
-            setIsProcessing(false);
-            return;
-        }
-        if (getAddAcceptDocsData) {
-            const insertDocsData = getAddAcceptDocsData.map((d) => {
-                return {
-                    docs_id: d.docs_id,
-                    word_id: getAddAcceptData.id
-                }
-            });
-            const { data: insertAddAcceptDocsData, error: insertAddAcceptDocsDataError } = await supabase.from('docs_words').insert(insertDocsData).select('*');
-            if (insertAddAcceptDocsDataError) {
-                makeError(insertAddAcceptDocsDataError);
-                setIsProcessing(false);
-                return;
-            }
-            // 4.1 문서 로그 추가
-            const insertDocsLogData = insertAddAcceptDocsData.map((d) => {
-                return {
-                    word: getWaitWordData.word,
-                    docs_id: d.docs_id,
-                    add_by: getWaitWordData.requested_by,
-                    type: "add"
-                } as const;
-            });
-            const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
+    const WriteDocsLog = useCallback(async (logsData: DocsLogDatas) => {
+        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(logsData);
             if (insertDocsLogDataError) {
                 makeError(insertDocsLogDataError);
                 setIsProcessing(false);
                 return;
             }
-        }
+    },[]);
 
-        // 5. 추가 요청 테이블에서 삭제
-        const { error: deleteWaitWordDataError } = await supabase.from('wait_words').delete().eq('id', getWaitWordData.id);
-        if (deleteWaitWordDataError) {
-            makeError(deleteWaitWordDataError);
+    const WriteWordLog = useCallback(async (logsData: WordLogDatas) => {
+        const { error: insertWordLogDataError } = await supabase.from('logs').insert(logsData);
+            if (insertWordLogDataError) {
+                makeError(insertWordLogDataError);
+                setIsProcessing(false);
+                return;
+            }
+    },[]);
+
+    const AddDocs = useCallback(async (docsAddData: { word_id: number; docs_id: number }[]) => {
+        try {
+            const { data: insertAddAcceptDocsData, error: insertAddAcceptDocsDataError } = await supabase
+                .from('docs_words')
+                .insert(docsAddData)
+                .select('*');
+            if (insertAddAcceptDocsDataError) {
+                throw insertAddAcceptDocsDataError;
+            }
+            return insertAddAcceptDocsData;
+        } catch (error) {
+            makeError(error as PostgrestError);
             setIsProcessing(false);
-            return;
+            return null;
         }
+    }, []);
 
-        setIsProcessing(false);
-        return;
+    const AddAccept = useCallback(async (word: string) => {
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
 
-    }
+        try {
+            // 1. 추가 요청 단어 정보 가져오기
+            const { data: getWaitWordData, error: getWaitWordDataError } = await supabase
+                .from('wait_words')
+                .select('*')
+                .eq('word', word)
+                .maybeSingle();
+            if (getWaitWordDataError) throw getWaitWordDataError;
+            if (!getWaitWordData) return;
 
-    const AddReject = async (word: string) => {
+            // 2. 추가 요청 단어의 주제 정보 가져오기
+            const { data: getWordThemesData, error: getWordThemesDataError } = await supabase
+                .from('wait_word_themes')
+                .select('*')
+                .eq('theme_id', getWaitWordData.id);
+            if (getWordThemesDataError) throw getWordThemesDataError;
+            if (!getWordThemesData) return;
+
+            // 3. 단어 데이터 추가
+            const isNoinWord = getWordThemesData.some((t) => noInjungTopicID.includes(t.theme_id));
+            const insertWordData = { word: getWaitWordData.word, noin_canuse: isNoinWord, added_by: getWaitWordData.requested_by};
+            const { data: getAddAcceptData, error: getAddAcceptDataError } = await supabase
+                .from('words')
+                .insert(insertWordData)
+                .select('*')
+                .single();
+            if (getAddAcceptDataError) throw getAddAcceptDataError;
+
+            // 4. 단어 주제 데이터 추가
+            const insertWordThemesData = getWordThemesData.map((t) => ({
+                word_id: getAddAcceptData.id,
+                theme_id: t.theme_id,
+            }));
+            const { error: getAddAcceptThemesDataError } = await supabase
+                .from('word_themes')
+                .insert(insertWordThemesData);
+            if (getAddAcceptThemesDataError) throw getAddAcceptThemesDataError;
+
+            // 5. 단어 추가 로그 등록
+            const insertWordLogData = {
+                word: getWaitWordData.word,
+                make_by: getWaitWordData.requested_by,
+                processed_by: user.uuid || null,
+                r_type: "add",
+                state: "approved",
+            } as const;
+            WriteWordLog([insertWordLogData]);
+
+            // 6. 문서와 추가 요청 처리
+            const { data: getAddAcceptDocsData, error: getAddAcceptDocsDataError } = await supabase
+                .from('docs_wait_words')
+                .select('*')
+                .eq('wait_word_id', getWaitWordData.id);
+            if (getAddAcceptDocsDataError) throw getAddAcceptDocsDataError;
+
+            if (getAddAcceptDocsData) {
+                const insertDocsData = getAddAcceptDocsData.map((d) => ({
+                    docs_id: d.docs_id,
+                    word_id: getAddAcceptData.id,
+                }));
+                const insertAddAcceptDocsData = await AddDocs(insertDocsData);
+                if (!insertAddAcceptDocsData) return;
+
+                // 문서 로그 추가
+                const insertDocsLogData = insertAddAcceptDocsData.map((d) => ({
+                    word: getWaitWordData.word,
+                    docs_id: d.docs_id,
+                    add_by: getWaitWordData.requested_by,
+                    type: "add" as const,
+                }));
+                WriteDocsLog(insertDocsLogData);
+            }
+
+            // 7. 추가 요청 테이블에서 삭제
+            const { error: deleteWaitWordDataError } = await supabase
+                .from('wait_words')
+                .delete()
+                .eq('id', getWaitWordData.id);
+            if (deleteWaitWordDataError) throw deleteWaitWordDataError;
+
+            setIsProcessing(false);
+            CompleWork();
+        } catch (error) {
+            makeError(error as PostgrestError);
+            setIsProcessing(false);
+        }
+    },[]);
+
+    const AddReject = useCallback(async (word: string) => {
         // 권한 체크 및 중복 요청 방지
         if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
         setIsProcessing(true);
@@ -216,18 +244,14 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             r_type: "add",
             state: "rejected"
         } as const;
-        const { error: getAddRejectLogDataError } = await supabase.from('logs').insert(insertWordLogData);
-        if (getAddRejectLogDataError) {
-            makeError(getAddRejectLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteWordLog([insertWordLogData]);
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const DeleteAccept = async (word: string) => {
+    const DeleteAccept = useCallback(async (word: string) => {
         // 권한 체크 및 중복 요청 방지
         if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
         setIsProcessing(true);
@@ -241,7 +265,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
         if (!getWaitWordData) return;
 
-        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('id', getWaitWordData.id);
+        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('wait_word_id', getWaitWordData.id);
         if (getDeleteDocsDataError) {
             makeError(getDeleteDocsDataError);
             setIsProcessing(false);
@@ -272,12 +296,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             r_type: "delete",
             state: "approved"
         } as const;
-        const { error: getDeleteAcceptLogDataError } = await supabase.from('logs').insert(insertWordLogData);
-        if (getDeleteAcceptLogDataError) {
-            makeError(getDeleteAcceptLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteWordLog([insertWordLogData]);
 
         // 2.4 문서 로그 등록
         const insertDocsLogData = getDeleteDocsData.map((d) => {
@@ -288,18 +307,14 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
                 type: "delete"
             } as const;
         });
-        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
-        if (insertDocsLogDataError) {
-            makeError(insertDocsLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteDocsLog(insertDocsLogData);
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const DeleteReject = async (word: string) => {
+    const DeleteReject = useCallback(async (word: string) => {
         // 권한 체크 및 중복 요청 방지
         if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
         setIsProcessing(true);
@@ -329,18 +344,14 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             r_type: "delete",
             state: "rejected"
         } as const;
-        const { error: getDeleteRejectLogDataError } = await supabase.from('logs').insert(insertWordLogData);
-        if (getDeleteRejectLogDataError) {
-            makeError(getDeleteRejectLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteWordLog([insertWordLogData]);
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const CancelAddRequest = async (word: string) => {
+    const CancelAddRequest = useCallback(async (word: string) => {
         // 중복 요청 방지
         if (isProcessing) return;
         setIsProcessing(true);
@@ -363,10 +374,11 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const CancelDeleteRequest = async (word: string) => {
+    const CancelDeleteRequest = useCallback(async (word: string) => {
         // 중복 요청 방지
         if (isProcessing) return;
         setIsProcessing(true);
@@ -389,10 +401,11 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const DeleteByAdmin = async (word: string) => {
+    const DeleteByAdmin = useCallback(async (word: string) => {
         // 권한 체크 및 중복 요청 방지
         if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
         setIsProcessing(true);
@@ -424,12 +437,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
                     type: "delete"
                 } as const;
             });
-            const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(insertDocsLogData);
-            if (insertDocsLogDataError) {
-                makeError(insertDocsLogDataError);
-                setIsProcessing(false);
-                return;
-            }
+            WriteDocsLog(insertDocsLogData);
         }
 
         // 2.2 로그에 등록
@@ -440,12 +448,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             r_type: "delete",
             state: "approved"
         } as const;
-        const { error: insertWordLogDataError } = await supabase.from('logs').insert(insertWordLogData);
-        if (insertWordLogDataError) {
-            makeError(insertWordLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteWordLog([insertWordLogData]);
 
         // 3. 단어 삭제
         const { error: deleteWordDataError } = await supabase.from('words').delete().eq('id', getWordData.id);
@@ -456,11 +459,12 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
 
-    }
+    },[]);
 
-    const RequestDelete = async (word: string) => {
+    const RequestDelete = useCallback(async (word: string) => {
         // 중복 요청 방지
         if (isProcessing) return;
         setIsProcessing(true);
@@ -511,10 +515,11 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
         }
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const DeleteWordFromDocsByAdin = async (word: string) => {
+    const DeleteWordFromDocsByAdin = useCallback(async (word: string) => {
         // 중복 요청 방지
         if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
         setIsProcessing(true);
@@ -544,18 +549,14 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             add_by: user.uuid || null,
             type: "delete" as const
         }
-        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(logData);
-        if (insertDocsLogDataError) {
-            makeError(insertDocsLogDataError);
-            setIsProcessing(false);
-            return;
-        }
+        WriteDocsLog([logData]);
 
         setIsProcessing(false);
+        CompleWork();
         return;
-    }
+    },[]);
 
-    const DeleteWordFromDocsRequest = async (word: string) => {
+    const DeleteWordFromDocsRequest = useCallback(async (word: string) => {
         // 중복 요청 방지
         if (isProcessing) return;
         setIsProcessing(true);
@@ -584,8 +585,201 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             return;
         }
 
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    },[]);
 
-    }
+    const onCancelDeleteFromDocsRequest = useCallback(async (word: string) => {
+        // 중복 요청 방지
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제 요청할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+
+    },[]);
+
+    const onDeleteFromDocsAccept = useCallback(async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_words_wait').select('words(word),docs_id,requested_by').eq('word_id', getWordData.id);
+        if (getDeleteDocsDataError) {
+            makeError(getDeleteDocsDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 3. 문서에서 삭제
+        const { error: deleteWordFromDocsError } = await supabase.from('docs_words').delete().eq('word_id', getWordData.id).eq('docs_id', Number(id));
+        if (deleteWordFromDocsError) {
+            makeError(deleteWordFromDocsError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 2.3 문서 로그 등록
+        const insertDocsLogData = getDeleteDocsData.map((d) => {
+            return {
+                word: d.words.word,
+                docs_id: d.docs_id,
+                add_by: d.requested_by,
+                type: "delete"
+            } as const;
+        });
+        WriteDocsLog(insertDocsLogData);
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    },[]);
+
+    const onDeleteFromDocsReject = useCallback(async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 삭제 요청단어 정보 가져오기
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWaitWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    },[]);
+
+    const onAddFromDocsAccept = useCallback(async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 추가할 단어 정보 가지고 오기
+        const { data: getWordData, error: getWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWordDataError) {
+            makeError(getWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWordData) return;
+
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('docs_words_wait').select('*').eq('word_id', getWordData.id).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 3. 문서에 등록
+        const insertDocsData = {
+            docs_id: Number(id),
+            word_id: getWordData.id
+        } as const;
+        const { error: insertDocsDataError } = await supabase.from('docs_words').insert(insertDocsData);
+        if (insertDocsDataError) {
+            makeError(insertDocsDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        // 4. 문서 로그 등록
+        const insertDocsLogData = {
+            word: getWordData.word,
+            docs_id: Number(id),
+            add_by: getWaitWordData.requested_by,
+            type: "add"
+        } as const;
+        WriteDocsLog([insertDocsLogData]);
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    },[]);
+
+    const onAddFromDocsReject = useCallback(async (word: string) => {
+        // 중복 요청 방지
+        if (user.role !== "admin" && user.role !== "r4" && isProcessing) return;
+        setIsProcessing(true);
+
+        // 1. 추가 요청단어 정보 가져오기
+        const { data: getWaitWordData, error: getWaitWordDataError } = await supabase.from('words').select('*').eq('word', word).maybeSingle();
+        if (getWaitWordDataError) {
+            makeError(getWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+        if (!getWaitWordData) return;
+
+        // 2. 대기큐에서 삭제
+        const { error: deleteWaitWordDataError } = await supabase.from('docs_words_wait').delete().eq('word_id', getWaitWordData.id);
+        if (deleteWaitWordDataError) {
+            makeError(deleteWaitWordDataError);
+            setIsProcessing(false);
+            return;
+        }
+
+        setIsProcessing(false);
+        CompleWork();
+        return;
+    },[]);
 
     return (
         <div className="w-full mx-auto px-2 sm:px-3 overflow-x-auto">
@@ -625,7 +819,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
                             <TableRow
                                 key={wordData.word}
                                 {...wordData}
-                                openWork={user.uuid !== undefined ? () => setTemp(true) : undefined}
+                                openWork={user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : undefined}
                             />
                         );
                     })}
@@ -634,24 +828,33 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
 
             {/* 모달 영역 */}
             {modal && (
-                <WorkModal
-                    isSaving={isProcessing}
-                    onClose={closeWork}
-                    word={modal.word}
-                    status={modal.status}
-                    isAdmin={user.role === "admin"}
-                    isRequester={user.uuid === modal.requer}
-                    onAddAccept={() => AddAccept(modal.word)}
-                    onDeleteAccept={() => DeleteAccept(modal.word)}
-                    onAddReject={() => AddReject(modal.word)}
-                    onDeleteReject={() => DeleteReject(modal.word)}
-                    onCancelAddRequest={() => CancelAddRequest(modal.word)}
-                    onCancelDeleteRequest={() => CancelDeleteRequest(modal.word)}
-                    onDelete={() => DeleteByAdmin(modal.word)}
-                    onRequestDelete={() => RequestDelete(modal.word)}
-                    onDeleteFromDoc={() => DeleteWordFromDocsByAdin(modal.word)}
-                    onRequestDeleteFromDoc={() => DeleteWordFromDocsRequest(modal.word)}
-                />
+                <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" ><Spinner /></div>}>
+                    <WorkModal
+                        isEct={isEct}
+                        isSaving={isProcessing}
+                        onClose={closeWork}
+                        word={modal.word}
+                        status={modal.status}
+                        isAdmin={user.role === "admin"}
+                        isRequester={user.uuid === modal.requer}
+                        onAddAccept={() => AddAccept(modal.word)}
+                        onDeleteAccept={() => DeleteAccept(modal.word)}
+                        onAddReject={() => AddReject(modal.word)}
+                        onDeleteReject={() => DeleteReject(modal.word)}
+                        onCancelAddRequest={() => CancelAddRequest(modal.word)}
+                        onCancelDeleteRequest={() => CancelDeleteRequest(modal.word)}
+                        onDelete={() => DeleteByAdmin(modal.word)}
+                        onRequestDelete={() => RequestDelete(modal.word)}
+                        onDeleteFromDoc={() => DeleteWordFromDocsByAdin(modal.word)}
+                        onRequestDeleteFromDoc={() => DeleteWordFromDocsRequest(modal.word)}
+                        onCancelDeleteFromDocsRequest={() => onCancelDeleteFromDocsRequest(modal.word)}
+                        onDeleteFromDocsAccept={() => onDeleteFromDocsAccept(modal.word)}
+                        onDeleteFromDocsReject={() => onDeleteFromDocsReject(modal.word)}
+                        onCancelAddFromDocsRequest={()=> onCancelDeleteFromDocsRequest(modal.word)}
+                        onAddFromDocsAccept={() => onAddFromDocsAccept(modal.word)}
+                        onAddFromDocsReject={() => onAddFromDocsReject(modal.word)}
+                    />
+                </Suspense>
             )}
 
             {errorModalView && (
@@ -662,7 +865,7 @@ const Table = ({ initialData, id }: { initialData: WordData[], id: string }) => 
             )}
 
             {isProcessing && <Spinner />}
-            {temp && <UnderConstructionModal open={temp} onColse={() => setTemp(false)} />}
+            {isCompleteModalOpen && <CompleteModal onClose={() => setIsCompleteModalOpen(false)} open={isCompleteModalOpen}/>}
         </div>
 
     );

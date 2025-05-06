@@ -60,14 +60,14 @@ const Header: React.FC = () => {
                     <Link href="/word-combiner" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/word-combiner" ? "border-b-2 border-white" : ""}`}>
                         단어조합기
                     </Link>
-                    <Link href="/manager-tool" className={`block py-2 md:py-0 hover:text-gray-300 ${/manager-tool/.test(pathname) ? "border-b-2 border-white" : ""}`}>
+                    <Link href="/manager-tool" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname.includes('manager-tool') ? "border-b-2 border-white" : ""}`}>
                         단어장 관리 도구
                     </Link>
-                    <Link href="/words-docs" className={`block py-2 md:py-0 hover:text-gray-300 ${ /words-docs/.test(pathname) ? "border-b-2 border-white" : ""}`}>
+                    <Link href="/words-docs" className={`block py-2 md:py-0 hover:text-gray-300 ${ pathname.includes('words-docs') ? "border-b-2 border-white" : ""}`}>
                         단어장 공유
                     </Link>
-                    <Link href="/" className={`block py-2 md:py-0 hover:text-gray-300 ${pathname === "/contact" ? "border-b-2 border-white" : ""}`}>
-                        단어 추가 요청 정리
+                    <Link href={"/extra-features"} className={`block py-2 md:py-0 hover:text-gray-300 ${!(pathname === "/word-combiner") && !(pathname.includes('manager-tool')) && !(pathname.includes('words-docs')) && !(pathname === "/") ? "border-b-2 border-white" : ""}`}>
+                        기타 기능
                     </Link>
 
                     {/* 모바일 로그인 / 프로필 */}
