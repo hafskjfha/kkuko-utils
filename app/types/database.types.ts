@@ -12,7 +12,9 @@ export type Database = {
       docs: {
         Row: {
           created_at: string
+          duem: boolean
           id: number
+          is_hidden: boolean
           last_update: string
           maker: string | null
           name: string
@@ -20,7 +22,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          duem?: boolean
           id?: number
+          is_hidden?: boolean
           last_update?: string
           maker?: string | null
           name: string
@@ -28,7 +32,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          duem?: boolean
           id?: number
+          is_hidden?: boolean
           last_update?: string
           maker?: string | null
           name?: string

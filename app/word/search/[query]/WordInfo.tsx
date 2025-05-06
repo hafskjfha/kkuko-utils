@@ -39,6 +39,7 @@ interface WordInfoProps {
     requester_uuid?: string;
     requester?: string;
     requestTime?: string;
+    moreExplanation?: React.ReactNode;
 }
 
 const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
@@ -376,6 +377,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                                 <p className="text-gray-700 italic">
                                     <strong className="text-blue-600">&quot;{wordInfo.word[0]}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word[wordInfo.word.length - 1]}&quot;</strong>로 끝나는 단어입니다.
                                 </p>
+                                {wordInfo.moreExplanation && wordInfo.moreExplanation}
                             </CardContent>
                         </Card>
                     </div>
@@ -457,8 +459,8 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-200">
-                                                {wordInfo.documents.map((doc) => (
-                                                    <tr key={doc.doc_id} className="hover:bg-gray-50">
+                                                {wordInfo.documents.map((doc,index) => (
+                                                    <tr key={`${doc.doc_id}-${index}`} className="hover:bg-gray-50">
                                                         <td className="py-3 px-4 text-sm text-gray-500">{doc.doc_id}</td>
                                                         <td className="py-3 px-4">
                                                             <Link href={`/words-docs/${doc.doc_id}`} className="text-blue-600 hover:underline hover:text-blue-800 flex items-center gap-1">

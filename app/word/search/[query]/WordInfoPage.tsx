@@ -7,6 +7,8 @@ import NotFound from '@/app/not-found-client';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { disassemble } from 'es-hangul';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import axios from 'axios';
+import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 
 interface WordInfoProps {
     word: string;
@@ -28,6 +30,7 @@ interface WordInfoProps {
     requester?: string;
     requester_uuid?: string;
     requestTime?: string;
+    moreExplanation?: React.ReactNode;
 }
 
 const calculateKoreanInitials = (word: string): string => {
@@ -68,6 +71,7 @@ export default function WordInfoPage({ query }: { query: string }) {
         },
         goFirstLetterWords: string[];
         goLastLetterWords: string[];
+        exp?: string;
     }) => {
         const mission: [string, number][] = [];
         for (const c of "가나다라마바사아자차카타파하") {
@@ -76,6 +80,18 @@ export default function WordInfoPage({ query }: { query: string }) {
                 mission.push([c, pp]);
             }
         }
+
+        const gget = () => {
+            return (<a
+                href={wordInfo.exp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 transition-colors"
+            >
+                해당 단어가 끄코위키에 있습니다.
+            </a>)
+        }
+
         setWordInfo({
             word: wordInfo.word,
             initial: calculateKoreanInitials(wordInfo.word),
@@ -91,7 +107,8 @@ export default function WordInfoPage({ query }: { query: string }) {
             documents: wordInfo.documents,
             topic: wordInfo.themes,
             goFirstLetterWords: wordInfo.goFirstLetterWords,
-            goLastLetterWords: wordInfo.goLastLetterWords
+            goLastLetterWords: wordInfo.goLastLetterWords,
+            moreExplanation: wordInfo.exp ? gget() : undefined
         });
     };
 
@@ -150,19 +167,45 @@ export default function WordInfoPage({ query }: { query: string }) {
                         return;
                     }
 
+                    const { data: docsData3, error: docsData3Error} = await supabase.from('docs').select('*').eq('name',wordTableCheck.word[wordTableCheck.word.length - 1]);
+                    if (docsData3Error){
+                        return makeError(docsData3Error);
+                    }
+                    
+                    const {data: docsData4, error: docsData4Error} = await supabase.from('docs').select('*').eq('typez','theme').in('name',[...wordThemes.map(d=>d.themes.name),...wordThemes2.map(d=>d.themes.name)]);
+                    if (docsData4Error){
+                        return makeError(docsData4Error);
+                    }
+                    const docc = docsData3.concat(docsData4).map(({id,name})=>({doc_id: id, doc_name: name}))
+
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', wordTableCheck.word[0]);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `${wordTableCheck.word[0]}%`);
+                    const fir1 = reverDuemLaw(wordTableCheck.word[0])
 
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('first_letter', wordTableCheck.word[wordTableCheck.word.length - 1]);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `%${wordTableCheck.word[wordTableCheck.word.length - 1]}`);
+                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
+                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+
+                    const las1 = [DuemRaw(wordTableCheck.word[wordTableCheck.word.length - 1])]
+                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
+                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
                             makeError(error);
                             return;
                         }
+                    }
+                    
+                    let kkukoWikiok = false
+
+                    const url = `/api/get_kkukowiki?title=${wordTableCheck.word}`;
+                    try{
+                        const response = await axios.get(url);
+                          if (response.status === 200){
+                            kkukoWikiok = true
+                          }
+                    } catch(error){
+                        console.log(error)
                     }
 
                     updateLoadingState(90, "정보 가공 중...");
@@ -172,7 +215,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: wordTableCheck.id,
                         word: wordTableCheck.word,
                         typez: waitTableCheck && waitTableCheck.request_type === "delete" ? "delete" : "ok",
-                        documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name }))],
+                        documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
                         themes: {
                             ok: wordThemes ? wordThemes.filter(theme => !wordThemes2.map(t => t.themes.name).includes(theme.themes.name)).map(theme => theme.themes.name) : [],
                             waitAdd: wordThemes2 ? wordThemes2.filter(theme => theme.typez === 'add').map(theme => theme.themes.name) : [],
@@ -184,7 +227,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                         requested_by_uuid: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_by : wordTableCheck.added_by,
                         requested_at: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_at : wordTableCheck.added_at,
                         goFirstLetterWords: [...firWords1?.map(w => w.word) ?? [], ...firWords2?.map(w => w.word) ?? []],
-                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []]
+                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []],
+                        exp: kkukoWikiok ? `https://kkukowiki.kr/w/${wordTableCheck.word}` : undefined
                     });
 
                 } else if (waitTableCheck) {
@@ -206,13 +250,27 @@ export default function WordInfoPage({ query }: { query: string }) {
                         return;
                     }
 
+                    const {data: waitDocsData4, error: waitDocsData4Error} = await supabase.from('docs').select('*').eq('typez','theme').in('name',[...waitWordThemes.map(d=>d.themes.name)]);
+                    if (waitDocsData4Error){
+                        return makeError(waitDocsData4Error);
+                    }
+
+                    const { data: waitDocsData2, error: waitDocsData2Error} = await supabase.from('docs').select('*').eq('name',waitTableCheck.word[waitTableCheck.word.length - 1]);
+                    if (waitDocsData2Error){
+                        return makeError(waitDocsData2Error);
+                    }
+                    const docc = waitDocsData2.concat(waitDocsData4).map(({id,name})=>({doc_id: id, doc_name: name}))
+
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', waitTableCheck.word[0]);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `${waitTableCheck.word[0]}%`);
+                    const fir1 = reverDuemLaw(waitTableCheck.word[0])
 
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('first_letter', waitTableCheck.word[waitTableCheck.word.length - 1]);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `%${waitTableCheck.word[waitTableCheck.word.length - 1]}`);
+                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
+                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+
+                    const las1 = [DuemRaw(waitTableCheck.word[waitTableCheck.word.length - 1])]
+                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
+                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
@@ -228,7 +286,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: waitTableCheck.id,
                         word: waitTableCheck.word,
                         typez: waitTableCheck.request_type,
-                        documents: waitDocsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })),
+                        documents: [...waitDocsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
                         themes: {
                             ok: [],
                             waitAdd: waitWordThemes ? waitWordThemes.map(theme => theme.themes.name) : [],
@@ -254,7 +312,23 @@ export default function WordInfoPage({ query }: { query: string }) {
             }
         };
 
-        fetchWordInfo();
+        try{
+            fetchWordInfo();
+        } catch(error){
+            if (error instanceof Error){
+                updateLoadingState(
+                    100,
+                    "오류 발생"
+                );
+                setErrorView({
+                    ErrName: error.name,
+                    ErrMessage: error.message,
+                    ErrStackRace: error.stack,
+                    inputValue: "getDocData"
+                })
+            }
+        }
+        
     }, [query]);
 
     if (isNotFound) {

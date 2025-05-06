@@ -2,10 +2,8 @@
 
 import { Button } from "@/app/components/ui/button";
 import { motion } from "framer-motion";
-import { useRouter } from 'next/navigation';
 
 export default function ErrorPage({ message }: { message?: string }) {
-    const router = useRouter();
 
     return (
         <div className="flex h-screen w-full flex-col items-center justify-center bg-red-50 dark:bg-red-950 p-4 text-center">
@@ -18,7 +16,7 @@ export default function ErrorPage({ message }: { message?: string }) {
                 오류가 발생했습니다
             </motion.h1>
             <motion.p
-                className="text-base text-red-500 dark:text-red-200 mb-6"
+                className="text-base text-red-500 dark:text-red-200 mb-6 whitespace-pre-line"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
@@ -32,7 +30,7 @@ export default function ErrorPage({ message }: { message?: string }) {
             >
                 <Button
                     variant="destructive"
-                    onClick={() => router.refresh()}
+                    onClick={() => window.location.reload()}
                     className="text-base px-6 py-3"
                 >
                     새로고침

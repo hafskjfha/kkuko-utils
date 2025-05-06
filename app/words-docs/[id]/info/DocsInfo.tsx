@@ -55,7 +55,7 @@ const DocsInfo = ({ metaData, wordsCount }: { metaData: Metadata; wordsCount: nu
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        <div className="min-h-screen max-w-6xl mx-auto px-4 py-8 space-y-8">
             {/* 이전 페이지로 돌아가기 */}
             <Link href={`/words-docs/${metaData.id}`} className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                 <ArrowLeft size={18} className="mr-2" />

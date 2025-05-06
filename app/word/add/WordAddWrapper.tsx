@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 
 export default function WordAddWrapper({docsID}:{docsID:number}) {
     const router = useRouter();
-    const onSaveWrapper = async (wordID:number, errorP:(value: React.SetStateAction<ErrorMessage | null>) => void) => {
+    const onSaveWrapper = async (wordID:number, setErrorModalView:(value: React.SetStateAction<ErrorMessage | null>) => void) => {
         const {error: insertWordintoDocs} = await supabase.from('docs_wait_words').insert({
             wait_word_id: wordID,
             docs_id: docsID
         })
         
         if (insertWordintoDocs) {
-            errorP({
+            setErrorModalView({
                 ErrName: insertWordintoDocs.name,
                 ErrMessage: insertWordintoDocs.message,
                 ErrStackRace: insertWordintoDocs.stack,

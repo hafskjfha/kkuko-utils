@@ -50,7 +50,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
             }
             if (docsData === null) return setIsNotFound(true);
 
-            updateLoadingState(40,"문서 정보 가져오는 중...");
+            updateLoadingState(40,"문서의 단어 정보 가져오는 중...");
             if (docsData.typez === "letter"){
                 const {data:LetterDatas1, error:error1} = await supabase.from('words').select('word').eq('last_letter',docsData.name.trim()).eq('k_canuse',true);
                 if (error1){
@@ -65,7 +65,28 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 return;
             }
             else if (docsData.typez === "theme"){
-                // 추가 예정
+                updateLoadingState(35,"주제 정보 가져오는 중...");
+                const {data: themeData, error: themeDataError} = await supabase.from('themes').select('*').eq('name',docsData.name).maybeSingle();
+                if (themeDataError){
+                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${themeDataError.name ?? "알수없음"}\nError Message: ${themeDataError.message ?? "없음"}\nError code: ${themeDataError.code}`)
+                    updateLoadingState(100,"ERR");
+                    return;
+                }
+                if (!themeData) return setIsNotFound(true);
+
+                updateLoadingState(50,"문서의 단어 정보 가져오는 중...");
+                const {data: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
+                if (themeWordsError1){
+                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${themeWordsError1.name ?? "알수없음"}\nError Message: ${themeWordsError1.message ?? "없음"}\nError code: ${themeWordsError1.code}`)
+                    updateLoadingState(100,"ERR");
+                    return;
+                }
+
+                updateLoadingState(90,"데이터 가공중...");
+                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length});
+
+                updateLoadingState(100,"완료!");
+                return;
             }
             else{
                 const {words, error} = await getDataOkWords()
