@@ -26,13 +26,6 @@ import { fetcher } from "../lib";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { PostgrestError } from "@supabase/supabase-js";
 
-// Define type for ErrorMessage
-interface ErrorMessage {
-  ErrMessage: string;
-  ErrName: string;
-  ErrStackRace: string;
-  inputValue: string;
-}
 
 // Utility function to calculate Korean initials
 const calculateKoreanInitials = (word: string) => {
@@ -253,7 +246,7 @@ interface TopicInfo {
 }
 
 type WordAddFormProps = {
-    compleSave?: (id: number, setErrorModalView: (data: ErrorMessage) => void) => Promise<void>;
+    compleSave?: (wordID: number, setErrorModalView: (value: React.SetStateAction<ErrorMessage | null>) => void) => Promise<(() => void) | undefined>
 };
 
 // Main component
