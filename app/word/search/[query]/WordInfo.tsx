@@ -39,6 +39,7 @@ interface WordInfoProps {
     requester_uuid?: string;
     requester?: string;
     requestTime?: string;
+    moreExplanation?: React.ReactNode;
 }
 
 const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
@@ -376,6 +377,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                                 <p className="text-gray-700 italic">
                                     <strong className="text-blue-600">&quot;{wordInfo.word[0]}&quot;</strong>으로 시작하여 <strong className="text-blue-600">&quot;{wordInfo.word[wordInfo.word.length - 1]}&quot;</strong>로 끝나는 단어입니다.
                                 </p>
+                                {wordInfo.moreExplanation && wordInfo.moreExplanation}
                             </CardContent>
                         </Card>
                     </div>

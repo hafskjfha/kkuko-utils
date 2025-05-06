@@ -30,7 +30,7 @@ export default function WordsDocsHomePage(){
         const getData = async () => {
 
             updateLoadingState(60, "문서 정보 가져오는 중...");
-            const { data: docsData, error: docsError} = await supabase.from('docs').select('*, users(nickname)');
+            const { data: docsData, error: docsError} = await supabase.from('docs').select('*, users(nickname)').eq('is_hidden',false)
 
             if (docsError){
                 setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${docsError.name ?? "알수없음"}\nError Message: ${docsError.message ?? "없음"}\nError code: ${docsError.code}`)

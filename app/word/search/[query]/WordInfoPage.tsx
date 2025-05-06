@@ -7,6 +7,7 @@ import NotFound from '@/app/not-found-client';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { disassemble } from 'es-hangul';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import axios from 'axios';
 
 interface WordInfoProps {
     word: string;
@@ -28,6 +29,7 @@ interface WordInfoProps {
     requester?: string;
     requester_uuid?: string;
     requestTime?: string;
+    moreExplanation?: React.ReactNode;
 }
 
 const calculateKoreanInitials = (word: string): string => {
@@ -68,6 +70,7 @@ export default function WordInfoPage({ query }: { query: string }) {
         },
         goFirstLetterWords: string[];
         goLastLetterWords: string[];
+        exp?: string;
     }) => {
         const mission: [string, number][] = [];
         for (const c of "가나다라마바사아자차카타파하") {
@@ -76,6 +79,18 @@ export default function WordInfoPage({ query }: { query: string }) {
                 mission.push([c, pp]);
             }
         }
+
+        const gget = () => {
+            return (<a
+                href={wordInfo.exp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 transition-colors"
+            >
+                해당 단어가 끄코위키에 있습니다.
+            </a>)
+        }
+
         setWordInfo({
             word: wordInfo.word,
             initial: calculateKoreanInitials(wordInfo.word),
@@ -91,7 +106,8 @@ export default function WordInfoPage({ query }: { query: string }) {
             documents: wordInfo.documents,
             topic: wordInfo.themes,
             goFirstLetterWords: wordInfo.goFirstLetterWords,
-            goLastLetterWords: wordInfo.goLastLetterWords
+            goLastLetterWords: wordInfo.goLastLetterWords,
+            moreExplanation: wordInfo.exp ? gget() : undefined
         });
     };
 
@@ -175,6 +191,18 @@ export default function WordInfoPage({ query }: { query: string }) {
                             return;
                         }
                     }
+                    
+                    let kkukoWikiok = false
+
+                    const url = `/api/get_kkukowiki?title=${wordTableCheck.word}`;
+                    try{
+                        const response = await axios.get(url);
+                          if (response.status === 200){
+                            kkukoWikiok = true
+                          }
+                    } catch{
+
+                    }
 
                     updateLoadingState(90, "정보 가공 중...");
 
@@ -195,7 +223,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                         requested_by_uuid: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_by : wordTableCheck.added_by,
                         requested_at: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_at : wordTableCheck.added_at,
                         goFirstLetterWords: [...firWords1?.map(w => w.word) ?? [], ...firWords2?.map(w => w.word) ?? []],
-                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []]
+                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []],
+                        exp: kkukoWikiok ? `https://kkukowiki.kr/w/${wordTableCheck.word}` : undefined
                     });
 
                 } else if (waitTableCheck) {
