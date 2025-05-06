@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
         return new NextResponse("ok");
 
     } catch (err) {
-        console.log(err)
         return NextResponse.json({ error: '' }, { status: 404 });
     }
 }

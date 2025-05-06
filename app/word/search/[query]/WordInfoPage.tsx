@@ -8,6 +8,7 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import { disassemble } from 'es-hangul';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import axios from 'axios';
+import { reverDuemLaw } from '@/app/lib/DuemLaw';
 
 interface WordInfoProps {
     word: string;
@@ -179,11 +180,14 @@ export default function WordInfoPage({ query }: { query: string }) {
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', wordTableCheck.word[0]);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `${wordTableCheck.word[0]}%`);
+                    const fir1 = reverDuemLaw(wordTableCheck.word[0])
 
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('first_letter', wordTableCheck.word[wordTableCheck.word.length - 1]);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `%${wordTableCheck.word[wordTableCheck.word.length - 1]}`);
+                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
+                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+
+                    const las1 = reverDuemLaw(wordTableCheck.word[wordTableCheck.word.length - 1])
+                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
+                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
@@ -259,11 +263,14 @@ export default function WordInfoPage({ query }: { query: string }) {
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('last_letter', waitTableCheck.word[0]);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `${waitTableCheck.word[0]}%`);
+                    const fir1 = reverDuemLaw(waitTableCheck.word[0])
 
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).eq('first_letter', waitTableCheck.word[waitTableCheck.word.length - 1]);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').ilike('word', `%${waitTableCheck.word[waitTableCheck.word.length - 1]}`);
+                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
+                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+
+                    const las1 = reverDuemLaw(waitTableCheck.word[waitTableCheck.word.length - 1])
+                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
+                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
