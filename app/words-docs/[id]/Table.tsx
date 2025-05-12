@@ -140,7 +140,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
             const { data: getWordThemesData, error: getWordThemesDataError } = await supabase
                 .from('wait_word_themes')
                 .select('*')
-                .eq('theme_id', getWaitWordData.id);
+                .eq('wait_word_id', getWaitWordData.id);
             if (getWordThemesDataError) throw getWordThemesDataError;
             if (!getWordThemesData) return;
 
