@@ -238,6 +238,10 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 await supabase.rpc('update_last_update',{docs_id:v})
             })
 
+            if (getWaitWordData.requested_by){
+                await supabase.rpc('increment_contribution',{target_id: getWaitWordData.requested_by, inc_amount:1})
+            }
+
             // 7. 추가 요청 테이블에서 삭제
             const { error: deleteWaitWordDataError } = await supabase
                 .from('wait_words')
@@ -402,6 +406,10 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 await supabase.rpc('update_last_update',{docs_id:v})
             })
 
+            if (getWaitWordData.requested_by){
+                await supabase.rpc('increment_contribution',{target_id: getWaitWordData.requested_by, inc_amount:1})
+            }
+            
 
         setIsProcessing(false);
         CompleWork();
