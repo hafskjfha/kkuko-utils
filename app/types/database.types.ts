@@ -502,7 +502,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      random_wait_word_ff: {
+        Args: { prefixes: string[] }
+        Returns: {
+          word: string
+        }[]
+      }
+      random_wait_word_ll: {
+        Args: { prefixes: string[] }
+        Returns: {
+          word: string
+        }[]
+      }
+      random_word_ff: {
+        Args: { fir1: string[] }
+        Returns: {
+          word: string
+        }[]
+      }
+      random_word_ll: {
+        Args: { fir1: string[] }
+        Returns: {
+          word: string
+        }[]
+      }
+      update_last_update: {
+        Args: { docs_id: number }
+        Returns: undefined
+      }
     }
     Enums: {
       document_type: "letter" | "theme" | "ect"

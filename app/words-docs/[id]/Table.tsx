@@ -139,7 +139,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
             // 2. 추가 요청 단어의 주제 정보 가져오기
             const { data: getWordThemesData, error: getWordThemesDataError } = await supabase
                 .from('wait_word_themes')
-                .select('*')
+                .select('*,themes(name)')
                 .eq('wait_word_id', getWaitWordData.id);
             if (getWordThemesDataError) throw getWordThemesDataError;
             if (!getWordThemesData) return;
@@ -198,6 +198,45 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 }));
                 WriteDocsLog(insertDocsLogData);
             }
+
+            const {data: docsDatas, error: docsError} = await supabase.from('docs').select('*');
+            if (docsError) return makeError(docsError)
+            const letterDocs = docsDatas.filter(({typez})=>typez==="letter");
+            const themeDocs = docsDatas.filter(({typez})=>typez === "theme");
+
+            const okLetterDocs = letterDocs
+                .filter(({name})=>getAddAcceptData.word[getAddAcceptData.word.length-1]===name)
+                .map(d=>({
+                    word: getWaitWordData.word,
+                    docs_id: d.id,
+                    add_by: getWaitWordData.requested_by,
+                    type: "add" as const
+                }));
+            WriteDocsLog(okLetterDocs);
+            const okThemeDocs = themeDocs
+                .filter(({name})=>getWordThemesData.some(b=>b.themes.name === name))
+                .map(d=>({
+                    word: getWaitWordData.word,
+                    docs_id: d.id,
+                    add_by: getWaitWordData.requested_by,
+                    type: "add" as const
+                }))
+            const okThemeDocsA = themeDocs
+                .filter(({name})=>getWordThemesData.some(b=>b.themes.name === name))
+                .map(({id})=>id);
+            WriteDocsLog(okThemeDocs);
+            
+            const okLetterDocsA = letterDocs
+                .filter(({name})=>getAddAcceptData.word[getAddAcceptData.word.length-1]===name)
+                .map(({id})=>id)
+            
+            okLetterDocsA.forEach(async (v)=>{
+                await supabase.rpc('update_last_update',{docs_id:v})
+            })
+            
+            okThemeDocsA.forEach(async (v)=>{
+                await supabase.rpc('update_last_update',{docs_id:v})
+            })
 
             // 7. 추가 요청 테이블에서 삭제
             const { error: deleteWaitWordDataError } = await supabase
@@ -264,6 +303,17 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
             return;
         }
         if (!getWaitWordData) return;
+        const {data: getWordData, error: getWordError} = await supabase.from('words').select('*').eq('word',word).maybeSingle();
+        if (getWordError) {
+            makeError(getWordError);
+            return setIsProcessing(false)
+        }
+        if (!getWordData) return;
+        const {data: themeWordData, error: themeWordError} = await supabase.from('word_themes').select('*,themes(*)').eq('word_id',getWordData.id);
+        if (themeWordError){
+            makeError(themeWordError);
+            return setIsProcessing(false);
+        }
 
         const { data: getDeleteDocsData, error: getDeleteDocsDataError } = await supabase.from('docs_wait_words').select('*').eq('wait_word_id', getWaitWordData.id);
         if (getDeleteDocsDataError) {
@@ -308,6 +358,50 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
             } as const;
         });
         WriteDocsLog(insertDocsLogData);
+
+        const {data: docsDatas, error: docsError} = await supabase.from('docs').select('*');
+        if (docsError) return makeError(docsError)
+        const letterDocs = docsDatas.filter(({typez})=>typez==="letter");
+        const themeDocs = docsDatas.filter(({typez})=>typez === "theme");
+
+        const okLetterDocs = letterDocs
+            .filter(({name})=>getWaitWordData.word[getWaitWordData.word.length-1]===name)
+            .map(d=>({
+                word: getWaitWordData.word,
+                docs_id: d.id,
+                add_by: getWaitWordData.requested_by,
+                type: "delete" as const
+            }));
+
+        const okThemeDocs = themeDocs
+                .filter(({name})=>themeWordData.some(b=>b.themes.name === name))
+                .map(d=>({
+                    word: getWaitWordData.word,
+                    docs_id: d.id,
+                    add_by: getWaitWordData.requested_by,
+                    type: "delete" as const
+                }))
+
+        WriteDocsLog(okLetterDocs);
+        WriteDocsLog(okThemeDocs);
+
+        const okThemeDocsA = themeDocs
+                .filter(({name})=>themeWordData.some(b=>b.themes.name === name))
+                .map(({id})=>id);
+            WriteDocsLog(okThemeDocs);
+            
+            const okLetterDocsA = letterDocs
+                .filter(({name})=>getWaitWordData.word[getWaitWordData.word.length-1]===name)
+                .map(({id})=>id)
+            
+            okLetterDocsA.forEach(async (v)=>{
+                await supabase.rpc('update_last_update',{docs_id:v})
+            })
+            
+            okThemeDocsA.forEach(async (v)=>{
+                await supabase.rpc('update_last_update',{docs_id:v})
+            })
+
 
         setIsProcessing(false);
         CompleWork();
