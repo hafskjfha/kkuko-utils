@@ -502,6 +502,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_contribution: {
+        Args: { target_id: string; inc_amount: number }
+        Returns: undefined
+      }
       random_wait_word_ff: {
         Args: { prefixes: string[] }
         Returns: {
