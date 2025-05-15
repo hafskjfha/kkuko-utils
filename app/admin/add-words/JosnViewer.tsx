@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, CSSProperties } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 type WordData = {
@@ -21,6 +21,7 @@ interface JsonViewerProps {
 
 const JsonViewer = ({ data }: JsonViewerProps) => {
   const [jsonLines, setJsonLines] = useState<string[]>([]);
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [containerWidth, setContainerWidth] = useState(300);
   const containerRef = useRef(null);
 
@@ -35,7 +36,7 @@ const JsonViewer = ({ data }: JsonViewerProps) => {
   useEffect(() => {
     if (containerRef.current) {
       const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
+        for (const entry of entries) {
           setContainerWidth(entry.contentRect.width);
         }
       });

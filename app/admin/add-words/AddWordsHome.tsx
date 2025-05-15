@@ -4,7 +4,6 @@ import {
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogDescription,
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
@@ -315,34 +314,6 @@ export default function WordsAddHome() {
     setCurrentTask('완료!')
     setIsProcessing(false);
   }
-
-  // 처리 과정 시뮬레이션 (데모용)
-  const simulateProcessing = () => {
-    const tasks = [
-      "데이터 초기화 중...",
-      "k_canuse 처리 중...",
-      "noin_canuse 처리 중...",
-      "테마 분석 중...",
-      "결과 생성 중...",
-    ];
-
-    let taskIndex = 0;
-    let currentProgress = 0;
-
-    const interval = setInterval(() => {
-      if (taskIndex < tasks.length) {
-        setCurrentTask(tasks[taskIndex]);
-        taskIndex++;
-        currentProgress += 20;
-        setProgress(currentProgress);
-      } else {
-        clearInterval(interval);
-        setIsProcessing(false);
-        // 실제 처리가 완료된 후에는 모달을 닫지 않고 사용자가 확인할 수 있도록 함
-        // 사용자가 모달 외부를 클릭하거나 완료 버튼을 누르면 모달이 닫힘
-      }
-    }, 1000);
-  };
 
   // 모달 닫기
   const closeModal = () => {
