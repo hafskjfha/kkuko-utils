@@ -78,7 +78,7 @@ const AuthPage: React.FC = () => {
         const { error: err } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: fullUrl, 
+                redirectTo: `${location.origin}/api/auth/callback`, 
             },
         });
         if (err) {

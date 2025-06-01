@@ -1,12 +1,23 @@
-// /app/auth/callback/route.ts
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseServerClient } from '@/app/lib/supabaseServer';
 import { NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
-  await supabase.auth.getSession() // 이 호출로 자동 쿠키 세팅됨
+export async function GET(req: Request) {
+    try {
+        const supabase = await createSupabaseServerClient();
 
-  // 로그인 후 홈으로 리디렉션
-  return NextResponse.redirect(new URL('/', request.url))
+        // 코드를 세션으로 교환
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+            new URL(req.url).searchParams.get('code') || ''
+        );
+
+        if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            return NextResponse.redirect(new URL('/auth', req.url));
+        }
+
+        return NextResponse.redirect(new URL('/auth', req.url));
+    } catch (error) {
+        console.error('Unexpected error:', error);
+        return NextResponse.redirect(new URL('/auth', req.url));
+    }
 }
