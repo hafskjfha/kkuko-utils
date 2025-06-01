@@ -233,7 +233,7 @@ const WordExtractorApp: React.FC = () => {
                                                 {fileContent.split('\n').length}
                                             </div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                총 단어 수
+                                                파일의 총 단어 수
                                             </div>
                                         </div>
                                     </CardContent>

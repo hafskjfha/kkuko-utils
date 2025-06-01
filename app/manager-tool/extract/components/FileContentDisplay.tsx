@@ -10,6 +10,8 @@ import { Button } from "@/app/components/ui/button";
 
 export interface FileContentDisplayProps {
     setFileContent: React.Dispatch<React.SetStateAction<string | null>>;
+    setFile: React.Dispatch<React.SetStateAction<File | null>>
+    file: File | null;
     fileContent: string | null;
     onFileUpload?: (content: string) => void;
     onError?: (error: unknown) => void;
@@ -20,6 +22,8 @@ export interface FileContentDisplayProps {
 
 const FileContentDisplay = ({
     setFileContent,
+    setFile,
+    file,
     fileContent,
     onFileUpload,
     onError,
@@ -27,7 +31,6 @@ const FileContentDisplay = ({
     resultData = [],
     resultTitle = "처리 결과"
 }: FileContentDisplayProps) => {
-    const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
