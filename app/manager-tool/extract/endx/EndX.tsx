@@ -1,7 +1,6 @@
 // 공통 레이아웃으로 잡음
 "use client";
 import React, { useState } from "react";
-import { Counter } from "@/app/lib/collections";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type'
 import Spinner from "@/app/components/Spinner";
