@@ -18,12 +18,15 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
     setFile: React.Dispatch<React.SetStateAction<File | null>>;
     setLineCount: React.Dispatch<React.SetStateAction<number>>
 }) => {
+    // 에디터 내용
     const [editorContent, setEditorContent] = useState(fileContent);
 
+    // 파일 콘텐츠 변경되면 업데이트
     useEffect(() => {
         setEditorContent(fileContent);
     }, [fileContent]);
 
+    // 파일 다운로드 처리
     const handleDownload = () => {
         const blob = new Blob([editorContent], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -39,6 +42,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
         }
     };
 
+    // 파일 삭제
     const clearFile = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -147,6 +151,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
     const [removeWord, setRemoveWord] = useState<string>("");
     const [replaceOpen, setReplaceOpen] = useState<boolean>(false);
 
+    // 도구 스택 undo푸시 함수
     const pushToUndoStack = (content: string) => {
         try {
             setUndoStack((prev) => [...prev, content]);
@@ -229,6 +234,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 공백을 줄바꿈으로 바꾸기
     const handleReplaceSpacesWithNewlines = () => {
         try {
             const updatedContent = fileContent.replace(/ +/g, "\n");
@@ -256,6 +262,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 빈줄 삭제
     const handleRemoveEmptyLines = () => {
         try {
             const updatedContent = fileContent
@@ -286,6 +293,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 단어 삭제
     const handleRemoveWord = (word: string) => {
         try {
             const updatedContent = fileContent
@@ -317,6 +325,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // replace처리 
     const handleReplaceCharacter = (target: string, replacement: string) => {
         try {
             const updatedContent = fileContent.replaceAll(target, replacement);
@@ -346,6 +355,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 중복 제거
     const handleRemoveDuplicates = () => {
         try {
             const okSet = new Set<string>();
@@ -380,6 +390,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 정렬 v1
     const handleSortWordv1 = () => {
         try {
             const updatedContent = fileContent.split("\n").sort((a, b) => a.localeCompare(b, "ko-KR"));
@@ -408,6 +419,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
         }
     };
 
+    // 정렬 v2
     const handleSortWordv2 = () => {
         try {
             let groupedText = '';
@@ -665,7 +677,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
     );
 };
 
-const ArrangeHome: React.FC = () => {
+const ArrangeHome = () => {
     const [file, setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string>("");
     const [lineCount, setLineCount] = useState<number>(0);
