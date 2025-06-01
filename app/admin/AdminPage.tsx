@@ -60,7 +60,7 @@ const AdminDashboard = () => {
             title: '단어 대량 추가',
             description: '새로운 단어들을 일괄적으로 시스템에 등록합니다',
             icon: Plus,
-            path: '/add-words',
+            path: '/admin/add-words',
             color: 'text-green-600',
             bgColor: 'bg-green-50 hover:bg-green-100',
             borderColor: 'border-green-200'
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
             title: '단어 대량 삭제',
             description: '불필요한 단어들을 일괄적으로 제거합니다',
             icon: Trash2,
-            path: '/del-words',
+            path: '/admin/del-words',
             color: 'text-red-600',
             bgColor: 'bg-red-50 hover:bg-red-100',
             borderColor: 'border-red-200'
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
             title: '요청 처리',
             description: '사용자 요청사항을 검토하고 처리합니다',
             icon: FileText,
-            path: '/request-words',
+            path: '/admin/request-words',
             color: 'text-blue-600',
             bgColor: 'bg-blue-50 hover:bg-blue-100',
             borderColor: 'border-blue-200'
