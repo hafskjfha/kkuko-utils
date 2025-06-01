@@ -30,11 +30,11 @@ import {
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { useRouter } from 'next/navigation'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
-import ErrorModal from '../components/ErrModal'
+import ErrorModal from '../../components/ErrModal'
 
 // 타입 정의
 type Theme = {
