@@ -1,4 +1,4 @@
-import AdminDashboard from "./AdminPage";
+import AdminDelHomeWrapper from "./AdminDelHomeWrapper";
 
 export async function generateMetadata() {
     return {
@@ -7,6 +7,6 @@ export async function generateMetadata() {
     };
 }
 
-export default function AdminPage(){
-    return <AdminDashboard />
+export default function AdminDelPage(){
+    return <AdminDelHomeWrapper />
 }
