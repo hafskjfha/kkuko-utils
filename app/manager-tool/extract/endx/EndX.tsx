@@ -1,192 +1,161 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
+import { HelpCircle, Download } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Card, CardContent } from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
 import ErrorModal from "@/app/components/ErrModal";
+import FileContentDisplay from "../components/FileContentDisplay";
 import type { ErrorMessage } from '@/app/types/type';
-import Spinner from "@/app/components/Spinner";
 
-const WordExtractorApp: React.FC = () => {
-    const [file, setFile] = useState<File | null>(null);
+const WordExtractorApp = () => {
     const [fileContent, setFileContent] = useState<string | null>(null);
     const [extractedWords, setExtractedWords] = useState<string[]>([]);
     const [wordEnd, setWordEnd] = useState<string>('');
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFile(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                
-                const content = event.target?.result as string;
-                setFileContent(content.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
-                setLoading(false);
-            };
-
-            reader.onerror = (event) => {
-                const error = event.target?.error;
-                try{
-                    if(error){
-                        const errorObj = new Error(`FileReader Error: ${error.message}`);
-                        errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
-                        throw errorObj;
-                    }
-                }catch(err){
-                    if (err instanceof Error) {
-                        seterrorModalView({
-                            ErrName: err.name,
-                            ErrMessage: err.message,
-                            ErrStackRace: err.stack,
-                            inputValue: null
-                        });
-                    } else {
-                        seterrorModalView({
-                            ErrName: null,
-                            ErrMessage: null,
-                            ErrStackRace: err as string,
-                            inputValue: null
-                        });
-                    }
-                }
-            };
-            setLoading(true);
-            reader.readAsText(file);
-        }
+    // 파일 업로드 처리
+    const handleFileUpload = (content: string) => {
+        setFileContent(content);
+        // 기존 추출 결과 초기화
+        setExtractedWords([]);
     };
 
+    // 단어 추출 함수
     const extractWords = () => {
-        try{
+        try {
             if (fileContent && wordEnd) {
-            const words = fileContent.split(/\s+/).filter((word) => word.endsWith(wordEnd));
-            setExtractedWords(words);
+                const words = fileContent.split(/\s+/).filter((word) => word.endsWith(wordEnd));
+                setExtractedWords(words);
             }
-        }catch(err){
-            if (err instanceof Error) {
-                seterrorModalView({
-                    ErrName: err.name,
-                    ErrMessage: err.message,
-                    ErrStackRace: err.stack,
-                    inputValue: `END: ${wordEnd} | ${fileContent}`
-                });
-
-            } else {
-                seterrorModalView({
-                    ErrName: null,
-                    ErrMessage: null,
-                    ErrStackRace: err as string,
-                    inputValue: `END: ${wordEnd} | ${fileContent}`
-                });
-            }
+        } catch (err) {
+            handleError(err);
         }
     };
 
+    // 다운로드 처리함수
     const downloadExtractedWords = () => {
-        try{
+        try {
             if (extractedWords.length === 0) return;
+            
             const blob = new Blob([extractedWords.join("\n")], { type: "text/plain" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `${file?.name.substring(0, file?.name.lastIndexOf(".")) || "unkown"}_X${wordEnd} 목록.txt`;
+            link.download = `extracted_words_${wordEnd}_목록.txt`;
             link.click();
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-        }catch(err){
-            if (err instanceof Error) {
-                seterrorModalView({
-                    ErrName: err.name,
-                    ErrMessage: err.message,
-                    ErrStackRace: err.stack,
-                    inputValue: fileContent
-                });
-
-            } else {
-                seterrorModalView({
-                    ErrName: null,
-                    ErrMessage: null,
-                    ErrStackRace: err as string,
-                    inputValue: fileContent
-                });
-            }
+            
+            // Clean up
+            URL.revokeObjectURL(link.href);
+        } catch (err) {
+            handleError(err);
         }
     };
 
+    // 에러 처리
+    const handleError = (err: unknown) => {
+        if (err instanceof Error) {
+            setErrorModalView({
+                ErrName: err.name,
+                ErrMessage: err.message,
+                ErrStackRace: err.stack,
+                inputValue: null
+            });
+        } else {
+            setErrorModalView({
+                ErrName: null,
+                ErrMessage: null,
+                ErrStackRace: err as string,
+                inputValue: null
+            });
+        }
+    };
+
+    // 도움말 (TODO: 추후 수정)
     const handleHelp = () => {
-        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.md5ray6sao6w", "_blank", "noopener,noreferrer");
-    }
+        window.open(
+            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.md5ray6sao6w", 
+            "_blank", 
+            "noopener,noreferrer"
+        );
+    };
 
     return (
-        <div className="flex flex-col min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
+        <div className="min-h-screen bg-background">
+            {/* Header */}
+            <header className="border-b">
+                <div className="container mx-auto px-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-bold">단어 추출기</h1>
+                        <Button onClick={handleHelp} variant="outline" size="sm">
+                            <HelpCircle className="h-4 w-4 mr-2" />
+                            도움말
+                        </Button>
+                    </div>
+                </div>
+            </header>
 
             {/* Main Content */}
-            <main className="flex-grow p-4">
-                <div className="flex flex-col md:flex-row h-full gap-4">
-                    {/* Left section */}
-                    <div className="md:w-4/5 w-full flex flex-col gap-4">
-                        <div className="p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".txt"
-                                onChange={handleFileUpload}
-                                className="border p-2 rounded w-full dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                            <div className="p-4 border rounded shadow overflow-auto dark:border-gray-700 dark:bg-gray-800">
-                                <h2 className="text-lg font-bold mb-2">업로드된 파일 내용</h2>
-                                <div className="h-full max-h-96 overflow-y-auto">
-                                    <pre>{fileContent || "아직 파일이 업로드 되지 않았습니다"}</pre>
-                                </div>
-                            </div>
-                            <div className="p-4 border rounded shadow overflow-auto dark:border-gray-700 dark:bg-gray-800">
-                                <h2 className="text-lg font-bold mb-2">{`${wordEnd || "?"}로 끝나는 단어 목록`}</h2>
-                                <div className="h-full max-h-96 overflow-y-auto">
-                                    <pre>{extractedWords.length > 0 ? extractedWords.join("\n") : "아직 추출되지 않았거나 \n추출된 단어가 없습니다."}</pre>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right section */}
-                    <div className="md:w-1/5 w-full p-4 border rounded shadow dark:border-gray-700 dark:bg-gray-800">
-                        <button
-                            onClick={handleHelp}
-                            className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 mb-4"
-                        >
-                            도움말
-                        </button>
-                        <input
-                            value={wordEnd}
-                            onChange={(e) => setWordEnd(e.target.value)}
-                            className="border p-2 rounded w-full mb-4 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="끝글자를 입력하세요."
+            <main className="container mx-auto px-4 py-8">
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left section - File Content Display */}
+                    <div className="md:w-4/5 w-full">
+                        <FileContentDisplay
+                            setFileContent={setFileContent}
+                            fileContent={fileContent}
+                            onFileUpload={handleFileUpload}
+                            onError={handleError}
+                            resultData={extractedWords}
+                            resultTitle={`"${wordEnd || "?"}"로 끝나는 단어 목록`}
                         />
-                        <button
-                            onClick={extractWords}
-                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-4 dark:bg-blue-600 dark:hover:bg-blue-700"
-                        >
-                            추출
-                        </button>
-                        <button
-                            onClick={downloadExtractedWords}
-                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
-                        >
-                            추출된 단어목록 다운로드
-                        </button>
+                    </div>
+
+                    {/* Right section - Controls */}
+                    <div className="md:w-1/5 w-full">
+                        <Card className="h-fit">
+                            <CardContent className="p-6 space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="word-end">끝글자 입력</Label>
+                                    <Input
+                                        id="word-end"
+                                        value={wordEnd}
+                                        onChange={(e) => setWordEnd(e.target.value)}
+                                        placeholder="끝글자를 입력하세요"
+                                        disabled={!fileContent}
+                                    />
+                                </div>
+                                
+                                <Button 
+                                    onClick={extractWords}
+                                    disabled={!fileContent || !wordEnd}
+                                    className="w-full"
+                                >
+                                    추출
+                                </Button>
+                                
+                                <Button 
+                                    onClick={downloadExtractedWords}
+                                    disabled={extractedWords.length === 0}
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    다운로드
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
-                {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView}/>}
-                {loading && (
-                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
-                    <Spinner />
-                </div>
-            )}
             </main>
-        </div>
 
+            {/* Error Modal */}
+            {errorModalView && (
+                <ErrorModal 
+                    onClose={() => setErrorModalView(null)} 
+                    error={errorModalView}
+                />
+            )}
+        </div>
     );
 };
 
