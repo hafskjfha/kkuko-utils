@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
@@ -20,8 +20,6 @@ const AuthPage: React.FC = () => {
     const [nicknameError, setNicknameError] = useState("");
     const dispatch = useDispatch<AppDispatch>();
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         
@@ -74,7 +72,6 @@ const AuthPage: React.FC = () => {
     
 
     const signInWithGoogle = async () => {
-        const fullUrl = `${window.location.origin}${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         const { error: err } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
