@@ -19,7 +19,6 @@ const WordExtractorApp = () => {
     const [sortChecked, setSortChecked] = useState<boolean>(true);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [loading, setLoading] = useState(false);
-    const [wordEnd, setWordEnd] = useState<string>('');
     const [wordLength, setWordLength] = useState<number>(5);
 
     // 파일 업로드 처리
