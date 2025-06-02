@@ -51,6 +51,7 @@ const WordExtractorApp = () => {
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent && wordStart) {
+                // 시작 글자에 맞는 단어 추출
                 const words = fileContent.split(/\s+/).filter((word) => word.startsWith(wordStart));
                 setExtractedWords(sortChecked ? words.sort((a,b)=>a.localeCompare(b,"ko")) : words);
                 console.log(words.length)
@@ -147,12 +148,12 @@ const WordExtractorApp = () => {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="word-start">끝글자</Label>
+                                        <Label htmlFor="word-start">시작글자</Label>
                                         <Input
                                             id="word-start"
                                             value={wordStart}
                                             onChange={(e) => setWordStart(e.target.value)}
-                                            placeholder="끝글자를 입력하세요"
+                                            placeholder="시작글자를 입력하세요"
                                         />
                                     </div>
 
@@ -235,6 +236,7 @@ const WordExtractorApp = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">

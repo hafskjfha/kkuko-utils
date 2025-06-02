@@ -62,25 +62,32 @@ const WordExtractorApp = () => {
             await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent) {
                 const words = fileContent.split(/\s+/);
+                // {시작글자: 해당단어들 리스트}
                 const kkk = new DefaultDict<string,string[]>(()=>[]);
                 const result:string[] = [];
                 for (const word of words){
                     kkk.get(word[0]).push(word)
                 }
+                // 정렬하여 dict추출
                 const ppp = kkk.sortedEntries();
+                // [시작글자, 단어들 리스트]
                 for (const [l,v] of ppp){
-                    
+                    // ww: 1티어 단어, co: 1티어 단어의 미션 글자 수
                     let ww:string|undefined = undefined;
                     let co:number = 0;
+
+                    // 미션 단어수 체크
                     for (const m of "가나다라마바사아자차카타파하"){
                         for (const word of v){
                             const pp = (word.match(new RegExp(m, "gi")) || []).length;
                             if (pp > 0){
                                 if (ww === undefined) {
+                                    // 초기화
                                     ww = word;
                                     co = pp;
                                 }
                                 else{
+                                    // 현재 1티어 미션 글자수 보다 미션글자수가 크거나 미션글자수가 같아도 길이가 길면 갱신 
                                     if (co === pp && ww.length < word.length) ww = word;
                                     else if (pp > co) {
                                         ww = word;
@@ -89,12 +96,15 @@ const WordExtractorApp = () => {
                                 }
                             }
                         }
+                        // 1티어 단어 존재한다면
                         if (ww !== undefined){
+                            // 결과 저장
                             if (!result.includes(`=[${l}]=`)) result.push(`=[${l}]=`);
                             result.push(`-${m}-`);
                             if (showMissionLetter) result.push(f(ww));
                             else result.push(ww);
                             result.push("");
+                            // 초기화
                             ww = undefined;
                             co = 0;
                         }
@@ -272,6 +282,7 @@ const WordExtractorApp = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">

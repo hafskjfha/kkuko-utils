@@ -72,6 +72,7 @@ const WordExtractorApp = () => {
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent && selected.length > 0) {
+                // {미션글자: 미션단어 리스트}
                 const kkk = new DefaultDict<string, { word: string, mission: number }[]>(() => []);
                 const include = oneMissionChecked ? 1 : 2;
                 for (const m of "가나다라마바사아자차카타파하") {
@@ -83,6 +84,7 @@ const WordExtractorApp = () => {
                     }
                 }
 
+                // 미션 글자 표시 처리
                 const f = (word:string) => {
                     let r = `${word} `;
                     for (const m of "가나다라마바사아자차카타파하") {
@@ -507,6 +509,7 @@ const WordExtractorApp = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">

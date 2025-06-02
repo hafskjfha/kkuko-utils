@@ -44,21 +44,28 @@ const WordExtractorApp: React.FC = () => {
         }
     };
 
-    const extractWords = () => {
+    const extractWords = async () => {
         try {
             if (fileContent) {
                 setLoading(true);
+                await new Promise(resolve => setTimeout(resolve, 1))
                 const words: string[] = [];
                 for (const word of fileContent.split('\n')) {
+                    // 카운터로 미션 카운트
                     const counter = new Counter<string>();
                     for (const c of 'abcdefghijklmnopqrstuvwxyz') {
+                        // 최소 미션 글자수 보다 큰 것만 저장
                         if ([...word].filter((char) => char === c).length >= minMission)
                             counter.set(c, [...word].filter((char) => char === c).length)
                     }
 
+                    // 미션 글자: 카운트 표시 정렬 처리
                     const aa = sortChecked ? counter.entries().sort((a, b) => b[1] - a[1]) : counter.entries();
 
-                    words.push(`${word} [${aa.map(([key, value]) => `${key}:${value}`).join(" ")}]`);
+                    // 결과 저장
+                    if (aa.length > 0) {
+                        words.push(`${word} [${aa.map(([key, value]) => `${key}:${value}`).join(" ")}]`);
+                    }
                 }
                 setExtractedWords(words);
                 setLoading(false);
@@ -252,6 +259,7 @@ const WordExtractorApp: React.FC = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">

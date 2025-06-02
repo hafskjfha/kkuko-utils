@@ -94,6 +94,7 @@ const WordExtractorApp = () => {
     const mergeFiles = () => {
         try{    
             if (fileContent1 && fileContent2) {
+                // 합치고 set으로 중복 제거
                 const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
                 setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
             }
@@ -148,7 +149,7 @@ const WordExtractorApp = () => {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
             <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
@@ -177,7 +178,7 @@ const WordExtractorApp = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                     {/* File Content Display - 3/4 width */}
                     <div className="xl:col-span-3">
@@ -428,6 +429,7 @@ const WordExtractorApp = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">

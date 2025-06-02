@@ -51,6 +51,7 @@ const WordExtractorApp = () => {
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent) {
+                // 길이에 맞는 단어 추출
                 const words = fileContent.split(/\s+/).filter((word) => word.length === wordLength);
                 setExtractedWords(sortChecked ? words.sort((a,b)=>a.localeCompare(b,'ko')): words);
             }
@@ -236,6 +237,7 @@ const WordExtractorApp = () => {
                 />
             )}
 
+            {/* loading */}
             {loading && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">
