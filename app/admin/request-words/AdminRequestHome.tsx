@@ -29,7 +29,6 @@ import {
     CardTitle
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
-import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
@@ -54,14 +53,13 @@ type WordRequest = {
     word_id?: number; // 주제 변경 요청에서만 사용
 }
 
-export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) {
+export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordRequest[], refreshFn: ()=>Promise<void>}) {
     const [selectedTab, setSelectedTab] = useState<string>("all");
     const [selectedRequests, setSelectedRequests] = useState<Set<number>>(new Set());
     const [selectedThemes, setSelectedThemes] = useState<Record<number, Set<number>>>({});
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [allSelected, setAllSelected] = useState<boolean>(false);
     const [errorModalView, setErrorModalView] = useState<ErrorMessage|null>(null);
-    const router = useRouter();
     const user = useSelector((state: RootState) => state.user);
 
     const PAGE_SIZE = 30;
@@ -358,7 +356,7 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
         setSelectedRequests(new Set());
         setSelectedThemes({});
         setAllSelected(false);
-        router.refresh();
+        refreshFn();
     };
 
     // 선택한 요청 거절 처리
