@@ -92,6 +92,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
                 const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 setWordsData({words: wordsData, metadata: p});
                 updateLoadingState(100, "완료!");
                 return;
@@ -133,6 +134,7 @@ export default function DocsDataHome({id}:{id:number}){
                 
                 const wordsData = [...Data3InWait, ...Data4In6Wait, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data1NotInData2And3And6 ];
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 setWordsData({words:wordsData, metadata:p});
                 updateLoadingState(100, "완료!");
                 return
@@ -152,6 +154,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsData = [...wordsNotInC,...CwordsNotInB, ...B]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 setWordsData({words:wordsData, metadata:p});
                 updateLoadingState(100, "완료!");
                 return;

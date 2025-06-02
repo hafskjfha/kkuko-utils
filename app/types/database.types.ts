@@ -19,6 +19,7 @@ export type Database = {
           maker: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
+          views: number
         }
         Insert: {
           created_at?: string
@@ -29,6 +30,7 @@ export type Database = {
           maker?: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
+          views?: number
         }
         Update: {
           created_at?: string
@@ -39,6 +41,7 @@ export type Database = {
           maker?: string | null
           name?: string
           typez?: Database["public"]["Enums"]["document_type"]
+          views?: number
         }
         Relationships: [
           {
@@ -502,8 +505,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_doc_rank: {
+        Args: { doc_id: number }
+        Returns: number
+      }
       increment_contribution: {
         Args: { target_id: string; inc_amount: number }
+        Returns: undefined
+      }
+      increment_doc_views: {
+        Args: { doc_id: number }
         Returns: undefined
       }
       random_wait_word_ff: {
