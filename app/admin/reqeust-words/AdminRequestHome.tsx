@@ -30,11 +30,11 @@ import {
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { useRouter } from 'next/navigation'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
-import ErrorModal from '../components/ErrModal'
+import ErrorModal from '../../components/ErrModal'
 
 // 타입 정의
 type Theme = {
@@ -112,8 +112,19 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
 
         if (currentThemes.has(themeId)) {
             currentThemes.delete(themeId);
+            if (currentThemes.size===0){
+                toggleRequest(requestId)
+            }
         } else {
             currentThemes.add(themeId);
+            const newSelected = new Set(selectedRequests);
+            if (!newSelected.has(requestId)){
+                newSelected.add(requestId);
+                if (newSelected.size === currentRequests.length) {
+                    setAllSelected(true);
+                }
+                setSelectedRequests(newSelected);
+            }
         }
 
         newSelectedThemes[requestId] = currentThemes;
@@ -162,7 +173,7 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
             switch (req.request_type){
                 case "add":
                     if (!req.word || !req.selectedThemes) continue;
-                    wordAddQuery.push({word: req.word, added_by: req.requested_by ?? null});
+                    wordAddQuery.push({word: req.word, added_by: req.requested_by_uuid ?? null});
                     wordAddBeforeThemes[req.word] = req.selectedThemes.map((theme)=>theme.theme_id);
                     RequestBy[req.word] = req.requested_by_uuid ?? null;
 
@@ -200,14 +211,17 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
         }
         
         const {error: AddWordThemesError} = await supabase.from('word_themes').insert(wordAddThemesQuery);
-        const conditions = wordDeleteThemesQuery
+        if (wordDeleteThemesQuery.length > 0){
+            const conditions = wordDeleteThemesQuery
             .map(p => `(word_id.eq.${p.word_id},theme_id.eq.${p.theme_id})`)
             .join(',');
-        const {error: DeleteWordThemesError} = await supabase.from('word_themes').delete().or(conditions);
-        if (DeleteWordThemesError){
-            makeError(DeleteWordThemesError);
-            return;
+            const {error: DeleteWordThemesError} = await supabase.from('word_themes').delete().or(conditions);
+            if (DeleteWordThemesError){
+                makeError(DeleteWordThemesError);
+                return;
+            }
         }
+        
 
         if (AddWordThemesError){
             makeError(AddWordThemesError);
@@ -225,37 +239,58 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
         AddedWords.forEach(({word,id})=>{
             const themes = wordAddBeforeThemes[word]
             if (themes){
-                wordAddThemesQuery2.concat(themes.map((tid)=>({
+                wordAddThemesQuery2.push(...themes.map((tid)=>({ 
                     word_id: id,
                     theme_id: tid
                 })))
             }
         });
 
-        const {error: AddWordThemesError2} = await supabase.from('word_themes').insert(wordAddThemesQuery2);
+        const {data: AddWordThemeData,error: AddWordThemesError2} = await supabase.from('word_themes').insert(wordAddThemesQuery2).select('words(id,word,added_by),themes(name,id)')
         if (AddWordThemesError2) return makeError(AddWordThemesError2);
+        const AddedWordThemeRecord: Record<string,string[]> = {}
+        AddWordThemeData.forEach(({words,themes})=>{
+            AddedWordThemeRecord[words.word] = (AddedWordThemeRecord[words.word] ?? []).concat([themes.name])
+        })
 
         // 로그 등록을 위한 문서 정보 가져오기
         const docsIdInfo: Record<string, number> = {};
+        const docsThemeIdInfo: Record<string, number> = {};
         const {data: docsDatas, error: docsDataError} = await supabase.from('docs').select('*');
         if (docsDataError){
             return makeError(docsDataError)
         }
         docsDatas.filter(({typez})=>typez==="letter").forEach(({id, name})=>docsIdInfo[name]=id);
+        docsDatas.filter(({typez})=>typez==="theme").forEach(({id,name})=>docsThemeIdInfo[name]=id)
 
         // 문서 로그 등록
         const docsLogQuery: {docs_id: number, word: string, add_by: string | null, type: "add" | "delete"}[] = [];
         const wordsLogQuery: {word: string, processed_by: string, make_by: string | null, state: "approved" | "rejected", r_type: "add" | "delete"}[] = []
 
         for (const data of AddedWords){
-            if (!docsIdInfo[data.word[data.word.length - 1]]) continue;
             const docsID = docsIdInfo[data.word[data.word.length - 1]];
-            docsLogQuery.push({
-                docs_id: docsID,
-                word: data.word,
-                add_by: RequestBy[data.word],
-                type: "add"
-            })
+            if (docsID){
+                docsLogQuery.push({
+                    docs_id: docsID,
+                    word: data.word,
+                    add_by: RequestBy[data.word],
+                    type: "add"
+                })
+            }
+            const docsNames = AddedWordThemeRecord[data.word]
+            if (docsNames.length > 0){
+                docsNames.forEach((name)=>{
+                    const docsId2 = docsThemeIdInfo[name]
+                    if (docsId2){
+                        docsLogQuery.push({
+                            docs_id: docsId2,
+                            word: data.word,
+                            add_by: RequestBy[data.word],
+                            type: "add"
+                        })
+                    }
+                })
+            }
             wordsLogQuery.push({
                 word: data.word,
                 processed_by: user.uuid!,
@@ -264,15 +299,17 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
                 r_type: "add"
             })
         }
+
         for (const data of deletedWordsData){
-            if (!docsIdInfo[data.word[data.word.length - 1]]) continue;
             const docsID = docsIdInfo[data.word[data.word.length - 1]];
-            docsLogQuery.push({
-                docs_id: docsID,
-                word: data.word,
-                add_by: RequestBy[data.word],
-                type: "delete"
-            });
+            if (docsID){
+                docsLogQuery.push({
+                    docs_id: docsID,
+                    word: data.word,
+                    add_by: RequestBy[data.word],
+                    type: "delete"
+                });
+            }
             wordsLogQuery.push({
                 word: data.word,
                 processed_by: user.uuid!,
@@ -280,7 +317,15 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
                 state: "approved",
                 r_type: "delete"
             })
-        }
+            // ㅅㅏㄱ제 관련도 문서 로그 추가해야함
+        };
+
+        const cont:Record<string,number> = {};
+        wordsLogQuery.forEach(({make_by})=>{
+            if (make_by){
+                cont[make_by] = (cont[make_by] ?? 0) + 1
+            }
+        });
 
         const {error: insertDocsLogError} = await supabase.from('docs_logs').insert(docsLogQuery);
         if (insertDocsLogError) return makeError(insertDocsLogError);
@@ -289,14 +334,25 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
-        const {error: deleteWaitQueueError} = await supabase.from('wait_words').delete().in('id',AddedWords.map(({id})=>id).concat(deletedWordsData.map(({id})=>id)));
+        const {error: deleteWaitQueueError} = await supabase.from('wait_words').delete().in('word',AddedWords.map(({word})=>word).concat(deletedWordsData.map(({word})=>word)));
         if (deleteWaitQueueError) return makeError(deleteWaitQueueError);
 
-        const conditions2 = wordDeleteThemesQuery.concat(wordAddThemesQuery)
-        .map(p => `(word_id.eq.${p.word_id},theme_id.eq.${p.theme_id})`)
-        .join(',');
-        const {error: deleteWaitQueueError2} = await supabase.from('word_themes_wait').delete().or(conditions2)
-        if (deleteWaitQueueError2) return makeError(deleteWaitQueueError2);
+        if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0){
+            const conditions2 = wordDeleteThemesQuery.concat(wordAddThemesQuery)
+            .map(p => `(word_id.eq.${p.word_id},theme_id.eq.${p.theme_id})`)
+            .join(',');
+            const {error: deleteWaitQueueError2} = await supabase.from('word_themes_wait').delete().or(conditions2)
+            if (deleteWaitQueueError2) return makeError(deleteWaitQueueError2);
+        }
+        
+
+        docsLogQuery.forEach(async ({docs_id})=>{
+            await supabase.rpc('update_last_update', {docs_id});
+        })
+
+        for (const [key, value] of Object.entries(cont)){
+            await supabase.rpc('increment_contribution',{target_id: key, inc_amount: value})
+        }
 
         // 선택 상태 초기화
         setSelectedRequests(new Set());
@@ -392,7 +448,6 @@ export default function AdminHome({requestDatas}:{requestDatas: WordRequest[]}) 
                                     variant="outline"
                                     className="bg-green-100 hover:bg-green-200"
                                     onClick={()=>{
-                                        return;
                                         approveSelected()
                                     }}
                                 >

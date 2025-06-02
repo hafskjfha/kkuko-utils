@@ -29,7 +29,11 @@ const AutoLogin = () => {
                 })
             );
         }
-        checkSession();
+        try{
+            checkSession();
+        }catch{
+            
+        }
     })
 
     return null;
