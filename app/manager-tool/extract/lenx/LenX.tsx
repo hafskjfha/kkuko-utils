@@ -98,7 +98,7 @@ const WordExtractorApp = () => {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    X로 글자수 단어 추출
+                                    X 글자수 단어 추출
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     텍스트 파일에서 길이가 X인 단어들을 추출합니다
