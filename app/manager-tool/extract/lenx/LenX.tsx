@@ -1,4 +1,3 @@
-// 공통 레이아웃으로 잡음
 "use client";
 import React, { useState } from "react";
 import ErrorModal from "@/app/components/ErrModal";
