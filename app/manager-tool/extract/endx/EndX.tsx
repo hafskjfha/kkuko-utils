@@ -1,4 +1,3 @@
-// 공통 레이아웃으로 잡음
 "use client";
 import React, { useState } from "react";
 import ErrorModal from "@/app/components/ErrModal";
@@ -81,7 +80,7 @@ const WordExtractorApp = () => {
     // 도움말 (TODO: 추후 수정)
     const handleHelp = () => {
         window.open(
-            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.md5ray6sao6w", 
+            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.xj79r0jfcmii", 
             "_blank", 
             "noopener,noreferrer"
         );
@@ -186,7 +185,7 @@ const WordExtractorApp = () => {
                                     <Button
                                         onClick={extractWords}
                                         className="w-full"
-                                        disabled={!fileContent || loading}
+                                        disabled={!fileContent || loading || !wordEnd}
                                     >
                                         <Play className="w-4 h-4 mr-2" />
                                         {loading ? "처리중..." : "단어 추출"}
