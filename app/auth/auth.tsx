@@ -56,7 +56,12 @@ const AuthPage = () => {
                         role: data[0].role ?? "guest",
                     })
                 );
-                router.push("/");
+                if (data[0].role === "admin"){
+                    router.push("/admin");
+                } else {
+                    router.push(`/profile/${data[0].nickname}`);
+                }   
+                
             }
     
         };
