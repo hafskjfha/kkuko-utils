@@ -73,7 +73,7 @@ const DocsInfo = ({ metaData, wordsCount, docsViewRank }: { metaData: Metadata; 
                         </span>
                     </div>
                     {metaData.users && (
-                        <Link href={`/profile?username=${metaData.users.nickname}`} className="flex items-center gap-2 hover:bg-gray-100 rounded-full px-3 py-1 transition-colors">
+                        <Link href={`/profile/${metaData.users.nickname}`} className="flex items-center gap-2 hover:bg-gray-100 rounded-full px-3 py-1 transition-colors">
                             <User size={16} className="text-gray-600" />
                             <span className="font-medium text-gray-800">{metaData.users.nickname}</span>
                         </Link>

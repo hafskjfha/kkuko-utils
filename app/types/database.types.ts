@@ -297,22 +297,61 @@ export type Database = {
         }
         Relationships: []
       }
+      user_start_docs: {
+        Row: {
+          created_at: string
+          docs_id: number
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          docs_id: number
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          docs_id?: number
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_start_docs_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_start_docs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           contribution: number
           id: string
+          month_contribution: number
           nickname: string
           role: Database["public"]["Enums"]["role_level"]
         }
         Insert: {
           contribution?: number
           id: string
+          month_contribution?: number
           nickname: string
           role?: Database["public"]["Enums"]["role_level"]
         }
         Update: {
           contribution?: number
           id?: string
+          month_contribution?: number
           nickname?: string
           role?: Database["public"]["Enums"]["role_level"]
         }
