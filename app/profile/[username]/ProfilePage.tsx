@@ -31,6 +31,7 @@ import { userAction } from '@/app/store/slice';
 import CompleteModal from '@/app/components/CompleteModal';
 import { ScrollArea } from '@/app/components/ui/scroll-area';
 import { Separator } from '@radix-ui/react-select';
+import axios, { isAxiosError } from 'axios';
 
 type role = "r1" | "r2" | "r3" | "r4" | "admin"
 type status = "pending" | "approved" | "rejected"
@@ -42,7 +43,6 @@ type userInfo = {
     contribution: number;
     role: role;
     month_contribution: number;
-    month_contribution_rank: number;
 }
 
 type waitWordList = {
@@ -149,7 +149,7 @@ const dummyStarredDocs = [
 
 
 const ProfilePage = ({ userName }: { userName: string }) => {
-    const [user, setUser] = useState<userInfo>(dummyUser);
+    const [user, setUser] = useState<userInfo & { month_contribution_rank: number}>(dummyUser);
     const [waitWords, setWaitWords] = useState<waitWordList>(dummyWaitWords);
     const [logs, setLogs] = useState<logList>(dummyLogs);
     const [starredDocs, setStarredDocs] = useState<starredDocsList>(dummyStarredDocs);
@@ -158,12 +158,13 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     const [nicknameError, setNicknameError] = useState<string>('');
     const [loading, setLoading] = useState<string | null>("유저 데이터 가져 오는 중...");
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const [isOwnProfile, setIsOwnProfile] = useState<boolean>(false);
     const router = useRouter();
     const userReudx = useSelector((state: RootState) => state.user);
     const dispatch = useDispatch<AppDispatch>();
     const [complete, setComplete] = useState<string | null>(null);
     const [isAdmin,setIsAdmin] = useState<boolean>(false);
+
+    const isOwnProfile = user.id === userReudx.uuid
 
     const makeError = (error: PostgrestError) => {
         seterrorModalView({
@@ -194,8 +195,8 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             if (mcrankError){
                 return makeError(mcrankError)
             }
+            setNewNickname(getUserData.nickname);
             setUser({...getUserData, month_contribution_rank: mcrankData});
-            setIsOwnProfile(getUserData.id === userReudx.uuid);
             setIsAdmin(getUserData.role === "admin")
             const getUserLog = async () => await supabase.from('logs').select('*').eq('make_by', getUserData.id).order('created_at', { ascending: false }).limit(30)
             const getUserWaitWord = async () => await supabase.from('wait_words').select('*').eq('requested_by', getUserData.id).order('requested_at', { ascending: false }).limit(30)
@@ -241,6 +242,33 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         if (rank === 2) return "bg-gray-300 text-black";
         if (rank === 3) return "bg-orange-400 text-black";
         return "bg-black text-white";
+    }
+
+    const updateNickname = async (updateNickname: string) => {
+        try{
+            const res = await axios.post<{data:null, error:PostgrestError}|{data: userInfo, error: null}>('/api/update_nickname',{
+                nickname: updateNickname
+            })
+            const {data, error} = res.data
+            return {data, error}
+        } catch(error){
+            if (isAxiosError(error)){
+                return {data: null, error:{
+                    name: "update fail",
+                    details: "",
+                    code: "EEE4",
+                    hint: "",
+                    message: error.message
+                }}
+            }else{
+                return {data: null, error:{
+                    name: "unknown",
+                    details: "",
+                    code: "EEE4",
+                    hint: "",
+                    message: "알수 없는 에러"}}
+            }
+        }
     }
 
     const getStatusIcon = (status: status) => {
@@ -300,12 +328,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             setNicknameError("이미 존재하는 닉네임 입니다.")
 
         } else {
-            const { data: updateNicknameData, error: updateNicknameError } = await supabase
-                .from("users")
-                .update({ nickname: newNickname })
-                .eq("id", userReudx.uuid)
-                .select("*")
-                .maybeSingle();
+            const { data: updateNicknameData, error: updateNicknameError } = await updateNickname(newNickname);
             if (updateNicknameError) {
                 return makeError(updateNicknameError)
             }
@@ -323,6 +346,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 userAction.setInfo({
                     username: updateNicknameData.nickname,
                     role: updateNicknameData.role,
+                    uuid: updateNicknameData.id
                 })
             );
             setComplete(`${updateNicknameData.nickname}으로 닉네임이 정상적으로 변경되었습니다!`)
@@ -333,6 +357,12 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     const handleAdminRedirect = () => {
         router.push('/admin');
     };
+
+    const updateUsernickComp = () => {
+        setComplete(null);
+        setLoading('잠시만 기다려 주세요...')
+        router.push(`/profile/${user.nickname}`);
+    }
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-6xl min-h-full">
@@ -401,7 +431,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 <div>
                                     <p className="text-2xl font-bold text-green-600">{user.month_contribution}</p>
                                     <p className="text-sm text-muted-foreground">이달 기여도</p>
-                                    {user.month_contribution_rank && (
+                                    {user.month_contribution_rank!==0 && (
                                         <Badge className={getRankColor(user.month_contribution_rank)}>
                                             {`${user.month_contribution_rank}등`}
                                         </Badge>
@@ -603,7 +633,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             {complete && (
                 <CompleteModal
                     open={complete !== null}
-                    onClose={() => setComplete(null)}
+                    onClose={updateUsernickComp}
                     title={"닉네임 변경 완료"}
                     description={complete}
                 />
