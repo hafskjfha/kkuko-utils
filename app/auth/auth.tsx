@@ -29,6 +29,7 @@ const AuthPage = () => {
         
         const checkUser = async (session: Session | null) => {
             if (!session) {
+                setLoading(false);
                 return;
             }
 
@@ -49,6 +50,7 @@ const AuthPage = () => {
     
             if (data.length === 0) {
                 setIsNewUser(true);
+                setLoading(false);
             } else {
                 dispatch(
                     userAction.setInfo({
@@ -71,7 +73,7 @@ const AuthPage = () => {
                 await checkUser(session);
             }
             finally {
-                setLoading(false);
+                
             }
         });
         return () => {

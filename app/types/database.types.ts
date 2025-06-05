@@ -297,7 +297,36 @@ export type Database = {
         }
         Relationships: []
       }
-      user_start_docs: {
+      user_month_contributions: {
+        Row: {
+          contribution: number
+          id: number
+          month: string
+          user_id: string
+        }
+        Insert: {
+          contribution?: number
+          id?: number
+          month: string
+          user_id: string
+        }
+        Update: {
+          contribution?: number
+          id?: number
+          month?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_month_contribution_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_star_docs: {
         Row: {
           created_at: string
           docs_id: number
@@ -546,6 +575,10 @@ export type Database = {
     Functions: {
       get_doc_rank: {
         Args: { doc_id: number }
+        Returns: number
+      }
+      get_user_monthly_rank: {
+        Args: { uid: string }
         Returns: number
       }
       increment_contribution: {

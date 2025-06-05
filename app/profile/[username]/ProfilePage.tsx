@@ -42,6 +42,7 @@ type userInfo = {
     contribution: number;
     role: role;
     month_contribution: number;
+    month_contribution_rank: number;
 }
 
 type waitWordList = {
@@ -73,7 +74,8 @@ const dummyUser = {
     nickname: 'dummyUser',
     contribution: 245,
     role: 'r3' as role,
-    month_contribution: 42
+    month_contribution: 42,
+    month_contribution_rank: 4
 };
 
 const dummyWaitWords = [
@@ -188,12 +190,16 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                     message: "알수 없는 에러"
                 })
             }
-            setUser(getUserData);
+            const {data: mcrankData, error: mcrankError} = await supabase.rpc('get_user_monthly_rank',{uid:getUserData.id})
+            if (mcrankError){
+                return makeError(mcrankError)
+            }
+            setUser({...getUserData, month_contribution_rank: mcrankData});
             setIsOwnProfile(getUserData.id === userReudx.uuid);
             setIsAdmin(getUserData.role === "admin")
             const getUserLog = async () => await supabase.from('logs').select('*').eq('make_by', getUserData.id).order('created_at', { ascending: false }).limit(30)
             const getUserWaitWord = async () => await supabase.from('wait_words').select('*').eq('requested_by', getUserData.id).order('requested_at', { ascending: false }).limit(30)
-            const getUserStarredDocs = async () => await supabase.from('user_start_docs').select('*,docs(name,typez,last_update,id)').eq('user_id', getUserData.id)
+            const getUserStarredDocs = async () => await supabase.from('user_star_docs').select('*,docs(name,typez,last_update,id)').eq('user_id', getUserData.id)
             const [{ data: userLog, error: userLogError }, { data: userWaitWord, error: userWaitWordError }, { data: userStarredDocs, error: userStarredDocsError }] = await Promise.all([getUserLog(), getUserWaitWord(), getUserStarredDocs()]);
             if (userLogError) return makeError(userLogError)
             if (userWaitWordError) return makeError(userWaitWordError);
@@ -228,6 +234,14 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         };
         return roleColors[role] || 'bg-gray-100 text-gray-800';
     };
+
+    const getRankColor = (rank: number) => {
+        if (rank === 0) return "";
+        if (rank === 1) return "bg-yellow-400 text-black";
+        if (rank === 2) return "bg-gray-300 text-black";
+        if (rank === 3) return "bg-orange-400 text-black";
+        return "bg-black text-white";
+    }
 
     const getStatusIcon = (status: status) => {
         switch (status) {
@@ -387,6 +401,11 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 <div>
                                     <p className="text-2xl font-bold text-green-600">{user.month_contribution}</p>
                                     <p className="text-sm text-muted-foreground">이달 기여도</p>
+                                    {user.month_contribution_rank && (
+                                        <Badge className={getRankColor(user.month_contribution_rank)}>
+                                            {`${user.month_contribution_rank}등`}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
 
