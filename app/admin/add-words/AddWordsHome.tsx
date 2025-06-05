@@ -232,8 +232,12 @@ export default function WordsAddHome() {
             }
         }
 
+        setProgress(50);
         const needCheckedWordsDatas:{id: number, word: string}[] = []
-        for (const chuckChecks of chunkArray(needCheckWord,100)){
+        const abab = chunkArray(needCheckWord,100)
+        for (let i=0;i<abab.length;i++){
+            const chuckChecks = abab[i];
+            setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
             const { data: needCheckedWordsData, error: ff } = await supabase.from('words').select('id,word').in('word', chuckChecks);
             if (ff) return makeError(ff)
             needCheckedWordsDatas.push(...needCheckedWordsData)
