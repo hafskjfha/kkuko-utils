@@ -1,12 +1,8 @@
-import ProfilePage from "./ProfilePage";
-import { Suspense } from "react";
+import ProfileHomePage from "./ProfileHome";
+
 
 export default function ProfilePageA() {
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <Suspense fallback={<div>Loading...</div>}>
-                <ProfilePage />
-            </Suspense>
-        </div>
+        <ProfileHomePage />
     );
 }
