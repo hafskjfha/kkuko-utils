@@ -44,6 +44,7 @@ import { Separator } from "@radix-ui/react-select";
 import axios, { isAxiosError } from "axios";
 import { Progress } from '@/app/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Link from "next/link";
 
 type role = "r1" | "r2" | "r3" | "r4" | "admin";
 type status = "pending" | "approved" | "rejected";
@@ -98,6 +99,7 @@ const dummyMonthlyData = [
     { month: '2024-12', contribution: 42 }
 ];
 
+// 지연로딩에 표시될 스켈레톤 데이터
 const TabSkeleton = () => (
     <div className="space-y-3 p-4">
         {[...Array(5)].map((_, i) => (
@@ -121,17 +123,12 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     >(dummyUser);
     const [waitWords, setWaitWords] = useState<waitWordList>([]);
     const [logs, setLogs] = useState<logList>([]);
-    const [starredDocs, setStarredDocs] =
-        useState<starredDocsList>([]);
+    const [starredDocs, setStarredDocs] = useState<starredDocsList>([]);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [newNickname, setNewNickname] = useState<string>(user.nickname);
     const [nicknameError, setNicknameError] = useState<string>("");
-    const [loading, setLoading] = useState<string | null>(
-        "유저 데이터 가져 오는 중..."
-    );
-    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(
-        null
-    );
+    const [loading, setLoading] = useState<string | null>("유저 데이터 가져 오는 중...");
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const router = useRouter();
     const userReudx = useSelector((state: RootState) => state.user);
     const dispatch = useDispatch<AppDispatch>();
@@ -144,8 +141,10 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         processed: true
     });
 
+    // 자신 프로필 인지 체크 (닉네임 변경 ui표시 여부 결정)
     const isOwnProfile = user.id === userReudx.uuid;
 
+    // 오류 처리 함수
     const makeError = (error: PostgrestError) => {
         seterrorModalView({
             ErrName: error.name,
@@ -158,6 +157,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
     useEffect(() => {
         const getData = async () => {
+            // 유저 기본 데이터 가져오기
             const { data: getUserData, error: getUserError } = await supabase
                 .from("users")
                 .select("*")
@@ -175,6 +175,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                     message: "알수 없는 에러",
                 });
             }
+            // 이번달 기여도 랭킹 가져오기
             const { data: mcrankData, error: mcrankError } = await supabase.rpc(
                 "get_user_monthly_rank",
                 { uid: getUserData.id }
@@ -206,14 +207,14 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
             // 현재 달 데이터 추가
             contributionMap.set(
-            `${now.getFullYear()}-${now.getMonth() + 1}`,
-            getUserData.month_contribution
+                `${now.getFullYear()}-${now.getMonth() + 1}`,
+                getUserData.month_contribution
             );
 
             // 최종 배열 구성 (누락된 달은 0으로 채움)
             const filledContributions = recentMonths.map(month => ({
-            month,
-            contribution: contributionMap.get(month) ?? 0,
+                month,
+                contribution: contributionMap.get(month) ?? 0,
             }));
 
             setMonthlyContributions(filledContributions);
@@ -225,6 +226,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         
     }, []);
 
+    // 등급에 따름 이름
     const getRoleName = (role: role) => {
         const roleNames = {
             r1: "새싹",
@@ -236,6 +238,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         return roleNames[role] || role;
     };
 
+    // 등급에 따른 색깔
     const getRoleColor = (role: role) => {
         const roleColors = {
             r1: "bg-green-100 text-green-800",
@@ -247,6 +250,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         return roleColors[role] || "bg-gray-100 text-gray-800";
     };
 
+    // 이번달 기여도 랭크 글자의 색깔
     const getRankColor = (rank: number) => {
         if (rank === 0) return "";
         if (rank === 1) return "bg-yellow-400 text-black";
@@ -255,6 +259,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         return "bg-black text-white";
     };
 
+    // tap 부분 데이터 레이지 로딩
     const loadTabsData = async (userId: string) => {
         // 즐겨찾기 문서 로딩
         const loadStarredDocs = async () => {
@@ -327,8 +332,10 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         ]);
     };
 
+    // 닉네임 업데이트 처리하는 함수
     const updateNickname = async (updateNickname: string) => {
         try {
+            // api로 업데이트 요청 날리고 적절하게 반환값 가공
             const res = await axios.post<
                 { data: null; error: PostgrestError } | { data: userInfo; error: null }
             >("/api/update_nickname", {
@@ -363,6 +370,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         }
     };
 
+    // 요청 / 처리 상태 아이콘
     const getStatusIcon = (status: status) => {
         switch (status) {
             case "pending":
@@ -376,6 +384,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         }
     };
 
+    // 요청 / 처리 상태 텍스트 
     const getStatusText = (status: status) => {
         const statusTexts = {
             pending: "대기중",
@@ -389,6 +398,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         return type === "add" ? "추가" : "삭제";
     };
 
+    // 해당 시각이 지금부터 몇 시간 전인지 반환 하는 함수 
     const formatTimeAgo = (dateString: string) => {
         return formatDistanceToNow(new Date(dateString), {
             addSuffix: true,
@@ -396,9 +406,11 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         });
     };
 
+    // 닉네임 업데이트 버튼 클릭했을때 처리 하는 함수
     const handleNicknameUpdate = async () => {
         setNicknameError("");
 
+        // 중복 체크 후 중복이면 컷
         if (newNickname.trim() === "") {
             setNicknameError("닉네임을 입력해주세요.");
             return;
@@ -422,6 +434,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         if (existingUser) {
             setNicknameError("이미 존재하는 닉네임 입니다.");
         } else {
+            // 존재하는 닉네임이 아니면 업데이트 처리
             const { data: updateNicknameData, error: updateNicknameError } =
                 await updateNickname(newNickname);
             if (updateNicknameError) {
@@ -451,16 +464,13 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         setLoading(null);
     };
 
-    const handleAdminRedirect = () => {
-        router.push("/admin");
-    };
-
     const updateUsernickComp = () => {
         setComplete(null);
         setLoading("잠시만 기다려 주세요...");
         router.push(`/profile/${user.nickname}`);
     };
 
+    // 다음 등급까지의 진행도 얻는 함수
     const getRoleProgress = (role: role, contribution: number) => {
         switch (role) {
             case 'r1':
@@ -669,14 +679,15 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
                             {/* 관리자이면 관리자 홈으로 이동 가능하게 */}
                             {isAdmin && (
-                                <Button
-                                    className="w-full"
-                                    onClick={handleAdminRedirect}
-                                    variant="outline"
-                                >
-                                    <Shield className="h-4 w-4 mr-2" />
-                                    관리자 대시보드
-                                </Button>
+                                <Link href={'/admin'}>
+                                    <Button
+                                        className="w-full"
+                                        variant="outline"
+                                    >
+                                        <Shield className="h-4 w-4 mr-2" />
+                                        관리자 대시보드
+                                    </Button>
+                                </Link>
                             )}
                         </CardContent>
                     </Card>

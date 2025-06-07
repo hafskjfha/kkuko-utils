@@ -6,6 +6,15 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest){
     const body = await request.json().catch()
+    
+    // 유효하지 않은 데이터는 그냥 반환
+    if (!body){
+        return NextResponse.json({
+            data: null,
+            error: "invaild data"
+        })
+    }
+
     const {nickname} = body;
     if (!nickname){
         return NextResponse.json({
@@ -13,6 +22,8 @@ export async function POST(request: NextRequest){
             error: "invaild data"
         })
     }
+
+    // 요청자의 데이터를 쿠키에서 얻어냄
     let supabaseResponse = NextResponse.next({request,})
 
     const supabase = createServerClient<Database>(
@@ -36,6 +47,7 @@ export async function POST(request: NextRequest){
         }
     )
 
+    // 유효한 유저인지 검사
     const { data: { user } } = await supabase.auth.getUser();
     if (!user){
         return NextResponse.json({
@@ -44,6 +56,7 @@ export async function POST(request: NextRequest){
         })
     }
 
+    // 업데이트 처리
     const supabaseServer = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL, 
         process.env.SUPABASE_SERVICE_KEY

@@ -102,7 +102,7 @@ export default function ProfileHomePage() {
                     placeholder="닉네임으로 검색..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                     className="pl-10"
                   />
                 </div>
