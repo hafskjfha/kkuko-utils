@@ -12,10 +12,22 @@ import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
 import { Download, Play, HelpCircle, Settings, Zap } from "lucide-react";
 
-const sortedLength = (a: {word:string, mission: number}, b: {word:string, mission: number}) => b.word.length - a.word.length;
-const sortedAlphabet = (a: {word:string, mission: number}, b: {word:string, mission: number}) => a.word.localeCompare(b.word, "ko-KR");
-const sortedMission = (a: {word:string, mission: number}, b: {word:string, mission: number}) => b.mission - a.mission;
-const pack = {"미션글자 포함순":sortedMission, "글자길이순":sortedLength, "ㄱㄴㄷ순":sortedAlphabet};
+const sortedLength = (a: { word: string, mission: number }, b: { word: string, mission: number }) => b.word.length - a.word.length;
+const sortedAlphabet = (a: { word: string, mission: number }, b: { word: string, mission: number }) => a.word.localeCompare(b.word, "ko-KR");
+const sortedMission = (a: { word: string, mission: number }, b: { word: string, mission: number }) => b.mission - a.mission;
+const pack = { "미션글자 포함순": sortedMission, "글자길이순": sortedLength, "ㄱㄴㄷ순": sortedAlphabet };
+
+const MISSION_CHARS = "가나다라마바사아자차카타파하";
+const countMissionChar = (word: string, char: string): number => (word.match(new RegExp(char, "gi")) || []).length;
+
+const formatWord = (word: string): string => {
+    let result = `${word} `;
+    for (const m of MISSION_CHARS) {
+        const count = countMissionChar(word, m);
+        if (count >= 1) result += `[${m}${count}]`;
+    }
+    return result;
+};
 
 const WordExtractorApp = () => {
     type op = "미션글자 포함순" | "글자길이순" | "ㄱㄴㄷ순";
@@ -66,236 +78,199 @@ const WordExtractorApp = () => {
         }
     };
 
-    // 단어 추출
-    const extractWords = async () => {
-        try {
-            setLoading(true);
-            await new Promise(resolve => setTimeout(resolve, 1))
-            if (fileContent && selected.length > 0) {
-                // {미션글자: 미션단어 리스트}
-                const kkk = new DefaultDict<string, { word: string, mission: number }[]>(() => []);
-                const include = oneMissionChecked ? 1 : 2;
-                for (const m of "가나다라마바사아자차카타파하") {
-                    for (const word of fileContent.split('\n')) {
-                        const pp = (word.match(new RegExp(m, "gi")) || []).length
-                        if (pp >= include) {
-                            kkk.get(m).push({ word, mission: pp });
-                        }
-                    }
-                }
+    // 우선순위에 맞게 단어 정렬
+    const sortWords = (
+        list: { word: string; mission: number }[],
+        rank1: (a: { word: string, mission: number }, b: { word: string, mission: number }) => number,
+        rank2?: (a: { word: string, mission: number }, b: { word: string, mission: number }) => number,
+        rank3?: (a: { word: string, mission: number }, b: { word: string, mission: number }) => number
+    ) => {
+        return list.sort((a, b) => {
+            const r1 = rank1(a, b);
+            if (r1 !== 0) return r1;
+            const r2 = rank2?.(a, b);
+            if (r2 !== undefined && r2 !== 0) return r2;
+            const r3 = rank3?.(a, b);
+            return r3 ?? sortedAlphabet(a, b);
+        });
+    };
 
-                // 미션 글자 표시 처리
-                const f = (word:string) => {
-                    let r = `${word} `;
-                    for (const m of "가나다라마바사아자차카타파하") {
-                        const pp = (word.match(new RegExp(m, "gi")) || []).length
-                        if (pp >= 1) {
-                            r += `[${m}${pp}]`;
-                        }
-                    }
-                    return r;
+    // 미션 단어들 추출
+    const buildMissionMap = (
+        content: string,
+        include: number
+    ): DefaultDict<string, { word: string; mission: number }[]> => {
+        const dict = new DefaultDict<string, { word: string; mission: number }[]>(() => []);
+        for (const m of MISSION_CHARS) {
+            for (const word of content.split('\n')) {
+                const count = countMissionChar(word, m);
+                if (count >= include) dict.get(m).push({ word, mission: count });
+            }
+        }
+        return dict;
+    };
+
+    // 
+    const handleAlphabeticalSort = (
+        missionMap: DefaultDict<string, { word: string; mission: number }[]>,
+        rank2?: (a: { word: string, mission: number }, b: { word: string, mission: number }) => number,
+        rank3?: (a: { word: string, mission: number }, b: { word: string, mission: number }) => number,
+    ): string[] => {
+        const result: string[] = [];
+
+        // 오로지 ㄱㄴㄷ순 정렬만 있을 경우
+        if (rank2 === undefined){
+            for (const m of MISSION_CHARS){
+                result.push(...missionMap.get(m).map(({word})=>word))
+            }
+            result.sort((a,b) => sortedAlphabet({word:a,mission:-1},{word:b,mission:-1}));
+            return showMissionLetter ? result.map(word=>formatWord(word)) : result
+        }
+        // 2순위가 미션글자 포함순일때
+        else if (selected[1] === "미션글자 포함순"){
+            // 앞글자가 같은 단어들 모으기 {첫글자: {미션글자: {단어,미션수}[]}}
+            const firstCharMissionMap = new DefaultDict<string, DefaultDict<string, {word: string, mission: number}[]>>(() => new DefaultDict(() => []));
+            for (const [missionChar, words] of missionMap.sortedEntries()){
+                for (const {word, mission} of words){
+                    firstCharMissionMap.get(word[0]).get(missionChar).push({word, mission});
                 }
-                const rank2 = pack[selected[1]];
-                const rank3 = pack[selected[2]];
-                switch (selected[0]){
-                    case "미션글자 포함순":
-                        const wordz:string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하"){
-                            if (kkk.get(m).length > 0){
-                                kkk.get(m).sort((a, b) =>{
-                                    const k =pack[selected[0]](a,b);
-                                    if (k!=0){
-                                        return k;
-                                    }
-                                    if (rank2 !== undefined){
-                                        const k = rank2(a,b);
-                                        if (k!=0) return k;
-                                    }
-                                    if (rank3 !== undefined){
-                                        const k = rank3(a,b)
-                                        return k;
-                                    }
-                                    return sortedAlphabet(a,b);
-                                });
-                                wordz.push(`=[${m}]=`);
-                                if (showMissionLetter){
-                                    wordz.push(...kkk.get(m).map(i => f(i.word)));
-                                }
-                                else{
-                                    wordz.push(...kkk.get(m).map(i => i.word));
-                                }
-                                wordz.push(' ');
-                                
+            }
+
+            // 우선순위에 맞게 정렬
+            for (const [letter,wordsSet] of firstCharMissionMap.entries()){
+                result.push(`=[${letter}]=`);
+                for (const [missionChar, words] of wordsSet.sortedEntries()){
+                    result.push(`-${missionChar}-`);
+                    const temp2 = words.sort(
+                        (a,b)=>{
+                            if (rank2 !== undefined){
+                                const k = rank2(a,b);
+                                if (k!=0) return k;
                             }
-                            else{
-                                wordz.push(`=[${m}]=`);
-                                wordz.push(' ');
+                            if (rank3 !== undefined){
+                                return rank3(a,b);
                             }
+                            return sortedLength(a,b);
+                        })
+                    result.push(...temp2.map(({word}) => (showMissionLetter ? formatWord(word) : word)))
+                    result.push('');
+                }
+            }
+            return result;
+        }
+        // 2순위가 글자 길이순 일때
+        else {
+            for (const [missionChar, words] of missionMap.sortedEntries()){
+                if (words.length === 0){
+                    continue;
+                }
+                // 우선순위에 맞게 정렬
+                words.sort(
+                    (a, b) => {
+                        const k = pack[selected[0]](a,b);
+                        if (k!=0) return k;
+                        
+                        if (rank2 !== undefined){
+                            const k = rank2(a,b)
+                            if (k!=0) return k;
                         }
-                        setExtractedWords(wordz);
-                        break;
-                    case "글자길이순":
-                        const words2:string[] = [];
-                        for (const m of "가나다라마바사아자차카타파하"){
-                            if (kkk.get(m).length > 0){
-                                kkk.get(m).sort((a, b) => {
-                                    const k = pack[selected[0]](a,b);
-                                    if (k!=0){
-                                        return k;
-                                    }
-                                    if (rank2 != undefined){
+
+                        if (rank3 != undefined){
+                            return rank3(a,b)
+                        }
+
+                        return sortedAlphabet(a,b);
+                    })
+                result.push(`==[[${missionChar}]]==`);
+                // 현재 진행중인 앞글자 마킹 / 단어 리스트
+                let nowFirstChar:undefined | string = undefined;
+                let nowFirstCharWords:{word:string,mission:number}[] = [];
+                
+                // 앞글자 끼리 같은거 모으기
+                for (const {mission, word} of words){
+                    if (!nowFirstChar){
+                        nowFirstChar=word[0];
+                        nowFirstCharWords.push({word,mission});
+                    } else {
+                        if (word[0]==nowFirstChar){
+                            nowFirstCharWords.push({word,mission})
+                        } else {
+                            nowFirstCharWords.sort(
+                                (a,b)=>{
+                                    if (rank2 !== undefined) {
                                         const k = rank2(a,b);
                                         if (k!=0) return k;
                                     }
-                                    if (rank3 != undefined){
+                                    if (rank3 !== undefined) {
                                         const k = rank3(a,b);
                                         return k;
                                     }
-                                    return sortedAlphabet(a,b);
+                                    return sortedLength(a,b);
                                 })
-                                if (showMissionLetter){
-                                    words2.push(...kkk.get(m).map(i => f(i.word)));
-                                }
-                                else{
-                                    words2.push(...kkk.get(m).map(i => i.word));
-                                }
-                            }
+                            result.push(`=[${nowFirstChar}]=`);
+                            result.push(...nowFirstCharWords.map(({word})=>(showMissionLetter ? formatWord(word) : word)));
+                            result.push('');
+                            nowFirstChar=word[0];
+                            nowFirstCharWords = [];
+                            nowFirstCharWords.push({word, mission})
                         }
-                        setExtractedWords(words2);
-                        break;
-                    case "ㄱㄴㄷ순":
-                        const words3:string[] = [];
-                        if (rank2 === undefined){
-                            for (const m of "가나다라마바사아자차카타파하"){
-                                words3.push(...kkk.get(m).map(w=>w.word));
-                            }
-                            words3.sort((a,b) => sortedAlphabet({word:a,mission:-1},{word:b,mission:-1}));
-                            if (showMissionLetter) setExtractedWords(words3.map(w => f(w)));
-                            else setExtractedWords(words3);
-                            return;
-                        }
-                        else if (selected[1] === "미션글자 포함순"){
-                            const ppp = new DefaultDict<string,Set<string>>(()=>new Set<string>());
-                            for (const m of "가나다라마바사아자차카타파하"){
-                                if (kkk.get(m).length > 0){
-                                    for (const {word} of kkk.get(m)){
-                                        ppp.get(word[0]).add(word);
-                                    }
-                                }
-                            }
-                            const rr = ppp.sortedEntries();
-                            const words3:string[] = [];
-                            let ww:{word:string,mission:number}[] = [];
-                            for (const [k,v] of rr){
-                                words3.push(`=[${k}]=`);
-                                for (const m of "가나다라마바사아자차카타파하"){
-                                    for (const word of v){
-                                        const pp = (word.match(new RegExp(m, "gi")) || []).length;
-                                        if (pp >= include){
-                                            if (!ww.includes({word,mission:pp})) ww.push({word,mission:pp});
-                                        }
-                                    }
-                                    if (ww.length > 0){
-                                        words3.push(`-${m}-`);
-                                        ww.sort((a,b)=>{
-                                            if (rank2 !== undefined){
-                                                const k = rank2(a,b);
-                                                if (k!=0) return k;
-                                            }
-                                            if (rank3 !== undefined){
-                                                return rank3(a,b);
-                                            }
-                                            return sortedLength(a,b);
-                                        });
-                                        if (showMissionLetter){
-                                            words3.push(...ww.map(w => f(w.word)));
-                                        }
-                                        else{
-                                            words3.push(...ww.map(w => w.word));
-                                        }
-                                        words3.push(' ');
-                                        
-                                    }
-                                    ww = [];
-                                }
-
-                                
-                            }
-                            setExtractedWords(words3);
-                            return;
-
-                        }
-                        for (const m of "가나다라마바사아자차카타파하") {
-                            if (kkk.get(m).length > 0){
-                                kkk.get(m).sort((a, b) => {
-                                    const k = pack[selected[0]](a,b);
-                                    if (k!=0) return k;
-                                    
-                                    if (rank2 !== undefined){
-                                        const k = rank2(a,b)
-                                        if (k!=0) return k;
-                                    }
-
-                                    if (rank3 != undefined){
-                                        return rank3(a,b)
-                                    }
-
-                                    return sortedAlphabet(a,b);
-                                })
-                                let ko:undefined | string = undefined;
-                                let ww:{word:string,mission:number}[] = [];
-                                words3.push(`==[[${m}]]==`);
-                                for (const {word,mission} of kkk.get(m)){
-                                    if (!ko){
-                                        ko= word[0];
-                                        ww.push({word,mission});
-                                    }
-                                    else{
-                                        if (word[0] === ko){
-                                            ww.push({word,mission});
-                                        }
-                                        else{
-                                            ww.sort((a,b)=>{
-                                                if (rank2 !== undefined) {
-                                                    const k = rank2(a,b);
-                                                    if (k!=0) return k;
-                                                }
-                                                if (rank3 !== undefined) {
-                                                    const k = rank3(a,b);
-                                                    return k;
-                                                }
-                                                return sortedLength(a,b);
-                                            });
-                                            words3.push(`=[${ko}]=`);
-                                            if (showMissionLetter){
-                                                words3.push(...ww.map(w => f(w.word)));
-                                            }
-                                            else{
-                                                words3.push(...ww.map(w => w.word));
-                                            }
-                                            words3.push(' ');
-                                            ww = [];
-                                            ww.push({word,mission});
-                                            ko = word[0];
-                                        }
-                                    }
-                                }
-                                words3.push(' ');
-                            }
-                            else{
-                                words3.push(`==[[${m}]]==`);
-                                words3.push(' ');
-                            }
-                        }
-                        setExtractedWords(words3);
-                        
+                    }
                 }
-            
+                if (nowFirstCharWords.length > 0){
+                    result.push(`=[${nowFirstChar}]=`);
+                    result.push(...nowFirstCharWords.map(({word})=>(showMissionLetter ? formatWord(word) : word)));
+                    result.push('');
+                }
+                result.push('');
             }
+
+            return result;
+        }
+        
+    };
+
+
+    // 단어 추출 메인 함수
+    const extractWords = async () => {
+        try {
+            setLoading(true);
+            await new Promise(resolve => setTimeout(resolve, 1));
+
+            if (!fileContent || selected.length === 0) return;
+
+            const include = oneMissionChecked ? 1 : 2;
+            const missionMap = buildMissionMap(fileContent, include);
+            const rank1 = pack[selected[0]];
+            const rank2 = pack[selected[1]];
+            const rank3 = pack[selected[2]];
+            const result: string[] = [];
+
+            switch (selected[0]) {
+                case "미션글자 포함순":
+                case "글자길이순":
+                    for (const m of MISSION_CHARS) {
+                        const group = missionMap.get(m);
+                        if (group.length > 0) {
+                            if (selected[0] === "미션글자 포함순") result.push(`=[${m}]=`);
+                            const sorted = sortWords(group, rank1, rank2, rank3);
+                            result.push(...sorted.map(i => showMissionLetter ? formatWord(i.word) : i.word));
+                            result.push(' ');
+                        } else {
+                            if (selected[0] === "미션글자 포함순") result.push(`=[${m}]=`, ' ');
+                        }
+                    }
+                    break;
+
+                case "ㄱㄴㄷ순":
+                    result.push(...handleAlphabeticalSort(missionMap, rank2, rank3));
+                    break;
+            }
+
+            setExtractedWords(result);
         } catch (err) {
             handleError(err);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     };
 
@@ -316,8 +291,8 @@ const WordExtractorApp = () => {
     // 도움말 (TODO: 추후 수정)
     const handleHelp = () => {
         window.open(
-            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4hk4plz6rbsd", 
-            "_blank", 
+            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4hk4plz6rbsd",
+            "_blank",
             "noopener,noreferrer"
         );
     };
@@ -409,7 +384,7 @@ const WordExtractorApp = () => {
                                             미션 글자 표시
                                         </Label>
                                     </div>
-                                    
+
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2">
                                             <Label className="text-sm font-medium">정렬 모드</Label>
@@ -417,7 +392,7 @@ const WordExtractorApp = () => {
                                                 {selected.length}/3
                                             </Badge>
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             {options.map((option) => (
                                                 <div key={option} className="flex items-center justify-between">

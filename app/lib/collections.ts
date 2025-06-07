@@ -50,6 +50,14 @@ class DefaultDict<K, V> {
             return a > b ? 1 : a < b ? -1 : 0; // 일반적인 비교 연산자
         });
     }
+
+    /** Map.prototype.entries과 동일함
+     * 
+     * @returns 전체 키/값 쌍 반환
+     */
+    entries(): [K, V][] {
+        return [...this.store.entries()]
+    }
     
 
 }
