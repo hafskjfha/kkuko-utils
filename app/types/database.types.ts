@@ -19,6 +19,7 @@ export type Database = {
           maker: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
+          views: number
         }
         Insert: {
           created_at?: string
@@ -29,6 +30,7 @@ export type Database = {
           maker?: string | null
           name: string
           typez: Database["public"]["Enums"]["document_type"]
+          views?: number
         }
         Update: {
           created_at?: string
@@ -39,6 +41,7 @@ export type Database = {
           maker?: string | null
           name?: string
           typez?: Database["public"]["Enums"]["document_type"]
+          views?: number
         }
         Relationships: [
           {
@@ -294,22 +297,90 @@ export type Database = {
         }
         Relationships: []
       }
+      user_month_contributions: {
+        Row: {
+          contribution: number
+          id: number
+          month: string
+          user_id: string
+        }
+        Insert: {
+          contribution?: number
+          id?: number
+          month: string
+          user_id: string
+        }
+        Update: {
+          contribution?: number
+          id?: number
+          month?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_month_contribution_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_star_docs: {
+        Row: {
+          created_at: string
+          docs_id: number
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          docs_id: number
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          docs_id?: number
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_start_docs_docs_id_fkey"
+            columns: ["docs_id"]
+            isOneToOne: false
+            referencedRelation: "docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_start_docs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           contribution: number
           id: string
+          month_contribution: number
           nickname: string
           role: Database["public"]["Enums"]["role_level"]
         }
         Insert: {
           contribution?: number
           id: string
+          month_contribution?: number
           nickname: string
           role?: Database["public"]["Enums"]["role_level"]
         }
         Update: {
           contribution?: number
           id?: string
+          month_contribution?: number
           nickname?: string
           role?: Database["public"]["Enums"]["role_level"]
         }
@@ -502,8 +573,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_doc_rank: {
+        Args: { doc_id: number }
+        Returns: number
+      }
+      get_user_monthly_rank: {
+        Args: { uid: string }
+        Returns: number
+      }
       increment_contribution: {
         Args: { target_id: string; inc_amount: number }
+        Returns: undefined
+      }
+      increment_doc_views: {
+        Args: { doc_id: number }
         Returns: undefined
       }
       random_wait_word_ff: {
@@ -529,6 +612,10 @@ export type Database = {
         Returns: {
           word: string
         }[]
+      }
+      reset_monthly_contribution: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_last_update: {
         Args: { docs_id: number }

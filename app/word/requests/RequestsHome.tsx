@@ -140,7 +140,7 @@ export default function RequestsPage() {
                                             <span className="text-orange-600">삭제</span>
                                         )}
                                     </TableCell>
-                                    <TableCell className={req.requested_by ? "text-blue-600 underline hover:cursor-pointer" : ""} onClick={() => { if(req.requested_by) { router.push(`/profile?username=${req.requested_by.nickname}`) } }}>
+                                    <TableCell className={req.requested_by ? "text-blue-600 underline hover:cursor-pointer" : ""} onClick={() => { if(req.requested_by) { router.push(`/profile/${req.requested_by.nickname}`) } }}>
                                         {req.requested_by?.nickname || "-"}
                                     </TableCell>
                                     <TableCell>{localTime}</TableCell>
