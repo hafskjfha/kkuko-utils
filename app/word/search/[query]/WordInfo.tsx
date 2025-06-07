@@ -203,18 +203,6 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
         }
     }
 
-    const handleWordChainClick = (wordList: string[]) => {
-        if (wordList.length === 0) return;
-
-        // Select a random word from the list
-        const randomIndex = Math.floor(Math.random() * wordList.length);
-        const randomWord = wordList[randomIndex];
-
-        // Navigate to the selected word
-        router.push(`/word/search/${randomWord}`);
-    };
-
-
     // 주제가 모두 비어있는지 확인
     const isTopicEmpty =
         wordInfo.topic.ok.length === 0 &&
