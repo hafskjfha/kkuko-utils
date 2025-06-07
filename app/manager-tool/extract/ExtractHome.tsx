@@ -111,7 +111,7 @@ const ExtractHome: React.FC = () => {
             </h1>
           </div>
           <p className="text-slate-600 dark:text-slate-300 text-lg max-w-2xl mx-auto">
-            다양한 조건으로 텍스트에서 원하는 단어들을 정확하게 추출하세요
+            다양한 조건으로 텍스트에서 원하는 단어들을 추출하세요
           </p>
         </div>
 
