@@ -90,75 +90,6 @@ const dummyUser = {
     month_contribution_rank: 4,
 };
 
-const dummyWaitWords = [
-    {
-        id: 1,
-        word: "React",
-        request_type: "add" as ttype,
-        requested_at: "2024-12-01T10:30:00Z",
-        status: "pending" as status,
-    },
-    {
-        id: 2,
-        word: "deprecated",
-        request_type: "delete" as ttype,
-        requested_at: "2024-11-28T15:20:00Z",
-        status: "approved" as status,
-    },
-    {
-        id: 3,
-        word: "TypeScript",
-        request_type: "add" as ttype,
-        requested_at: "2024-11-25T09:15:00Z",
-        status: "rejected" as status,
-    },
-];
-
-const dummyLogs = [
-    {
-        id: 1,
-        word: "JavaScript",
-        created_at: "2024-12-02T14:30:00Z",
-        state: "approved" as status,
-        r_type: "add" as ttype,
-    },
-    {
-        id: 2,
-        word: "old",
-        created_at: "2024-11-30T11:45:00Z",
-        state: "approved" as status,
-        r_type: "delete" as ttype,
-    },
-    {
-        id: 3,
-        word: "Vue",
-        created_at: "2024-11-27T16:20:00Z",
-        state: "rejected" as status,
-        r_type: "add" as ttype,
-    },
-];
-
-const dummyStarredDocs = [
-    {
-        id: 1,
-        name: "React",
-        last_update: "2024-11-30T10:00:00Z",
-        typez: "tutorial",
-    },
-    {
-        id: 2,
-        name: "TypeScript",
-        last_update: "2024-11-28T14:30:00Z",
-        typez: "guide",
-    },
-    {
-        id: 3,
-        name: "Next",
-        last_update: "2024-11-25T09:15:00Z",
-        typez: "documentation",
-    },
-];
-
 const dummyMonthlyData = [
     { month: '2024-08', contribution: 15 },
     { month: '2024-09', contribution: 28 },
@@ -167,14 +98,31 @@ const dummyMonthlyData = [
     { month: '2024-12', contribution: 42 }
 ];
 
+const TabSkeleton = () => (
+    <div className="space-y-3 p-4">
+        {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                </div>
+                <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+        ))}
+    </div>
+);
+
 const ProfilePage = ({ userName }: { userName: string }) => {
     const [user, setUser] = useState<
         userInfo & { month_contribution_rank: number }
     >(dummyUser);
-    const [waitWords, setWaitWords] = useState<waitWordList>(dummyWaitWords);
-    const [logs, setLogs] = useState<logList>(dummyLogs);
+    const [waitWords, setWaitWords] = useState<waitWordList>([]);
+    const [logs, setLogs] = useState<logList>([]);
     const [starredDocs, setStarredDocs] =
-        useState<starredDocsList>(dummyStarredDocs);
+        useState<starredDocsList>([]);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [newNickname, setNewNickname] = useState<string>(user.nickname);
     const [nicknameError, setNicknameError] = useState<string>("");
@@ -190,6 +138,11 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     const [complete, setComplete] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
     const [monthlyContributions, setMonthlyContributions] = useState<{ month: string, contribution: number }[]>(dummyMonthlyData);
+    const [tabsLoading, setTabsLoading] = useState({
+        starred: true,
+        requests: true,
+        processed: true
+    });
 
     const isOwnProfile = user.id === userReudx.uuid;
 
@@ -232,49 +185,9 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             setNewNickname(getUserData.nickname);
             setUser({ ...getUserData, month_contribution_rank: mcrankData });
             setIsAdmin(getUserData.role === "admin");
-            const getUserLog = async () =>
-                await supabase
-                    .from("logs")
-                    .select("*")
-                    .eq("make_by", getUserData.id)
-                    .order("created_at", { ascending: false })
-                    .limit(30);
-            const getUserWaitWord = async () =>
-                await supabase
-                    .from("wait_words")
-                    .select("*")
-                    .eq("requested_by", getUserData.id)
-                    .order("requested_at", { ascending: false })
-                    .limit(30);
-            const getUserStarredDocs = async () =>
-                await supabase
-                    .from("user_star_docs")
-                    .select("*,docs(name,typez,last_update,id)")
-                    .eq("user_id", getUserData.id);
-            const [
-                { data: userLog, error: userLogError },
-                { data: userWaitWord, error: userWaitWordError },
-                { data: userStarredDocs, error: userStarredDocsError },
-            ] = await Promise.all([
-                getUserLog(),
-                getUserWaitWord(),
-                getUserStarredDocs(),
-            ]);
             const {data: monthlyContributionsData, error: monthlyContributionsError} = await supabase.from('user_month_contributions').select('*').eq('user_id',getUserData.id).limit(4);
             if (monthlyContributionsError) return makeError(monthlyContributionsError);
-            if (userLogError) return makeError(userLogError);
-            if (userWaitWordError) return makeError(userWaitWordError);
-            if (userStarredDocsError) return makeError(userStarredDocsError);
-            setWaitWords(userWaitWord);
-            setStarredDocs(
-                userStarredDocs.map(({ docs: { name, typez, last_update, id } }) => ({
-                    name,
-                    id,
-                    typez,
-                    last_update,
-                }))
-            );
-            setLogs(userLog);
+
             const now = new Date();
 
             // 최근 5개월 구하기 (가장 오래된 달부터 정렬)
@@ -306,8 +219,10 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             setMonthlyContributions(filledContributions);
 
             setLoading(null);
+            loadTabsData(getUserData.id);
         };
         getData();
+        
     }, []);
 
     const getRoleName = (role: role) => {
@@ -338,6 +253,78 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         if (rank === 2) return "bg-gray-300 text-black";
         if (rank === 3) return "bg-orange-400 text-black";
         return "bg-black text-white";
+    };
+
+    const loadTabsData = async (userId: string) => {
+        // 즐겨찾기 문서 로딩
+        const loadStarredDocs = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("user_star_docs")
+                    .select("*,docs(name,typez,last_update,id)")
+                    .eq("user_id", userId);
+                
+                if (error) throw error;
+                
+                setStarredDocs(
+                    data.map(({ docs: { name, typez, last_update, id } }) => ({
+                        name,
+                        id,
+                        typez,
+                        last_update,
+                    }))
+                );
+            } catch (error) {
+                console.error('즐겨찾기 문서 로딩 실패:', error);
+            } finally {
+                setTabsLoading(prev => ({ ...prev, starred: false }));
+            }
+        };
+
+        // 요청 내역 로딩
+        const loadRequests = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("wait_words")
+                    .select("*")
+                    .eq("requested_by", userId)
+                    .order("requested_at", { ascending: false })
+                    .limit(30);
+                
+                if (error) throw error;
+                setWaitWords(data);
+            } catch (error) {
+                console.error('요청 내역 로딩 실패:', error);
+            } finally {
+                setTabsLoading(prev => ({ ...prev, requests: false }));
+            }
+        };
+
+        // 처리 내역 로딩
+        const loadProcessed = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("logs")
+                    .select("*")
+                    .eq("make_by", userId)
+                    .order("created_at", { ascending: false })
+                    .limit(30);
+                
+                if (error) throw error;
+                setLogs(data);
+            } catch (error) {
+                console.error('처리 내역 로딩 실패:', error);
+            } finally {
+                setTabsLoading(prev => ({ ...prev, processed: false }));
+            }
+        };
+
+        // 병렬로 모든 탭 데이터 로딩
+        Promise.all([
+            loadStarredDocs(),
+            loadRequests(),
+            loadProcessed()
+        ]);
     };
 
     const updateNickname = async (updateNickname: string) => {
@@ -715,36 +702,40 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     <ScrollArea className="h-[400px]">
-                                        <div className="p-4">
-                                            {starredDocs.length === 0 ? (
-                                                <p className="text-center text-muted-foreground py-8">
-                                                    즐겨찾기한 문서가 없습니다.
-                                                </p>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {starredDocs.map((doc, index) => (
-                                                        <div key={doc.id}>
-                                                            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                                                                <div className="flex items-center gap-3">
-                                                                    <FileText className="h-4 w-4 text-blue-500" />
-                                                                    <div>
-                                                                        <p className="font-medium">{doc.name}</p>
-                                                                        <p className="text-sm text-muted-foreground">
-                                                                            {formatTimeAgo(doc.last_update)}에
-                                                                            업데이트
-                                                                        </p>
+                                        {tabsLoading.starred ? <TabSkeleton /> :
+                                            (
+                                            <div className="p-4">
+                                                {starredDocs.length === 0 ? (
+                                                    <p className="text-center text-muted-foreground py-8">
+                                                        즐겨찾기한 문서가 없습니다.
+                                                    </p>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {starredDocs.map((doc, index) => (
+                                                            <div key={doc.id}>
+                                                                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <FileText className="h-4 w-4 text-blue-500" />
+                                                                        <div>
+                                                                            <p className="font-medium">{doc.name}</p>
+                                                                            <p className="text-sm text-muted-foreground">
+                                                                                {formatTimeAgo(doc.last_update)}에
+                                                                                업데이트
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
+                                                                    <Badge variant="outline">{doc.typez}</Badge>
                                                                 </div>
-                                                                <Badge variant="outline">{doc.typez}</Badge>
+                                                                {index < starredDocs.length - 1 && (
+                                                                    <Separator className="my-2" />
+                                                                )}
                                                             </div>
-                                                            {index < starredDocs.length - 1 && (
-                                                                <Separator className="my-2" />
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            )
+                                        }
                                     </ScrollArea>
                                 </CardContent>
                             </Card>
@@ -761,7 +752,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     <ScrollArea className="h-[400px]">
-                                        <div className="p-4">
+                                        {tabsLoading.requests ? <TabSkeleton /> : (<div className="p-4">
                                             {waitWords.length === 0 ? (
                                                 <p className="text-center text-muted-foreground py-8">
                                                     요청 내역이 없습니다.
@@ -799,7 +790,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                     ))}
                                                 </div>
                                             )}
-                                        </div>
+                                        </div>)}
                                     </ScrollArea>
                                 </CardContent>
                             </Card>
@@ -816,7 +807,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     <ScrollArea className="h-[400px]">
-                                        <div className="p-4">
+                                        {tabsLoading.processed ? <TabSkeleton /> : (<div className="p-4">
                                             {logs.length === 0 ? (
                                                 <p className="text-center text-muted-foreground py-8">
                                                     처리된 요청이 없습니다.
@@ -854,7 +845,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                     ))}
                                                 </div>
                                             )}
-                                        </div>
+                                        </div>)}
                                     </ScrollArea>
                                 </CardContent>
                             </Card>
