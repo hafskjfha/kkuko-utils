@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Search, User, Crown, Star, Trophy, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
