@@ -45,6 +45,7 @@
     "react-loading-skeleton": "^3.5.0",
     "react-redux": "^9.2.0",
     "react-window": "^1.8.11",
+    "recharts": "^2.15.3",
     "swr": "^2.3.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"

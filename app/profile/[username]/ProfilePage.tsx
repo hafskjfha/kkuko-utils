@@ -43,6 +43,7 @@ import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { Separator } from "@radix-ui/react-select";
 import axios, { isAxiosError } from "axios";
 import { Progress } from '@/app/components/ui/progress';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type role = "r1" | "r2" | "r3" | "r4" | "admin";
 type status = "pending" | "approved" | "rejected";
@@ -158,6 +159,14 @@ const dummyStarredDocs = [
     },
 ];
 
+const dummyMonthlyData = [
+    { month: '2024-08', contribution: 15 },
+    { month: '2024-09', contribution: 28 },
+    { month: '2024-10', contribution: 35 },
+    { month: '2024-11', contribution: 42 },
+    { month: '2024-12', contribution: 42 }
+];
+
 const ProfilePage = ({ userName }: { userName: string }) => {
     const [user, setUser] = useState<
         userInfo & { month_contribution_rank: number }
@@ -180,6 +189,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [complete, setComplete] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [monthlyContributions, setMonthlyContributions] = useState<{ month: string, contribution: number }[]>(dummyMonthlyData);
 
     const isOwnProfile = user.id === userReudx.uuid;
 
@@ -250,6 +260,8 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 getUserWaitWord(),
                 getUserStarredDocs(),
             ]);
+            const {data: monthlyContributionsData, error: monthlyContributionsError} = await supabase.from('user_month_contributions').select('*').eq('user_id',getUserData.id).limit(4);
+            if (monthlyContributionsError) return makeError(monthlyContributionsError);
             if (userLogError) return makeError(userLogError);
             if (userWaitWordError) return makeError(userWaitWordError);
             if (userStarredDocsError) return makeError(userStarredDocsError);
@@ -263,6 +275,36 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 }))
             );
             setLogs(userLog);
+            const now = new Date();
+
+            // 최근 5개월 구하기 (가장 오래된 달부터 정렬)
+            const recentMonths = Array.from({ length: 5 }, (_, i) => {
+            const date = new Date(now.getFullYear(), now.getMonth() - 4 + i); // 5개월 전부터 현재까지
+            return `${date.getFullYear()}-${date.getMonth() + 1}`;
+            });
+
+            // DB에서 가져온 기여도 데이터를 Map으로 변환 (month: contribution)
+            const contributionMap = new Map(
+            monthlyContributionsData.map(({ contribution, month }) => {
+                const formattedMonth = `${new Date(month).getFullYear()}-${new Date(month).getMonth() + 1}`;
+                return [formattedMonth, contribution];
+            })
+            );
+
+            // 현재 달 데이터 추가
+            contributionMap.set(
+            `${now.getFullYear()}-${now.getMonth() + 1}`,
+            getUserData.month_contribution
+            );
+
+            // 최종 배열 구성 (누락된 달은 0으로 채움)
+            const filledContributions = recentMonths.map(month => ({
+            month,
+            contribution: contributionMap.get(month) ?? 0,
+            }));
+
+            setMonthlyContributions(filledContributions);
+
             setLoading(null);
         };
         getData();
@@ -601,6 +643,42 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 }
                                 return null;
                             })()}
+
+                            {/* 월간 기여도 그래프 */}
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-medium text-muted-foreground">최근 5개월 기여도</h3>
+                                <div className="h-32">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={monthlyContributions}>
+                                            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                            <XAxis
+                                                dataKey="month"
+                                                tick={{ fontSize: 10 }}
+                                                tickFormatter={(value) => {
+                                                    const date = new Date(value + '-01');
+                                                    return `${date.getMonth() + 1}월`;
+                                                }}
+                                            />
+                                            <YAxis tick={{ fontSize: 10 }} />
+                                            <Tooltip
+                                                labelFormatter={(value) => {
+                                                    const date = new Date(value + '-01');
+                                                    return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+                                                }}
+                                                formatter={(value) => [`${value}개`, '기여도']}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="contribution"
+                                                stroke="#3b82f6"
+                                                strokeWidth={2}
+                                                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                                                activeDot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
 
                             {/* 관리자이면 관리자 홈으로 이동 가능하게 */}
                             {isAdmin && (

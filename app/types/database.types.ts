@@ -613,6 +613,10 @@ export type Database = {
           word: string
         }[]
       }
+      reset_monthly_contribution: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_last_update: {
         Args: { docs_id: number }
         Returns: undefined
