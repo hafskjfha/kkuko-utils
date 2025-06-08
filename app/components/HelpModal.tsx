@@ -36,7 +36,7 @@ const HelpModal = ({
                     {triggerText && <span className="text-sm">{triggerText}</span>}
                 </button>
             </DialogTrigger>
-            <DialogContent className="max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-xl w-full overflow-x-auto max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
                         <HelpCircle className="w-5 h-5 text-blue-600" />
