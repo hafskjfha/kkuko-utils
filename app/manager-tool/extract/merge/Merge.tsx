@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type';
 import Spinner from "@/app/components/Spinner";
@@ -12,14 +12,143 @@ import { Badge } from "@/app/components/ui/badge";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { 
     Download, 
-    HelpCircle, 
     Settings, 
     Merge, 
     Upload, 
     FileText, 
     List,
-    Zap
+    Zap,
+    Search,
+    Home
 } from "lucide-react";
+import Link from "next/link";
+import HelpModal from "@/app/components/HelpModal";
+
+// 가상화된 텍스트 뷰어 컴포넌트
+const VirtualizedTextViewer = React.memo(({ 
+    content, 
+    placeholder = "내용이 없습니다.",
+    searchable = false,
+    height = "h-[400px]"
+}: { 
+    content: string; 
+    placeholder?: string;
+    searchable?: boolean;
+    height?: string;
+}) => {
+    const [searchTerm, setSearchTerm] = useState("");
+    const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+    // 검색 기능이 있을 때 필터링된 라인들
+    const filteredLines = useMemo(() => {
+        if (!content) return [];
+        const lines = content.split('\n');
+        
+        if (!searchTerm.trim()) return lines;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return lines.filter(line => 
+            line.toLowerCase().includes(searchLower)
+        );
+    }, [content, searchTerm]);
+
+    // 현재 보여줄 라인들 (가상화)
+    const visibleLines = useMemo(() => {
+        return filteredLines.slice(visibleRange.start, visibleRange.end);
+    }, [filteredLines, visibleRange]);
+
+    // 스크롤 핸들러 - 가상화 범위 업데이트
+    const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+        const target = event.target as HTMLDivElement;
+        const scrollTop = target.scrollTop;
+        const itemHeight = 20; // 대략적인 라인 높이
+        const containerHeight = target.clientHeight;
+        
+        const startIndex = Math.floor(scrollTop / itemHeight);
+        const endIndex = Math.min(
+            startIndex + Math.ceil(containerHeight / itemHeight) + 50, // 버퍼 추가
+            filteredLines.length
+        );
+        
+        setVisibleRange({ start: Math.max(0, startIndex - 25), end: endIndex });
+    }, [filteredLines.length]);
+
+    // 대용량 텍스트인지 확인 (5천 줄 이상)
+    const isLargeContent = filteredLines.length > 5000;
+
+    if (!content) {
+        return (
+            <div className={`flex items-center justify-center ${height} text-muted-foreground`}>
+                {placeholder}
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
+            {searchable && (
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="내용 검색..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 text-sm"
+                    />
+                    {searchTerm && (
+                        <Badge variant="secondary" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs">
+                            {filteredLines.length}줄
+                        </Badge>
+                    )}
+                </div>
+            )}
+            
+            <ScrollArea 
+                className={`${height} w-full border rounded-md`}
+                onScrollCapture={isLargeContent ? handleScroll : undefined}
+                ref={scrollAreaRef}
+            >
+                <div className="p-4">
+                    {isLargeContent ? (
+                        // 대용량 텍스트 - 가상화 적용
+                        <div 
+                            style={{ 
+                                height: `${filteredLines.length * 20}px`,
+                                position: 'relative'
+                            }}
+                        >
+                            <div 
+                                style={{
+                                    position: 'absolute',
+                                    top: `${visibleRange.start * 20}px`,
+                                    width: '100%'
+                                }}
+                            >
+                                <pre className="text-sm whitespace-pre-wrap break-words leading-5">
+                                    {visibleLines.join('\n')}
+                                </pre>
+                            </div>
+                        </div>
+                    ) : (
+                        // 일반 크기 텍스트 - 전체 렌더링
+                        <pre className="text-sm whitespace-pre-wrap break-words">
+                            {filteredLines.join('\n')}
+                        </pre>
+                    )}
+                </div>
+            </ScrollArea>
+            
+            {isLargeContent && (
+                <div className="text-xs text-muted-foreground text-center">
+                    대용량 파일 - 가상화 모드 ({filteredLines.length.toLocaleString()}줄)
+                </div>
+            )}
+        </div>
+    );
+});
+
+VirtualizedTextViewer.displayName = 'VirtualizedTextViewer';
 
 const WordExtractorApp = () => {
     const [fileContent1, setFileContent1] = useState("");
@@ -34,7 +163,7 @@ const WordExtractorApp = () => {
     const fileInputRef1 = useRef<HTMLInputElement>(null);
     const fileInputRef2 = useRef<HTMLInputElement>(null);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fileNumber: number) => {
+    const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>, fileNumber: number) => {
         const file = event.target.files?.[0];
         if (file) {
             if (fileNumber === 1) {
@@ -45,14 +174,20 @@ const WordExtractorApp = () => {
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                if (fileNumber === 1) {
-                    const r = e.target?.result as string
-                    setFileContent1(r.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
-                } else {
-                    const rr = e.target?.result as string
-                    setFileContent2(rr.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b",""));
+                try {
+                    const content = e.target?.result as string;
+                    const cleanContent = content.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b","");
+                    
+                    if (fileNumber === 1) {
+                        setFileContent1(cleanContent);
+                    } else {
+                        setFileContent2(cleanContent);
+                    }
+                } catch (err) {
+                    handleError(err);
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             };
             
             reader.onerror = (event) => {
@@ -71,9 +206,9 @@ const WordExtractorApp = () => {
             setLoading(true);
             reader.readAsText(file);
         }
-    };
+    }, []);
 
-    const handleError = (err: unknown) => {
+    const handleError = useCallback((err: unknown) => {
         if (err instanceof Error) {
             seterrorModalView({
                 ErrName: err.name,
@@ -89,21 +224,25 @@ const WordExtractorApp = () => {
                 inputValue: null
             });
         }
-    };
+    }, []);
 
-    const mergeFiles = () => {
+    const mergeFiles = useCallback(async() => {
         try{    
+            setLoading(true);
+            await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent1 && fileContent2) {
                 // 합치고 set으로 중복 제거
-                const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])]
+                const mergeResult = [...new Set([...fileContent1.split('\n'),...fileContent2.split('\n')])];
                 setMergedContent(sortChecked ? mergeResult.sort((a,b)=>a.localeCompare(b)).join('\n') : mergeResult.join('\n'));
             }
         }catch(err){
             handleError(err);
+        }finally{
+            setLoading(false);
         }
-    };
+    }, [fileContent1, fileContent2, sortChecked, handleError]);
 
-    const downloadMergedContent = () => {
+    const downloadMergedContent = useCallback(() => {
         try{    
             if (mergedContent) {
                 const blob = new Blob([mergedContent], { type: "text/plain" });
@@ -117,13 +256,9 @@ const WordExtractorApp = () => {
         }catch(err){
             handleError(err);
         }
-    };
+    }, [mergedContent, handleError]);
 
-    const handleHelp = () => {
-        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4sz3wbmpl386", "_blank", "noopener,noreferrer");
-    }
-
-    const resetFile = (fileNumber: number) => {
+    const resetFile = useCallback((fileNumber: number) => {
         if (fileNumber === 1) {
             setFile1(null);
             setFileContent1("");
@@ -137,13 +272,31 @@ const WordExtractorApp = () => {
                 fileInputRef2.current.value = "";
             }
         }
-    };
+    }, []);
 
-    const resetAll = () => {
+    const resetAll = useCallback(() => {
         resetFile(1);
         resetFile(2);
         setMergedContent("");
-    };
+    }, [resetFile]);
+
+    // 파일 라인 수 계산 (메모화)
+    const file1LineCount = useMemo(() => {
+        return fileContent1 ? fileContent1.split('\n').length : 0;
+    }, [fileContent1]);
+
+    const file2LineCount = useMemo(() => {
+        return fileContent2 ? fileContent2.split('\n').length : 0;
+    }, [fileContent2]);
+
+    const mergedLineCount = useMemo(() => {
+        return mergedContent ? mergedContent.split('\n').length : 0;
+    }, [mergedContent]);
+
+    // 검색 가능 여부 결정 (1000줄 이상일 때 검색 활성화)
+    const shouldEnableSearch1 = file1LineCount > 1000;
+    const shouldEnableSearch2 = file2LineCount > 1000;
+    const shouldEnableSearchMerged = mergedLineCount > 1000;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -164,15 +317,113 @@ const WordExtractorApp = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleHelp}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                            도움말
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Link href="/manager-tool/extract">
+                                <Button variant="outline" size="sm">
+                                    <Home size="sm" />
+                                    도구홈
+                                </Button>
+                            </Link>
+                            <HelpModal
+                                title="텍스트 파일 합성 사용법"
+                                triggerText="도움말"
+                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            >
+                                <div className="space-y-6">
+                                    {/* Step 0 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                            <h3 className="font-semibold">텍스트 파일을 2개 업로드 합니다.</h3>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 1 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                            <h3 className="font-semibold">실행</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>실행 버튼을 누르고 기다립니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button className="w-full h-8" disabled>
+                                                    <Merge className="w-3 h-3 mr-2" />
+                                                        파일 병합
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                            <h3 className="font-semibold">결과 확인 및 다운로드</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>결과를 확인한 후 다운로드합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button variant="secondary" className="w-full h-8" disabled>
+                                                    <Download className="w-3 h-3 mr-2" />
+                                                    결과 다운로드
+                                                    <Badge variant="default" className="ml-2 text-xs">5</Badge>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 예시 */}
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold">사용 예시</h3>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">입력:</p>
+                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                    이름 하품
+                                                </pre>
+                                                <div className="flex items-center justify-center">
+                                                    <div className="text-center">
+                                                        <div className="text-2xl">+</div>
+                                                    </div>
+                                                </div>
+                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                    고객 이름 사격
+                                                </pre>
+                                            </div>
+                                            <div className="flex items-center justify-center">
+                                                <div className="text-center">
+                                                    <div className="text-sm text-gray-500">병합</div>
+                                                    <div className="text-2xl">↓</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">병합 결과:</p>
+                                                <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                    <div className="text-sm space-y-1">
+                                                        <div>• 고객</div>
+                                                        <div>• 사격</div>
+                                                        <div>• 이름</div>
+                                                        <div>• 하품</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 정렬 옵션을 체크하면 결과가 가나다순으로 정렬됩니다.
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 중복된 단어는 1개만 남깁니다.
+                                        </p>
+                                    </div>
+                                </div>
+                            </HelpModal>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -258,20 +509,25 @@ const WordExtractorApp = () => {
                                         <CardTitle className="flex items-center gap-2">
                                             <FileText className="h-5 w-5" />
                                             첫 번째 파일 내용
+                                            {file1LineCount > 0 && (
+                                                <Badge variant="outline" className="ml-auto">
+                                                    {file1LineCount.toLocaleString()}줄
+                                                </Badge>
+                                            )}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <ScrollArea className="h-[400px] w-full border rounded-md p-4">
-                                            {loading ? (
-                                                <div className="flex items-center justify-center h-full">
-                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                                </div>
-                                            ) : (
-                                                <pre className="text-sm whitespace-pre-wrap">
-                                                    {fileContent1 || "파일이 아직 업로드되지 않았습니다."}
-                                                </pre>
-                                            )}
-                                        </ScrollArea>
+                                        {loading ? (
+                                            <div className="flex items-center justify-center h-[400px]">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                            </div>
+                                        ) : (
+                                            <VirtualizedTextViewer
+                                                content={fileContent1}
+                                                placeholder="파일이 아직 업로드되지 않았습니다."
+                                                searchable={shouldEnableSearch1}
+                                            />
+                                        )}
                                     </CardContent>
                                 </Card>
 
@@ -281,20 +537,25 @@ const WordExtractorApp = () => {
                                         <CardTitle className="flex items-center gap-2">
                                             <FileText className="h-5 w-5" />
                                             두 번째 파일 내용
+                                            {file2LineCount > 0 && (
+                                                <Badge variant="outline" className="ml-auto">
+                                                    {file2LineCount.toLocaleString()}줄
+                                                </Badge>
+                                            )}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <ScrollArea className="h-[400px] w-full border rounded-md p-4">
-                                            {loading ? (
-                                                <div className="flex items-center justify-center h-full">
-                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                                </div>
-                                            ) : (
-                                                <pre className="text-sm whitespace-pre-wrap">
-                                                    {fileContent2 || "파일이 아직 업로드되지 않았습니다."}
-                                                </pre>
-                                            )}
-                                        </ScrollArea>
+                                        {loading ? (
+                                            <div className="flex items-center justify-center h-[400px]">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                            </div>
+                                        ) : (
+                                            <VirtualizedTextViewer
+                                                content={fileContent2}
+                                                placeholder="파일이 아직 업로드되지 않았습니다."
+                                                searchable={shouldEnableSearch2}
+                                            />
+                                        )}
                                     </CardContent>
                                 </Card>
 
@@ -304,19 +565,19 @@ const WordExtractorApp = () => {
                                         <CardTitle className="flex items-center gap-2">
                                             <List className="h-5 w-5" />
                                             병합된 파일 내용
-                                            {mergedContent && (
+                                            {mergedLineCount > 0 && (
                                                 <Badge variant="default" className="ml-auto">
-                                                    {mergedContent.split('\n').length}개
+                                                    {mergedLineCount}개
                                                 </Badge>
                                             )}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <ScrollArea className="h-[400px] w-full border rounded-md p-4">
-                                            <pre className="text-sm whitespace-pre-wrap">
-                                                {mergedContent || "파일이 아직 병합되지 않았습니다."}
-                                            </pre>
-                                        </ScrollArea>
+                                        <VirtualizedTextViewer
+                                            content={mergedContent}
+                                            placeholder="파일이 아직 병합되지 않았습니다."
+                                            searchable={shouldEnableSearchMerged}
+                                        />
                                     </CardContent>
                                 </Card>
                             </div>
@@ -377,9 +638,9 @@ const WordExtractorApp = () => {
                                     >
                                         <Download className="w-4 h-4 mr-2" />
                                         병합된 파일 다운로드
-                                        {mergedContent && (
+                                        {mergedLineCount > 0 && (
                                             <Badge variant="default" className="ml-2">
-                                                {mergedContent.split('\n').length}
+                                                {mergedLineCount}
                                             </Badge>
                                         )}
                                     </Button>
@@ -387,12 +648,12 @@ const WordExtractorApp = () => {
                             </Card>
 
                             {/* Status Cards */}
-                            {fileContent1 && (
+                            {file1LineCount > 0 && (
                                 <Card>
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                                {fileContent1.split('\n').length}
+                                                {file1LineCount.toLocaleString()}
                                             </div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
                                                 첫 번째 파일의 라인 수
@@ -402,12 +663,12 @@ const WordExtractorApp = () => {
                                 </Card>
                             )}
 
-                            {fileContent2 && (
+                            {file2LineCount > 0 && (
                                 <Card>
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                                {fileContent2.split('\n').length}
+                                                {file2LineCount.toLocaleString()}
                                             </div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
                                                 두 번째 파일의 라인 수

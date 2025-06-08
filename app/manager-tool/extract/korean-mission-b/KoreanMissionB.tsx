@@ -9,10 +9,12 @@ import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
-import { Download, Play, HelpCircle, Settings, Zap } from "lucide-react";
+import { Download, Play, Settings, Zap, Home } from "lucide-react";
 import { DefaultDict } from "@/app/lib/collections";
+import Link from "next/link";
+import HelpModal from "@/app/components/HelpModal";
 
-const f = (word:string) => {
+const f = (word: string) => {
     let r = `${word} `;
     for (const m of "가나다라마바사아자차카타파하") {
         const pp = (word.match(new RegExp(m, "gi")) || []).length
@@ -63,30 +65,30 @@ const WordExtractorApp = () => {
             if (fileContent) {
                 const words = fileContent.split(/\s+/);
                 // {시작글자: 해당단어들 리스트}
-                const kkk = new DefaultDict<string,string[]>(()=>[]);
-                const result:string[] = [];
-                for (const word of words){
+                const kkk = new DefaultDict<string, string[]>(() => []);
+                const result: string[] = [];
+                for (const word of words) {
                     kkk.get(word[0]).push(word)
                 }
                 // 정렬하여 dict추출
                 const ppp = kkk.sortedEntries();
                 // [시작글자, 단어들 리스트]
-                for (const [l,v] of ppp){
+                for (const [l, v] of ppp) {
                     // ww: 1티어 단어, co: 1티어 단어의 미션 글자 수
-                    let ww:string|undefined = undefined;
-                    let co:number = 0;
+                    let ww: string | undefined = undefined;
+                    let co: number = 0;
 
                     // 미션 단어수 체크
-                    for (const m of "가나다라마바사아자차카타파하"){
-                        for (const word of v){
+                    for (const m of "가나다라마바사아자차카타파하") {
+                        for (const word of v) {
                             const pp = (word.match(new RegExp(m, "gi")) || []).length;
-                            if (pp > 0){
+                            if (pp > 0) {
                                 if (ww === undefined) {
                                     // 초기화
                                     ww = word;
                                     co = pp;
                                 }
-                                else{
+                                else {
                                     // 현재 1티어 미션 글자수 보다 미션글자수가 크거나 미션글자수가 같아도 길이가 길면 갱신 
                                     if (co === pp && ww.length < word.length) ww = word;
                                     else if (pp > co) {
@@ -97,7 +99,7 @@ const WordExtractorApp = () => {
                             }
                         }
                         // 1티어 단어 존재한다면
-                        if (ww !== undefined){
+                        if (ww !== undefined) {
                             // 결과 저장
                             if (!result.includes(`=[${l}]=`)) result.push(`=[${l}]=`);
                             result.push(`-${m}-`);
@@ -133,15 +135,6 @@ const WordExtractorApp = () => {
         }
     };
 
-    // 도움말 (TODO: 추후 수정)
-    const handleHelp = () => {
-        window.open(
-            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4hk4plz6rbsd", 
-            "_blank", 
-            "noopener,noreferrer"
-        );
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
@@ -161,15 +154,84 @@ const WordExtractorApp = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleHelp}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                            도움말
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Link href="/manager-tool/extract">
+                                <Button variant="outline" size="sm">
+                                    <Home size="sm" />
+                                    도구홈
+                                </Button>
+                            </Link>
+                            <HelpModal
+                                title="한국어 미션 단어 추출 - B 추출 사용법"
+                                triggerText="도움말"
+                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            >
+                                <div className="space-y-6">
+                                    {/* Step 0 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                            <h3 className="font-semibold">텍스트 파일을 업로드 합니다.</h3>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 1 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                            <h3 className="font-semibold">실행</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>실행 버튼을 누르고 기다립니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button className="w-full h-8" disabled>
+                                                    <Play className="w-3 h-3 mr-2" />
+                                                    단어 추출
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                            <h3 className="font-semibold">결과 확인 및 다운로드</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>결과를 확인한 후 다운로드합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button variant="secondary" className="w-full h-8" disabled>
+                                                    <Download className="w-3 h-3 mr-2" />
+                                                    결과 다운로드
+                                                    <Badge variant="default" className="ml-2 text-xs">5</Badge>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 예시 */}
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold">1티어 기준</h3>
+                                        <div className="space-y-3">
+                                            <div className="bg-green-50 p-3 rounded border">
+                                                <div className="text-sm space-y-1">
+                                                    <div>• 1순위: 미션글자 포함 수</div>
+                                                    <div>• 2순위: 단어 길이</div>
+                                                    <div>• 참고: 동률단어중 랜덤 단어1개만 추출됩니다.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 미션글자 표시 옵션을 체크하면 단어 옆에 [가2] 이런 형식이 추가됩니다.
+                                        </p>
+                                    </div>
+                                </div>
+                            </HelpModal>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -10,7 +10,9 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
-import { Download, Play, HelpCircle, Settings, Zap } from "lucide-react";
+import { Download, Play, Settings, Zap, Home } from "lucide-react";
+import HelpModal from "@/app/components/HelpModal";
+import Link from "next/link";
 
 const WordExtractorApp = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -53,7 +55,7 @@ const WordExtractorApp = () => {
             console.log(fileContent?.length, wordEnd)
             if (fileContent && wordEnd) {
                 const words = fileContent.split(/\s+/).filter((word) => word.endsWith(wordEnd));
-                setExtractedWords(sortChecked ? words.sort((a,b)=>a.localeCompare(b,"ko")) : words);
+                setExtractedWords(sortChecked ? words.sort((a, b) => a.localeCompare(b, "ko")) : words);
                 console.log(words.length)
             }
         } catch (err) {
@@ -77,15 +79,6 @@ const WordExtractorApp = () => {
         }
     };
 
-    // 도움말 (TODO: 추후 수정)
-    const handleHelp = () => {
-        window.open(
-            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.xj79r0jfcmii", 
-            "_blank", 
-            "noopener,noreferrer"
-        );
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
@@ -105,15 +98,126 @@ const WordExtractorApp = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleHelp}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                            도움말
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Link href="/manager-tool/extract">
+                                <Button variant="outline" size="sm">
+                                    <Home size="sm" />
+                                    도구홈
+                                </Button>
+                            </Link>
+                            <HelpModal
+                                title="X로 끝나는 단어 추출 사용법"
+                                triggerText="도움말"
+                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            >
+                                <div className="space-y-6">
+                                    {/* Step 0 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                            <h3 className="font-semibold">텍스트 파일을 업로드 합니다.</h3>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 1 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                            <h3 className="font-semibold">설정</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>원하는 끝글자를 입력합니다. (예: &quot;다&quot;, &quot;션&quot;, &quot;시리즈&quot;)</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-medium">끝글자</Label>
+                                                    <Input placeholder="끝글자를 입력하세요" className="h-8" disabled />
+                                                    <div className="flex items-center space-x-2">
+                                                        <Checkbox disabled checked />
+                                                        <Label className="text-sm">결과 정렬</Label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                            <h3 className="font-semibold">실행</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>실행 버튼을 누르고 기다립니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button className="w-full h-8" disabled>
+                                                    <Play className="w-3 h-3 mr-2" />
+                                                    단어 추출
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 3 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">3</span>
+                                            <h3 className="font-semibold">결과 확인 및 다운로드</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>결과를 확인한 후 다운로드합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button variant="secondary" className="w-full h-8" disabled>
+                                                    <Download className="w-3 h-3 mr-2" />
+                                                    결과 다운로드
+                                                    <Badge variant="default" className="ml-2 text-xs">5</Badge>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 예시 */}
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold">사용 예시</h3>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">입력:</p>
+                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                    이름
+                                                    하품
+                                                    늠름
+                                                    가끔
+                                                    들녘
+                                                </pre>
+                                            </div>
+                                            <div className="flex items-center justify-center">
+                                                <div className="text-center">
+                                                    <div className="text-sm text-gray-500">끝글자: &quot;름&quot; 추출</div>
+                                                    <div className="text-2xl">↓</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">추출 결과:</p>
+                                                <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                    <div className="text-sm space-y-1">
+                                                        <div>• 이름</div>
+                                                        <div>• 늠름</div>
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-green-600">
+                                                        총 2개 단어 추출됨
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 정렬 옵션을 체크하면 결과가 가나다순으로 정렬됩니다.
+                                        </p>
+                                    </div>
+                                </div>
+                            </HelpModal>
+                        </div>
                     </div>
                 </div>
             </div>
