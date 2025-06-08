@@ -10,14 +10,15 @@ import CodeMirror from '@uiw/react-codemirror';
 import { FileUp, Download, FilePlus, Trash2 } from 'lucide-react';
 import HelpModalA from '@/app/components/HelpModal';
 
-const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount }: {
+const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount, setFileContent }: {
     fileContent: string;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     file: File | null;
     lineCount: number;
     setFile: React.Dispatch<React.SetStateAction<File | null>>;
-    setLineCount: React.Dispatch<React.SetStateAction<number>>
+    setLineCount: React.Dispatch<React.SetStateAction<number>>;
+    setFileContent: React.Dispatch<React.SetStateAction<string>>
 }) => {
     // 에디터 내용
     const [editorContent, setEditorContent] = useState(fileContent);
@@ -114,6 +115,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
                         extensions={[]}
                         onChange={(value) => {
                             setEditorContent(value);
+                            setFileContent(value)
                         }}
                         className="text-sm"
                     />
@@ -150,6 +152,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
     const [replaceValue, setReplaceValue] = useState<string>("");
     const [removeWord, setRemoveWord] = useState<string>("");
     const [replaceOpen, setReplaceOpen] = useState<boolean>(false);
+    const [patternToDelete, setPatternToDelete] = useState<string>("");
 
     // 도구 스택 undo푸시 함수
     const pushToUndoStack = (content: string) => {
@@ -463,6 +466,50 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
         }
     };
 
+    // 패턴삭제
+    const handleDeleteByPattern = (pattern: string) => {
+        try {
+            // 정규식 예약 문자들을 이스케이프 처리하는 함수
+            const escapeRegExp = (string: string) => {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            };
+
+            // ?를 임시 플레이스홀더로 치환
+            const tempPattern = pattern.replace(/\?/g, '___WILDCARD___');
+
+            // 나머지 특수문자들을 이스케이프 처리
+            const escapedPattern = escapeRegExp(tempPattern);
+
+            // 플레이스홀더를 .+로 치환하여 정규식 패턴 생성
+            const regexPattern = escapedPattern.replace(/___WILDCARD___/g, '.+');
+            const regex = new RegExp(regexPattern, 'g');
+
+            const updatedContent = fileContent.replace(regex, '');
+            if (updatedContent === fileContent) return;
+
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+            setPatternToDelete("");
+        } catch (err) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `DeleteByPattern | ${fileContent}`
+                });
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `DeleteByPattern | ${fileContent}`
+                });
+            }
+        }
+    };
+
     return (
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
             {/* 헤더 */}
@@ -503,6 +550,26 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                                         <li>• <strong>빈 줄 제거:</strong> 빈줄을 삭제합니다.</li>
                                         <li>• <strong>공백 → 줄바꿈:</strong> 공백을 줄바꿈으로 바꿉니다. 이 웹사이트의 대부분 내용들은 줄바꿈을 한 단어로 인식합니다.</li>
                                     </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔍 패턴 삭제</h3>
+                                    <p className="text-sm mb-2">간단한 패턴을 사용해 텍스트를 삭제합니다.</p>
+                                    <ul className="space-y-1 text-sm mb-2">
+                                        <li>• <strong>?</strong>: 하나 이상의 임의 문자를 의미합니다.</li>
+                                    </ul>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시:</p>
+                                        <p><strong>패턴:</strong> [?]</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">안녕하세요 [abc] 반갑습니다 [def] 감사합니다</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">안녕하세요  반갑습니다  감사합니다</code>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -679,6 +746,26 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                                 변환하기
                             </button>
                         </div>
+                        {/* 패턴 삭제 */}
+                        <div className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-full sm:w-auto">패턴 삭제:</span>
+                            <div className="flex flex-1 gap-2">
+                                <input
+                                    type="text"
+                                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="패턴 입력 (예: [?] - ?는 임의 문자)"
+                                    value={patternToDelete}
+                                    onChange={(e) => setPatternToDelete(e.target.value)}
+                                />
+                                <button
+                                    className="bg-orange-500 text-white px-3 py-1.5 rounded-md hover:bg-orange-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    disabled={!fileContent || !patternToDelete}
+                                    onClick={() => handleDeleteByPattern(patternToDelete)}
+                                >
+                                    삭제하기
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -818,7 +905,7 @@ const ArrangeHome = () => {
                     lineCount={lineCount}
                     setFile={setFile}
                     setLineCount={setLineCount}
-
+                    setFileContent={setFileContent}
                 />
             </div>
 
