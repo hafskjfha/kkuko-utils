@@ -7,6 +7,13 @@ import type { WordData } from "@/app/types/type";
 import { DefaultDict } from "@/app/lib/collections";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { Star } from "lucide-react";
+import { supabase } from "@/app/lib/supabaseClient";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import LoginRequiredModal from "@/app/components/LoginRequiredModal";
+import { PostgrestError } from "@supabase/supabase-js";
+import ErrorModal from "@/app/components/ErrModal";
 
 interface DocsPageProp {
     id: number;
@@ -16,9 +23,11 @@ interface DocsPageProp {
         lastUpdate: string;
         typez: "letter" | "theme" | "ect"
     };
+    starCount: number;
+    isUserStarred: boolean;
 }
 
-const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
+const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPageProp) => {
     const refs = useRef<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
@@ -26,6 +35,10 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
     const [wordsData] = useState<WordData[]>(data);
     const [grouped, setGrouped] = useState<DefaultDict<string, WordData[]>>(new DefaultDict<string, WordData[]>(() => []));
     const [isLoading, setIsLoading] = useState(true); // ✅ 스켈레톤 상태
+    const [isUserStarreda, setIsUserStarreda] = useState<boolean>(isUserStarred);
+    const user = useSelector((state: RootState) => state.user);
+    const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
     // refs 초기화
     useEffect(() => {
@@ -89,12 +102,47 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
         URL.revokeObjectURL(url);
     };
 
+    const hadnleDocsStar = async () => {
+        console.log(user)
+        if (!user.uuid) {
+            return setLoginNeedModalOpen(true);
+        }
+        if (isUserStarreda) {
+            const { error } = await supabase.from('user_star_docs').delete().eq('docs_id', id).eq('user_id', user.uuid);
+            if (error) return makeError(error)
+        } else {
+            const { error } = await supabase.from('user_star_docs').insert({ docs_id: id, user_id: user.uuid })
+            if (error) return makeError(error);
+        }
+
+        setIsUserStarreda(!isUserStarreda)
+    }
+
+    const makeError = (error: PostgrestError) => {
+        seterrorModalView({
+            ErrName: error.name,
+            ErrMessage: error.message,
+            ErrStackRace: error.stack,
+            inputValue: null
+        });
+    };
+
     return (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
             {/* 문서 헤더 */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b pb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold">{metaData.title}</h1>
                 <div className="flex flex-col sm:flex-row gap-2">
+                    <div
+                        className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto flex items-center gap-2 hover:cursor-pointer"
+                        onClick={hadnleDocsStar}
+                    >
+                        <Star fill={isUserStarreda ? "gold" : "white"} />
+                        <span>
+                            {(isUserStarred && !isUserStarreda) ? starCount - 1 : (!isUserStarred && isUserStarreda) ? starCount + 1 : starCount}
+                        </span>
+                    </div>
+
                     <Link href={`/words-docs/${id}/info`}>
                         <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto">
                             문서 정보
@@ -136,11 +184,20 @@ const DocsDataPage = ({ id, data, metaData }: DocsPageProp) => {
                     // ✅ 실제 데이터 렌더링
                     items.map(({ title, ref }) => (
                         <div key={title} ref={ref} className="mt-4">
-                            <WordsTableBody title={title} initialData={grouped.get(title)} id={`${id}`} aoK={metaData.typez === "ect"}/>
+                            <WordsTableBody title={title} initialData={grouped.get(title)} id={`${id}`} aoK={metaData.typez === "ect"} />
                         </div>
                     ))
                 )}
             </div>
+            {loginNeedModalOpen && (
+                <LoginRequiredModal open={loginNeedModalOpen} onClose={() => setLoginNeedModalOpen(false)} />
+            )}
+            {errorModalView && (
+                <ErrorModal
+                    onClose={() => seterrorModalView(null)}
+                    error={errorModalView}
+                />
+            )}
         </div>
     );
 };

@@ -6,6 +6,8 @@ import ErrorPage from "@/app/components/ErrorPage";
 import { useState, useCallback, useEffect } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
 
 type wordsDataType = ({
     word: string;
@@ -25,7 +27,8 @@ export default function DocsDataHome({id}:{id:number}){
     const [isNotFound,setIsNotFound] = useState(false);
     const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
-    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}} | null>(null);
+    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}, starCount: number, isUserStarred: boolean} | null>(null);
+    const user = useSelector((state: RootState) => state.user);
 
     const getDataOkWords = useCallback(async () => {
         const {data:dataA, error:error} = await supabase.from('docs_words').select('words(word)').eq('docs_id',id);
@@ -80,6 +83,8 @@ export default function DocsDataHome({id}:{id:number}){
             const {data: docsData, error: docsDataError} = await getDocsInfo();
             if (docsDataError) return MakeError(docsDataError);
             if (docsData===null) return setIsNotFound(true);
+            const {data: docsStarData, error: docsStarError} = await supabase.from('user_star_docs').select('user_id').eq('docs_id',docsData.id)
+            if (docsStarError) return MakeError(docsStarError);
 
             if (docsData.typez === "letter"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
@@ -88,11 +93,12 @@ export default function DocsDataHome({id}:{id:number}){
                 const {data:LetterDatas2, error:error2} = await supabase.from('wait_words').select('*').ilike('word',`%${docsData.name.trim()}`);
                 if (error2) return MakeError(error2);
                 
+                await new Promise(resolve => setTimeout(resolve, 1))
                 updateLoadingState(70, "데이터를 가공중...")
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
                 const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
-                setWordsData({words: wordsData, metadata: p});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
                 updateLoadingState(100, "완료!");
                 return;
             }
@@ -108,6 +114,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const {data: themeWordsData3, error: themeWordsError3} = await supabase.from('wait_word_themes').select('wait_words(*)').eq('theme_id', themeData.id)
                 if (themeWordsError3) return MakeError(themeWordsError3);
 
+                await new Promise(resolve => setTimeout(resolve, 1))
                 updateLoadingState(70, "데이터를 가공중...");
                 const Data1NotInData2And3 = themeWordsData1
                     .filter(a=>!themeWordsData2.some(b=> b.words.word === a.words.word) && !themeWordsData3.some(c=>c.wait_words.word === a.words.word))
@@ -123,7 +130,7 @@ export default function DocsDataHome({id}:{id:number}){
 
                 const wordsData = [...Data1NotInData2And3, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data3InWait];
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
-                setWordsData({words:wordsData, metadata:p});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
                 updateLoadingState(100, "완료!");
                 return
 
@@ -142,7 +149,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsData = [...wordsNotInC,...CwordsNotInB, ...B]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 
-                setWordsData({words:wordsData, metadata:p});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
                 updateLoadingState(100, "완료!");
                 return;
             }
@@ -163,6 +170,6 @@ export default function DocsDataHome({id}:{id:number}){
     }
 
     if (wordsData){
-        return <DocsDataPage id={id} data={wordsData.words} metaData={wordsData.metadata}/>
+        return <DocsDataPage id={id} data={wordsData.words} metaData={wordsData.metadata} starCount={wordsData.starCount} isUserStarred={wordsData.isUserStarred}/>
     }
 }
