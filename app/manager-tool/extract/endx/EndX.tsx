@@ -126,7 +126,7 @@ const WordExtractorApp = () => {
                                             <h3 className="font-semibold">설정</h3>
                                         </div>
                                         <div className="ml-6 space-y-2">
-                                            <p>원하는 끝글자를 입력합니다. (예: "다", "션", "층")</p>
+                                            <p>원하는 끝글자를 입력합니다. (예: "다", "션", "시리즈")</p>
                                             <div className="bg-gray-50 p-3 rounded-lg border">
                                                 <div className="space-y-2">
                                                     <Label className="text-sm font-medium">끝글자</Label>
