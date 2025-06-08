@@ -1,14 +1,14 @@
 "use client";
-import AdminHome from "./AdminHome";
+import AdminHome from "./AdminRequestHome";
 import NotFound from '@/app/not-found-client';
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { useEffect, useState } from 'react';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
-import ErrorPage from "../components/ErrorPage";
+import ErrorPage from "../../components/ErrorPage";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { DefaultDict } from "../lib/collections";
+import { DefaultDict } from "../../lib/collections";
 
 type Theme = {
     theme_id: number;

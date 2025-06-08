@@ -1,28 +1,18 @@
 "use client"
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import CombinationManager from '../lib/CombinationsManger';
 import ErrorModal from '../components/ErrModal';
 import HelpModal from './WordCombinerHelpModal';
 import Spinner from '../components/Spinner';
-import type { PostgrestError } from '@supabase/supabase-js';
 
 interface WordCombinerWithData {
     len5: string[];
     len6: string[];
-    error: null;
 }
 
-interface WordCombinerWithError {
-    len5: never[];
-    len6: never[];
-    error: PostgrestError;
-}
-
-type WordCombinerClientProp = WordCombinerWithData | WordCombinerWithError;
-
-export default function WordCombinerClient({ prop }: { prop: WordCombinerClientProp }) {
+export default function WordCombinerClient({ prop }: { prop: WordCombinerWithData }) {
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [nomalJOKAK, setNomalJOKAK] = useState<string>("");
     const [highJOKAK, setHighJOKAK] = useState<string>("");
@@ -36,21 +26,9 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
     const [loading, setLoading] = useState(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [HtmlHelpModalView, setHtmlHelpModalView] = useState<boolean>(false);
-
-    useEffect(()=>{
-        if (prop.error) {
-            seterrorModalView({
-                ErrName: prop.error.name,
-                ErrMessage: prop.error.message,
-                ErrStackRace: prop.error.stack,
-                inputValue: null
-            });
-        }
-    },[])
-    
+    const [activeTab, setActiveTab] = useState<'normal' | 'high' | 'rare' | 'html'>('normal');
 
     const handleHtmlSubmit = () => {
-
         try {
             const htmlString = inputHtml;
             const parser = new DOMParser();
@@ -90,6 +68,7 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
             setNomalJOKAK(nomal);
             setHighJOKAK(high);
             setRareJOKAK(rare);
+            setActiveTab('normal');
         } catch (err: unknown) {
             if (err instanceof Error) {
                 seterrorModalView({
@@ -98,7 +77,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                     ErrStackRace: err.stack,
                     inputValue: null
                 });
-
             } else {
                 seterrorModalView({
                     ErrName: null,
@@ -129,7 +107,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                     ErrStackRace: err.stack,
                     inputValue: null
                 });
-
             } else {
                 seterrorModalView({
                     ErrName: null,
@@ -144,7 +121,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
     }
 
     const processCombH = () => {
-
         try {
             setLoading(true);
             setTimeout(() => {
@@ -163,7 +139,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                     ErrStackRace: err.stack,
                     inputValue: null
                 });
-
             } else {
                 seterrorModalView({
                     ErrName: null,
@@ -196,7 +171,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                     ErrStackRace: err.stack,
                     inputValue: null
                 });
-
             } else {
                 seterrorModalView({
                     ErrName: null,
@@ -210,13 +184,60 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
         }
     }
 
+    const getProcessFunction = () => {
+        switch(activeTab) {
+            case 'normal': return processCombN;
+            case 'high': return processCombH;
+            case 'rare': return processCombR;
+            case 'html': return handleHtmlSubmit;
+            default: return processCombN;
+        }
+    };
+
+    const getCurrentValue = () => {
+        switch(activeTab) {
+            case 'normal': return nomalJOKAK;
+            case 'high': return highJOKAK;
+            case 'rare': return rareJOKAK;
+            case 'html': return inputHtml;
+            default: return "";
+        }
+    };
+
+    const getCurrentSetter = () => {
+        switch(activeTab) {
+            case 'normal': return setNomalJOKAK;
+            case 'high': return setHighJOKAK;
+            case 'rare': return setRareJOKAK;
+            case 'html': return setInputHtml;
+            default: return setNomalJOKAK;
+        }
+    };
+
+    const getCurrentPlaceholder = () => {
+        if (activeTab === 'html') return "HTML 코드를 여기에 붙여넣으세요";
+        const idx = activeTab === 'normal' ? 0 : activeTab === 'high' ? 1 : 2;
+        return placeholderArray[idx];
+    };
+
+    const handleClick = () => {
+        const fn = getProcessFunction();
+        setLoading(true);
+        setTimeout(() => {
+          fn();
+          setLoading(false);
+        }, 0);
+      };
+      
+
     return (
-        <div className="flex flex-col flex-grow min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-            {/* 도움말 버튼 */}
-            <div className="p-4 flex justify-end bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100">
+            {/* Header with help button */}
+            <header className="bg-white dark:bg-gray-800 shadow-sm p-4 flex justify-between items-center">
+                <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">글자조각 조합기</h1>
                 <button
                     onClick={() => setShowHelpModal(true)}
-                    className="flex items-center space-x-2 text-blue-500 dark:text-blue-300 hover:underline"
+                    className="flex items-center space-x-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 transition-colors"
                 >
                     <Image
                         src="/info-logo.svg"
@@ -225,92 +246,144 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                         height={28}
                         className="inline-block"
                     />
+                    <span className="hidden sm:inline">도움말</span>
                 </button>
-            </div>
+            </header>
 
-            {/* 메인 컨테이너 */}
-            <div className="flex flex-col md:flex-row flex-grow p-4 md:p-6 lg:p-8">
-                {/* 왼쪽 컨테이너 */}
-                <div className="w-full md:w-1/2 bg-gray-100 dark:bg-gray-800 p-4 flex flex-col space-y-6">
-                    {[
-                        { label: "(일반) 글자조각:", rows: 4, value: nomalJOKAK, onChange: setNomalJOKAK, onClick: processCombN, placeholder: placeholderArray[0] },
-                        { label: "(고급) 글자조각:", rows: 3, value: highJOKAK, onChange: setHighJOKAK, onClick: processCombH, placeholder: placeholderArray[1] },
-                        { label: "(희귀) 글자조각:", rows: 2, value: rareJOKAK, onChange: setRareJOKAK, onClick: processCombR, placeholder: placeholderArray[2] },
-                    ].map((item, idx) => (
-                        <div className="flex items-center space-x-4" key={idx}>
-                            <label className="w-20 text-gray-700 dark:text-gray-300 text-sm">{item.label}</label>
-                            <textarea
-                                placeholder={item.placeholder}
-                                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm overflow-auto resize-none bg-white dark:bg-gray-700"
-                                rows={item.rows}
-                                value={item.value}
-                                onChange={(e) => item.onChange(e.target.value)}
-                                disabled={loading}
-                            />
+            {/* Main container */}
+            <div className="flex flex-col lg:flex-row flex-grow p-4 gap-6 max-w-7xl mx-auto w-full">
+                {/* Left panel - Input section */}
+                <div className="w-full lg:w-1/2 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                    {/* Tab navigation */}
+                    <div className="flex border-b border-gray-200 dark:border-gray-700">
+                        {[
+                            { key: 'normal', label: '일반 글자조각' },
+                            { key: 'high', label: '고급 글자조각' },
+                            { key: 'rare', label: '희귀 글자조각' },
+                            { key: 'html', label: 'HTML 입력' }
+                        ].map((tab) => (
                             <button
-                                className={`px-4 py-2 bg-blue-500 dark:bg-blue-700 text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-800 ${loading ? "bg-gray-500 dark:bg-gray-600 cursor-not-allowed" : ""
-                                    }`}
-                                onClick={item.onClick}
-                                disabled={loading}
-                            >
-                                확인
-                            </button>
-                        </div>
-                    ))}
-                    <div className="flex items-center space-x-4">
-                        <label className="w-20 text-gray-700 dark:text-gray-300 text-sm">html 입력:</label>
-                        <textarea
-                            placeholder="html 입력"
-                            className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm overflow-auto resize-none bg-white dark:bg-gray-700"
-                            rows={3}
-                            value={inputHtml}
-                            onChange={(e) => setInputHtml(e.target.value)}
-                            disabled={loading}
-                        />
-                        <button
-                            className={`px-4 py-2 bg-blue-500 dark:bg-blue-700 text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-800 ${loading ? "bg-gray-500 dark:bg-gray-600 cursor-not-allowed" : ""
+                                key={tab.key}
+                                className={`flex-1 py-3 text-sm font-medium ${
+                                    activeTab === tab.key 
+                                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
-                            onClick={handleHtmlSubmit}
-                            disabled={loading}
-                        >
-                            확인
-                        </button>
-                        <button
-                            onClick={() => setHtmlHelpModalView(true)}
-                            className="flex items-center space-x-2 text-blue-500 dark:text-blue-300 hover:underline ml-2"
-                        >
-                            <Image
-                                src="/help1-log.svg"
-                                alt="도움말"
-                                width={28}
-                                height={28}
-                                className="inline-block"
-                            />
-                        </button>
+                                onClick={() => setActiveTab(tab.key as 'normal' | 'high' | 'rare' | 'html')}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Input area */}
+                    <div className="p-6 flex-grow">
+                        <div className="flex flex-col h-full space-y-4">
+                            <div className="relative flex-grow">
+                                <textarea
+                                    placeholder={getCurrentPlaceholder()}
+                                    className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm 
+                                              focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700
+                                              transition duration-200 resize-none"
+                                    value={getCurrentValue()}
+                                    onChange={(e) => getCurrentSetter()(e.target.value)}
+                                    disabled={loading}
+                                />
+                                
+                                {activeTab === 'html' && (
+                                    <button
+                                        onClick={() => setHtmlHelpModalView(true)}
+                                        className="absolute top-2 right-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200"
+                                    >
+                                        <Image
+                                            src="/help1-log.svg"
+                                            alt="도움말"
+                                            width={24}
+                                            height={24}
+                                            className="inline-block"
+                                        />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div className="flex justify-end">
+                                <button
+                                    className={`px-6 py-3 bg-blue-600 text-white rounded-lg flex items-center space-x-2
+                                              hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+                                              transition duration-200 transform hover:scale-105
+                                              ${loading ? "bg-gray-500 dark:bg-gray-600 cursor-not-allowed" : ""}`}
+                                    onClick={handleClick}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                                    ) : (
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    )}
+                                    {activeTab === 'html' ? '처리하기' : '조합하기'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats display */}
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 border-t border-gray-200 dark:border-gray-600">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">일반</span>
+                                <span className="text-lg font-semibold">{nomalJOKAK.length}</span>
+                            </div>
+                            <div className="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">고급</span>
+                                <span className="text-lg font-semibold">{highJOKAK.length}</span>
+                            </div>
+                            <div className="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">희귀</span>
+                                <span className="text-lg font-semibold">{rareJOKAK.length}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* 오른쪽 컨테이너 */}
-                <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 p-4 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-                    {[{ title: "만들어진 6글자 단어", data: len6Data }, { title: "만들어진 5글자 단어", data: len5Data }].map((section, idx) => (
-                        <div className="flex flex-col w-full md:w-1/2 h-[calc(100vh-200px)]" key={idx}>
-                            <div className="p-3 text-center text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-t-md text-sm">
-                                {section.title}
+                {/* Right panel - Results section */}
+                <div className="w-full lg:w-1/2 flex flex-col gap-6">
+                    {[
+                        { title: "만들어진 6글자 단어", data: len6Data, icon: "/icon-6char.svg" }, 
+                        { title: "만들어진 5글자 단어", data: len5Data, icon: "/icon-5char.svg" }
+                    ].map((section, idx) => (
+                        <div className="flex flex-col flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden" key={idx}>
+                            <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center">
+                                <div className="w-8 h-8 mr-3 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                                    <span className="text-blue-600 dark:text-blue-400 font-bold">{idx === 0 ? '6' : '5'}</span>
+                                </div>
+                                <h3 className="flex-1 font-medium text-gray-700 dark:text-gray-300">{section.title}</h3>
+                                <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    {section.data.length}
+                                </span>
                             </div>
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-b-md overflow-y-auto">
+                            <div className="flex-1 overflow-y-auto max-h-[calc(50vh-100px)]">
                                 {section.data.length > 0 ? (
-                                    <div className="flex flex-col w-full border border-gray-300 dark:border-gray-600 p-3 overflow-auto break-words">
+                                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
                                         {section.data.map((item, index) => (
-                                            <div key={index} className="flex items-start py-2 border-b border-gray-400 dark:border-gray-600">
-                                                <div className="flex-none w-[15%] text-right mr-2 border-r border-gray-300 dark:border-gray-600 pr-2 text-sm">
-                                                    {index + 1}
+                                            <div key={index} className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                <div className="flex-none w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full mr-4">
+                                                    <span className="text-gray-600 dark:text-gray-300 font-medium">{index + 1}</span>
                                                 </div>
-                                                <div className="flex-grow pl-2 text-sm">{item}</div>
+                                                <div className="flex-grow">
+                                                    <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{item}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-gray-500 dark:text-gray-400 text-center p-4">결과가 없습니다.</div>
+                                    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                                        <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                        </svg>
+                                        <p className="text-gray-500 dark:text-gray-400">아직 결과가 없습니다. 글자조각을 입력하고 조합해보세요.</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -318,20 +391,22 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerClientP
                 </div>
             </div>
 
-            {/* 도움말 모달창 */}
+            {/* Help modals */}
             {showHelpModal && <HelpModal onClose={() => setShowHelpModal(false)} />}
             {HtmlHelpModalView && <HelpModal onClose={() => setHtmlHelpModalView(false)} wantGo={3} />}
 
-            {/* 로딩 스피너 */}
+            {/* Loading overlay */}
             {loading && (
-                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
-                    <Spinner />
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl flex items-center space-x-4">
+                        <Spinner />
+                        <p className="text-gray-700 dark:text-gray-300 font-medium">처리 중...</p>
+                    </div>
                 </div>
             )}
 
-            {/* 오류 모달 */}
+            {/* Error modal */}
             {errorModalView && <ErrorModal error={errorModalView} onClose={() => seterrorModalView(null)} />}
         </div>
-
     );
 }

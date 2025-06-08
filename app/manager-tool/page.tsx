@@ -7,7 +7,7 @@ export async function generateMetadata() {
 	};
 }
 
-const Page: React.FC = () => {
+const Page = () => {
     return (
         <>
             <Home />

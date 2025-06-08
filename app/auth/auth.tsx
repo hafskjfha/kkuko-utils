@@ -2,17 +2,21 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store/store";
 import { userAction } from "../store/slice";
 import { Suspense } from 'react';
-import Spinner from "../components/Spinner";
+import { LogIn, UserPlus, Loader2, User, AlertCircle } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Alert, AlertDescription } from "@/app/components/ui/alert";
 import ErrorModal from '../components/ErrModal';
 import type { ErrorMessage } from "../types/type";
 import { supabase } from "../lib/supabaseClient";
 
-const AuthPage: React.FC = () => {
+const AuthPage = () => {
     const router = useRouter();
     const [nickname, setNickname] = useState<string>("");
     const [isNewUser, setIsNewUser] = useState<boolean>(false);
@@ -20,13 +24,12 @@ const AuthPage: React.FC = () => {
     const [nicknameError, setNicknameError] = useState("");
     const dispatch = useDispatch<AppDispatch>();
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         
         const checkUser = async (session: Session | null) => {
             if (!session) {
+                setLoading(false);
                 return;
             }
 
@@ -47,6 +50,7 @@ const AuthPage: React.FC = () => {
     
             if (data.length === 0) {
                 setIsNewUser(true);
+                setLoading(false);
             } else {
                 dispatch(
                     userAction.setInfo({
@@ -54,7 +58,12 @@ const AuthPage: React.FC = () => {
                         role: data[0].role ?? "guest",
                     })
                 );
-                router.push("/");
+                if (data[0].role === "admin"){
+                    router.push("/admin");
+                } else {
+                    router.push(`/profile/${data[0].nickname}`);
+                }   
+                
             }
     
         };
@@ -64,7 +73,7 @@ const AuthPage: React.FC = () => {
                 await checkUser(session);
             }
             finally {
-                setLoading(false);
+                
             }
         });
         return () => {
@@ -74,11 +83,10 @@ const AuthPage: React.FC = () => {
     
 
     const signInWithGoogle = async () => {
-        const fullUrl = `${window.location.origin}${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
         const { error: err } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: fullUrl, 
+                redirectTo: `${location.origin}/api/auth/callback`, 
             },
         });
         if (err) {
@@ -160,53 +168,122 @@ const AuthPage: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-            <div className="bg-white dark:bg-gray-800 p-8 shadow-lg rounded-lg w-full max-w-sm transition-all">
-                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 text-center">
-                    {isNewUser ? "회원가입" : "로그인 / 회원가입"}
-                </h2>
-                {isNewUser ? (
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="닉네임 입력"
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        {nicknameError && <p className="text-red-500 text-sm mb-2">{nicknameError}</p>}
-                        <button
-                            onClick={completeSignup}
-                            className={`w-full text-white py-2 px-4 rounded-lg transition-all ${
-                                !nickname || loading
-                                    ? "bg-gray-500 dark:bg-gray-600 cursor-not-allowed"
-                                    : "bg-green-500 hover:bg-green-600 dark:bg-green-400 dark:hover:bg-green-500"
-                            }`}
-                            disabled={!nickname || loading}
-                        >
-                            {loading ? "회원가입 중..." : "회원가입 완료"}
-                        </button>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
+            <div className="w-full max-w-md">
+                <Card className="shadow-xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                    <CardHeader className="space-y-4 text-center pb-8">
+                        <div className="mx-auto w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            {isNewUser ? (
+                                <UserPlus className="h-6 w-6 text-white" />
+                            ) : (
+                                <LogIn className="h-6 w-6 text-white" />
+                            )}
+                        </div>
+                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+                            {isNewUser ? "회원가입" : "환영합니다"}
+                        </CardTitle>
+                        <CardDescription className="text-slate-600 dark:text-slate-400">
+                            {isNewUser 
+                                ? "서비스 이용을 위해 닉네임을 설정해주세요" 
+                                : "Google 계정으로 간편하게 시작하세요"
+                            }
+                        </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-6">
+                        {isNewUser ? (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            type="text"
+                                            placeholder="닉네임을 입력하세요"
+                                            value={nickname}
+                                            onChange={(e) => setNickname(e.target.value)}
+                                            className="pl-10 h-12 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                    {nicknameError && (
+                                        <Alert variant="destructive" className="py-2">
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertDescription className="text-sm">
+                                                {nicknameError}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                </div>
+                                
+                                <Button
+                                    onClick={completeSignup}
+                                    disabled={!nickname.trim() || loading}
+                                    className="w-full h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            가입 중...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="mr-2 h-4 w-4" />
+                                            회원가입 완료
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                onClick={signInWithGoogle}
+                                disabled={loading}
+                                className="w-full h-12 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 font-medium transition-all duration-200 shadow-sm"
+                                variant="outline"
+                            >
+                                Google로 계속하기
+                            </Button>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* 로딩 오버레이 */}
+                {loading && (
+                    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+                        <Card className="p-6">
+                            <div className="flex items-center space-x-3">
+                                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                <span className="text-slate-700 dark:text-slate-300">
+                                    {isNewUser ? "회원가입 처리 중..." : "로그인 처리 중..."}
+                                </span>
+                            </div>
+                        </Card>
                     </div>
-                ) : (
-                    <button
-                        onClick={signInWithGoogle}
-                        className="flex items-center justify-center w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 dark:bg-blue-400 dark:hover:bg-blue-500 transition-all"
-                    >
-                        Google로 로그인
-                    </button>
                 )}
 
-                {loading && <Spinner />}
                 {/* 오류 모달 */}
-                {errorModalView && <ErrorModal error={errorModalView} onClose={() => seterrorModalView(null)} />}
+                {errorModalView && (
+                    <ErrorModal 
+                        error={errorModalView} 
+                        onClose={() => seterrorModalView(null)} 
+                    />
+                )}
             </div>
         </div>
     );
 };
 
-const Auth: React.FC = () => {
+const Auth = () => {
     return (
-        <Suspense fallback={<Spinner />}>
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+                <Card className="p-8">
+                    <div className="flex items-center space-x-3">
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                        <span className="text-slate-700 dark:text-slate-300">로딩 중...</span>
+                    </div>
+                </Card>
+            </div>
+        }>
             <AuthPage />
         </Suspense>
     );

@@ -99,11 +99,12 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
                 setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 updateLoadingState(100, "완료!");
                 return;
             }
             else if (docsData.typez === "theme"){
-                updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
+                updateLoadingState(30, "문서에 들어간 단어 정보 가져오는 중...");
                 const {data: themeData, error: themeDataError} = await supabase.from('themes').select('*').eq('name',docsData.name).maybeSingle();
                 if (themeDataError) return MakeError(themeDataError);
                 if (!themeData) return setIsNotFound(true)
@@ -113,11 +114,18 @@ export default function DocsDataHome({id}:{id:number}){
                 if (themeWordsError2) return MakeError(themeWordsError2);
                 const {data: themeWordsData3, error: themeWordsError3} = await supabase.from('wait_word_themes').select('wait_words(*)').eq('theme_id', themeData.id)
                 if (themeWordsError3) return MakeError(themeWordsError3);
+                const {data: themeWordsData4, error: themeWordError4} = await supabase.from('wait_words').select('*').eq('request_type',"delete");
+                if (themeWordError4) return MakeError(themeWordError4);
+                const {data: wprdsA, error} = await supabase.from('words').select('word,id').in('word',themeWordsData4.map(({word})=>word))
+                if (error) return MakeError(error);
+                const themeWordsData5 = wprdsA.filter(({word})=>!themeWordsData3.some(b=>b.wait_words.word === word)).map(({id})=>id);
+                const {data: themeWordsData6, error: themeWordError6} = await supabase.from('word_themes').select('*,words(word)').in('word_id',themeWordsData5);
+                if (themeWordError6) return MakeError(themeWordError6);
 
                 await new Promise(resolve => setTimeout(resolve, 1))
                 updateLoadingState(70, "데이터를 가공중...");
-                const Data1NotInData2And3 = themeWordsData1
-                    .filter(a=>!themeWordsData2.some(b=> b.words.word === a.words.word) && !themeWordsData3.some(c=>c.wait_words.word === a.words.word))
+                const Data1NotInData2And3And6 = themeWordsData1
+                    .filter(a=>!themeWordsData2.some(b=> b.words.word === a.words.word) && !themeWordsData3.some(c=>c.wait_words.word === a.words.word) && !themeWordsData6.some(d=>d.words.word === a.words.word))
                     .map(d=>({word: d.words.word, status: "ok" as const, maker: undefined}));
                 const Data2InWaitAdd = themeWordsData2
                     .filter(d=>d.typez === "add" && !themeWordsData3.some(c=>c.wait_words.word === d.words.word))
@@ -127,10 +135,15 @@ export default function DocsDataHome({id}:{id:number}){
                     .map(({words})=>({word: words.word, status: "delete" as const, maker: undefined}));
                 const Data3InWait = themeWordsData3
                     .map(({wait_words})=>({word: wait_words.word, status: wait_words.request_type, maker: wait_words.requested_by ?? undefined}))
-
-                const wordsData = [...Data1NotInData2And3, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data3InWait];
+                const Data4In6Wait = themeWordsData4
+                    .filter(({word})=>themeWordsData6.some((b=>b.words.word===word)))
+                    .map(data=>({word:data.word, status: data.request_type, maker: data.requested_by ?? undefined}));
+                
+                const wordsData = [...Data3InWait, ...Data4In6Wait, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data1NotInData2And3And6 ];
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
+
                 updateLoadingState(100, "완료!");
                 return
 
@@ -150,6 +163,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 
                 setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 updateLoadingState(100, "완료!");
                 return;
             }
