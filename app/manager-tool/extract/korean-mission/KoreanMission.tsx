@@ -10,7 +10,9 @@ import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
-import { Download, Play, HelpCircle, Settings, Zap } from "lucide-react";
+import { Download, Play, HelpCircle, Settings, Zap, Home } from "lucide-react";
+import Link from "next/link";
+import HelpModal from "@/app/components/HelpModal";
 
 const sortedLength = (a: { word: string, mission: number }, b: { word: string, mission: number }) => b.word.length - a.word.length;
 const sortedAlphabet = (a: { word: string, mission: number }, b: { word: string, mission: number }) => a.word.localeCompare(b.word, "ko-KR");
@@ -119,40 +121,40 @@ const WordExtractorApp = () => {
         const result: string[] = [];
 
         // 오로지 ㄱㄴㄷ순 정렬만 있을 경우
-        if (rank2 === undefined){
-            for (const m of MISSION_CHARS){
-                result.push(...missionMap.get(m).map(({word})=>word))
+        if (rank2 === undefined) {
+            for (const m of MISSION_CHARS) {
+                result.push(...missionMap.get(m).map(({ word }) => word))
             }
-            result.sort((a,b) => sortedAlphabet({word:a,mission:-1},{word:b,mission:-1}));
-            return showMissionLetter ? result.map(word=>formatWord(word)) : result
+            result.sort((a, b) => sortedAlphabet({ word: a, mission: -1 }, { word: b, mission: -1 }));
+            return showMissionLetter ? result.map(word => formatWord(word)) : result
         }
         // 2순위가 미션글자 포함순일때
-        else if (selected[1] === "미션글자 포함순"){
+        else if (selected[1] === "미션글자 포함순") {
             // 앞글자가 같은 단어들 모으기 {첫글자: {미션글자: {단어,미션수}[]}}
-            const firstCharMissionMap = new DefaultDict<string, DefaultDict<string, {word: string, mission: number}[]>>(() => new DefaultDict(() => []));
-            for (const [missionChar, words] of missionMap.sortedEntries()){
-                for (const {word, mission} of words){
-                    firstCharMissionMap.get(word[0]).get(missionChar).push({word, mission});
+            const firstCharMissionMap = new DefaultDict<string, DefaultDict<string, { word: string, mission: number }[]>>(() => new DefaultDict(() => []));
+            for (const [missionChar, words] of missionMap.sortedEntries()) {
+                for (const { word, mission } of words) {
+                    firstCharMissionMap.get(word[0]).get(missionChar).push({ word, mission });
                 }
             }
 
             // 우선순위에 맞게 정렬
-            for (const [letter,wordsSet] of firstCharMissionMap.entries()){
+            for (const [letter, wordsSet] of firstCharMissionMap.entries()) {
                 result.push(`=[${letter}]=`);
-                for (const [missionChar, words] of wordsSet.sortedEntries()){
+                for (const [missionChar, words] of wordsSet.sortedEntries()) {
                     result.push(`-${missionChar}-`);
                     const temp2 = words.sort(
-                        (a,b)=>{
-                            if (rank2 !== undefined){
-                                const k = rank2(a,b);
-                                if (k!=0) return k;
+                        (a, b) => {
+                            if (rank2 !== undefined) {
+                                const k = rank2(a, b);
+                                if (k != 0) return k;
                             }
-                            if (rank3 !== undefined){
-                                return rank3(a,b);
+                            if (rank3 !== undefined) {
+                                return rank3(a, b);
                             }
-                            return sortedLength(a,b);
+                            return sortedLength(a, b);
                         })
-                    result.push(...temp2.map(({word}) => (showMissionLetter ? formatWord(word) : word)))
+                    result.push(...temp2.map(({ word }) => (showMissionLetter ? formatWord(word) : word)))
                     result.push('');
                 }
             }
@@ -160,65 +162,65 @@ const WordExtractorApp = () => {
         }
         // 2순위가 글자 길이순 일때
         else {
-            for (const [missionChar, words] of missionMap.sortedEntries()){
-                if (words.length === 0){
+            for (const [missionChar, words] of missionMap.sortedEntries()) {
+                if (words.length === 0) {
                     continue;
                 }
                 // 우선순위에 맞게 정렬
                 words.sort(
                     (a, b) => {
-                        const k = pack[selected[0]](a,b);
-                        if (k!=0) return k;
-                        
-                        if (rank2 !== undefined){
-                            const k = rank2(a,b)
-                            if (k!=0) return k;
+                        const k = pack[selected[0]](a, b);
+                        if (k != 0) return k;
+
+                        if (rank2 !== undefined) {
+                            const k = rank2(a, b)
+                            if (k != 0) return k;
                         }
 
-                        if (rank3 != undefined){
-                            return rank3(a,b)
+                        if (rank3 != undefined) {
+                            return rank3(a, b)
                         }
 
-                        return sortedAlphabet(a,b);
+                        return sortedAlphabet(a, b);
                     })
                 result.push(`==[[${missionChar}]]==`);
                 // 현재 진행중인 앞글자 마킹 / 단어 리스트
-                let nowFirstChar:undefined | string = undefined;
-                let nowFirstCharWords:{word:string,mission:number}[] = [];
-                
+                let nowFirstChar: undefined | string = undefined;
+                let nowFirstCharWords: { word: string, mission: number }[] = [];
+
                 // 앞글자 끼리 같은거 모으기
-                for (const {mission, word} of words){
-                    if (!nowFirstChar){
-                        nowFirstChar=word[0];
-                        nowFirstCharWords.push({word,mission});
+                for (const { mission, word } of words) {
+                    if (!nowFirstChar) {
+                        nowFirstChar = word[0];
+                        nowFirstCharWords.push({ word, mission });
                     } else {
-                        if (word[0]==nowFirstChar){
-                            nowFirstCharWords.push({word,mission})
+                        if (word[0] == nowFirstChar) {
+                            nowFirstCharWords.push({ word, mission })
                         } else {
                             nowFirstCharWords.sort(
-                                (a,b)=>{
+                                (a, b) => {
                                     if (rank2 !== undefined) {
-                                        const k = rank2(a,b);
-                                        if (k!=0) return k;
+                                        const k = rank2(a, b);
+                                        if (k != 0) return k;
                                     }
                                     if (rank3 !== undefined) {
-                                        const k = rank3(a,b);
+                                        const k = rank3(a, b);
                                         return k;
                                     }
-                                    return sortedLength(a,b);
+                                    return sortedLength(a, b);
                                 })
                             result.push(`=[${nowFirstChar}]=`);
-                            result.push(...nowFirstCharWords.map(({word})=>(showMissionLetter ? formatWord(word) : word)));
+                            result.push(...nowFirstCharWords.map(({ word }) => (showMissionLetter ? formatWord(word) : word)));
                             result.push('');
-                            nowFirstChar=word[0];
+                            nowFirstChar = word[0];
                             nowFirstCharWords = [];
-                            nowFirstCharWords.push({word, mission})
+                            nowFirstCharWords.push({ word, mission })
                         }
                     }
                 }
-                if (nowFirstCharWords.length > 0){
+                if (nowFirstCharWords.length > 0) {
                     result.push(`=[${nowFirstChar}]=`);
-                    result.push(...nowFirstCharWords.map(({word})=>(showMissionLetter ? formatWord(word) : word)));
+                    result.push(...nowFirstCharWords.map(({ word }) => (showMissionLetter ? formatWord(word) : word)));
                     result.push('');
                 }
                 result.push('');
@@ -226,7 +228,7 @@ const WordExtractorApp = () => {
 
             return result;
         }
-        
+
     };
 
 
@@ -288,15 +290,6 @@ const WordExtractorApp = () => {
         }
     };
 
-    // 도움말 (TODO: 추후 수정)
-    const handleHelp = () => {
-        window.open(
-            "https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4hk4plz6rbsd",
-            "_blank",
-            "noopener,noreferrer"
-        );
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
@@ -316,15 +309,108 @@ const WordExtractorApp = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleHelp}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                            도움말
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Link href="/manager-tool/extract">
+                                <Button variant="outline" size="sm">
+                                    <Home size="sm" />
+                                    도구홈
+                                </Button>
+                            </Link>
+                            <HelpModal
+                                title="한국어 미션단어 추출 - A 사용법"
+                                triggerText="도움말"
+                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            >
+                                <div className="space-y-6">
+                                    {/* Step 0 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                            <h3 className="font-semibold">텍스트 파일을 업로드 합니다.</h3>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 1 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                            <h3 className="font-semibold">설정</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>정렬모드를 선택합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <div className="space-y-2">
+                                                    {options.map((option) => (
+                                                        <div key={option} className="flex items-center justify-between">
+                                                            <div className="flex items-center space-x-2">
+                                                                <Checkbox id={`sort-${option}`} disabled />
+                                                                <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                                    {option}
+                                                                </Label>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                            <h3 className="font-semibold">실행</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>실행 버튼을 누르고 기다립니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button className="w-full h-8" disabled>
+                                                    <Play className="w-3 h-3 mr-2" />
+                                                    단어 추출
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 3 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">3</span>
+                                            <h3 className="font-semibold">결과 확인 및 다운로드</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>결과를 확인한 후 다운로드합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button variant="secondary" className="w-full h-8" disabled>
+                                                    <Download className="w-3 h-3 mr-2" />
+                                                    결과 다운로드
+                                                    <Badge variant="default" className="ml-2 text-xs">5</Badge>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 예시 */}
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold">사용 예시</h3>
+                                        <div className="space-y-3">
+                                            준비중입니다...
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 1미 포함 옵션을 체크하면 1미 단어도 추출됩니다. (기본 2미이상)
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 미션글자 표시옵션을 체크했을때 예시: (바나나 [나2][바1])
+                                        </p>
+                                    </div>
+                                </div>
+                            </HelpModal>
+                        </div>
                     </div>
                 </div>
             </div>
