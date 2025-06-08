@@ -99,7 +99,7 @@ const DocsLogs = ({ id, name, Logs }: DocsLogsProps) => {
                                     {log.user ? (
                                         <Link
                                             className="text-blue-600 hover:underline"
-                                            href={`/profile?username=${log.user}`}
+                                            href={`/profile/${log.user}`}
                                         >
                                             {log.user}
                                         </Link>

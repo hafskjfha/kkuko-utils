@@ -18,6 +18,7 @@ import { supabase } from "@/app/lib/supabaseClient"
 import ConfirmModal from "@/app/components/ConfirmModal";
 import { josa } from "es-hangul";
 import { useRouter } from 'next/navigation'
+import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 
 interface WordInfoProps {
     word: string;
@@ -31,8 +32,8 @@ interface WordInfoProps {
     };
     isChainable: boolean;
     isSeniorApproved: boolean;
-    goFirstLetterWords: string[];
-    goLastLetterWords: string[];
+    goFirstLetterWords: number;
+    goLastLetterWords: number;
     status: "ok" | "추가요청" | "삭제요청";
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
@@ -40,6 +41,8 @@ interface WordInfoProps {
     requester?: string;
     requestTime?: string;
     moreExplanation?: React.ReactNode;
+    goFirstLetterWord: (f: string[]) => Promise<void>;
+    goLastLetterWord: (l: string[]) => Promise<void>
 }
 
 const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
@@ -50,7 +53,9 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [completeModalOpen, setCompleteModalOpen] = useState<{ word: string, isOpen: boolean, addThemes: string[], delThemes: string[], s: "t" } | { word: string, work: "dr" | "ca", s: "r" } | null>(null);
     const [conFirmModalOpen, setConFirmModalOpen] = useState(false);
-    const router = useRouter()
+    const router = useRouter();
+    const fir1 = reverDuemLaw(wordInfo.word[0]);
+    const las1 = [DuemRaw(wordInfo.word[wordInfo.word.length - 1])];
 
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
@@ -198,18 +203,6 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
         }
     }
 
-    const handleWordChainClick = (wordList: string[]) => {
-        if (wordList.length === 0) return;
-
-        // Select a random word from the list
-        const randomIndex = Math.floor(Math.random() * wordList.length);
-        const randomWord = wordList[randomIndex];
-
-        // Navigate to the selected word
-        router.push(`/word/search/${randomWord}`);
-    };
-
-
     // 주제가 모두 비어있는지 확인
     const isTopicEmpty =
         wordInfo.topic.ok.length === 0 &&
@@ -259,14 +252,14 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                 <Card className="mb-6 shadow-md border-none overflow-hidden">
                     <CardContent className="py-4 flex items-center justify-center gap-6">
                         {/* 첫 글자로 시작하는 단어 버튼 */}
-                        {wordInfo.goFirstLetterWords.length > 0 ? (
+                        {wordInfo.goFirstLetterWords > 0 ? (
                             <Button
                                 variant="outline"
                                 className="flex items-center gap-1 text-green-600 border-green-300 hover:bg-green-50"
-                                onClick={() => handleWordChainClick(wordInfo.goFirstLetterWords)}
+                                onClick={()=>{wordInfo.goFirstLetterWord(fir1)}}
                             >
                                 <span className="font-bold">&lt;{wordInfo.word[0]}</span>
-                                <span className="text-sm ml-1">({wordInfo.goFirstLetterWords.length})</span>
+                                <span className="text-sm ml-1">({wordInfo.goFirstLetterWords})</span>
                             </Button>
                         ) : (
                             <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2">
@@ -281,14 +274,14 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                         </div>
 
                         {/* 마지막 글자로 끝나는 단어 버튼 */}
-                        {wordInfo.goLastLetterWords.length > 0 ? (
+                        {wordInfo.goLastLetterWords > 0 ? (
                             <Button
                                 variant="outline"
                                 className="flex items-center gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
-                                onClick={() => handleWordChainClick(wordInfo.goLastLetterWords)}
+                                onClick={()=>{wordInfo.goLastLetterWord(las1)}}
                             >
                                 <span className="font-bold">{wordInfo.word[wordInfo.word.length - 1]}&gt;</span>
-                                <span className="text-sm ml-1">({wordInfo.goLastLetterWords.length})</span>
+                                <span className="text-sm ml-1">({wordInfo.goLastLetterWords})</span>
                             </Button>
                         ) : (
                             <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2">

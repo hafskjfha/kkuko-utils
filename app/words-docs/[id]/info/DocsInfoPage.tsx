@@ -16,8 +16,10 @@ type docsInfoType = {
         } | null;
         typez: "letter" | "theme" | "ect";
         last_update: string;
+        views: number;
     };
-    wordsCount: number
+    wordsCount: number;
+    rank: number
 }
 
 export default function DocsInfoPage({ id }: { id: number }) {
@@ -27,7 +29,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
     const { loadingState, updateLoadingState } = useLoadingState();
 
     const getDocs = useCallback(async () => {
-        const { data, error } = await supabase.from('docs').select('id, created_at, name, users(nickname), typez, last_update').eq('id', id).maybeSingle();
+        const { data, error } = await supabase.from('docs').select('*,users(nickname)').eq('id', id).maybeSingle();
         return { data, error }
     }, []);
 
@@ -58,9 +60,14 @@ export default function DocsInfoPage({ id }: { id: number }) {
                     updateLoadingState(100,"ERR");
                     return;
                 }
-
+                const {data, error} = await supabase.rpc('get_doc_rank',{doc_id: docsData.id})
+                if (error){
+                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
+                    updateLoadingState(100,"ERR");
+                    return;
+                }
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1.length});
+                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1.length, rank:data});
                 updateLoadingState(100,"완료!");
                 return;
             }
@@ -81,9 +88,15 @@ export default function DocsInfoPage({ id }: { id: number }) {
                     updateLoadingState(100,"ERR");
                     return;
                 }
+                const {data, error} = await supabase.rpc('get_doc_rank',{doc_id: docsData.id})
+                if (error){
+                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
+                    updateLoadingState(100,"ERR");
+                    return;
+                }
 
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length});
+                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length, rank: data});
 
                 updateLoadingState(100,"완료!");
                 return;
@@ -95,9 +108,14 @@ export default function DocsInfoPage({ id }: { id: number }) {
                     updateLoadingState(100,"ERR");
                     return;
                 }
-
+                const {data, error:errorl} = await supabase.rpc('get_doc_rank',{doc_id: docsData.id})
+                if (errorl){
+                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${errorl.name ?? "알수없음"}\nError Message: ${errorl.message ?? "없음"}\nError code: ${errorl.code}`)
+                    updateLoadingState(100,"ERR");
+                    return;
+                }
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: words.length});
+                setDocsInfoData({metadata:docsData, wordsCount: words.length, rank: data});
                 updateLoadingState(100,"완료!");
                 return;
             }
@@ -118,6 +136,6 @@ export default function DocsInfoPage({ id }: { id: number }) {
     }
 
     if (docsInfoData){
-        return <DocsInfo metaData={docsInfoData.metadata} wordsCount={docsInfoData.wordsCount} />
+        return <DocsInfo metaData={docsInfoData.metadata} wordsCount={docsInfoData.wordsCount} docsViewRank={docsInfoData.rank} />
     }
 }

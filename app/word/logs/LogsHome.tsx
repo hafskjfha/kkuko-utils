@@ -163,8 +163,8 @@ export default function LogPage() {
                                         }
                                     }
                                     } >{log.word}</TableCell>
-                                    <TableCell className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.make_by_user) { router.push(`/profile?username=${log.make_by_user?.nickname}`); } }} >{log.make_by_user?.nickname || "-"}</TableCell>
-                                    <TableCell className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.processed_by_user) { router.push(`/profile?username=${log.processed_by_user?.nickname}`); } }}>{log.processed_by_user?.nickname || "-"}</TableCell>
+                                    <TableCell className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.make_by_user) { router.push(`/profile/${log.make_by_user?.nickname}`); } }} >{log.make_by_user?.nickname || "-"}</TableCell>
+                                    <TableCell className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} onClick={() => { if (log.processed_by_user) { router.push(`/profile/${log.processed_by_user?.nickname}`); } }}>{log.processed_by_user?.nickname || "-"}</TableCell>
                                     <TableCell>
                                         {log.state === "approved" ? (
                                             <span className="text-green-600 font-semibold">승인</span>
