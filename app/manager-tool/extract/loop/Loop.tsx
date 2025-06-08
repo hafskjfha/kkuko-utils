@@ -139,7 +139,7 @@ const LoopWordExtractorApp = () => {
                                 </Button>
                             </Link>
                             <HelpModalA
-                                title="X로 끝나는 단어 추출 사용법"
+                                title="돌림단어 추출 사용법"
                                 triggerText="도움말"
                                 triggerClassName="border border-gray-200 border-1 rounded-md p-2"
                             >

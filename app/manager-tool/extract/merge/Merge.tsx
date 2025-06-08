@@ -12,15 +12,17 @@ import { Badge } from "@/app/components/ui/badge";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
 import { 
     Download, 
-    HelpCircle, 
     Settings, 
     Merge, 
     Upload, 
     FileText, 
     List,
     Zap,
-    Search
+    Search,
+    Home
 } from "lucide-react";
+import Link from "next/link";
+import HelpModal from "@/app/components/HelpModal";
 
 // 가상화된 텍스트 뷰어 컴포넌트
 const VirtualizedTextViewer = React.memo(({ 
@@ -256,10 +258,6 @@ const WordExtractorApp = () => {
         }
     }, [mergedContent, handleError]);
 
-    const handleHelp = useCallback(() => {
-        window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.4sz3wbmpl386", "_blank", "noopener,noreferrer");
-    }, []);
-
     const resetFile = useCallback((fileNumber: number) => {
         if (fileNumber === 1) {
             setFile1(null);
@@ -319,15 +317,113 @@ const WordExtractorApp = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleHelp}
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                        >
-                            <HelpCircle className="w-4 h-4" />
-                            도움말
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                            <Link href="/manager-tool/extract">
+                                <Button variant="outline" size="sm">
+                                    <Home size="sm" />
+                                    도구홈
+                                </Button>
+                            </Link>
+                            <HelpModal
+                                title="텍스트 파일 합성 사용법"
+                                triggerText="도움말"
+                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            >
+                                <div className="space-y-6">
+                                    {/* Step 0 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                            <h3 className="font-semibold">텍스트 파일을 2개 업로드 합니다.</h3>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 1 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                            <h3 className="font-semibold">실행</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>실행 버튼을 누르고 기다립니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button className="w-full h-8" disabled>
+                                                    <Merge className="w-3 h-3 mr-2" />
+                                                        파일 병합
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Step 2 */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                            <h3 className="font-semibold">결과 확인 및 다운로드</h3>
+                                        </div>
+                                        <div className="ml-6 space-y-2">
+                                            <p>결과를 확인한 후 다운로드합니다.</p>
+                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                                <Button variant="secondary" className="w-full h-8" disabled>
+                                                    <Download className="w-3 h-3 mr-2" />
+                                                    결과 다운로드
+                                                    <Badge variant="default" className="ml-2 text-xs">5</Badge>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 예시 */}
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold">사용 예시</h3>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">입력:</p>
+                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                    이름 하품
+                                                </pre>
+                                                <div className="flex items-center justify-center">
+                                                    <div className="text-center">
+                                                        <div className="text-2xl">+</div>
+                                                    </div>
+                                                </div>
+                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                    고객 이름 사격
+                                                </pre>
+                                            </div>
+                                            <div className="flex items-center justify-center">
+                                                <div className="text-center">
+                                                    <div className="text-sm text-gray-500">병합</div>
+                                                    <div className="text-2xl">↓</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600 mb-2">병합 결과:</p>
+                                                <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                    <div className="text-sm space-y-1">
+                                                        <div>• 고객</div>
+                                                        <div>• 사격</div>
+                                                        <div>• 이름</div>
+                                                        <div>• 하품</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 정렬 옵션을 체크하면 결과가 가나다순으로 정렬됩니다.
+                                        </p>
+                                    </div>
+                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-blue-800 text-sm">
+                                            <strong>💡 팁:</strong> 중복된 단어는 1개만 남깁니다.
+                                        </p>
+                                    </div>
+                                </div>
+                            </HelpModal>
+                        </div>
                     </div>
                 </div>
             </div>
