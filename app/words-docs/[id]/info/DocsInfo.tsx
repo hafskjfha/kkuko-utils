@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Calendar, Clock, User, FileText, Tag, ArrowLeft, Eye, TrendingUp } from "lucide-react";
+import { Calendar, Clock, User, FileText, Tag, ArrowLeft, Star, Eye, TrendingUp } from "lucide-react";
 
 interface Metadata {
     id: number;
@@ -14,7 +14,17 @@ interface Metadata {
     views: number;
 };
 
-const DocsInfo = ({ metaData, wordsCount, docsViewRank }: { metaData: Metadata; wordsCount: number, docsViewRank:number }) => {
+const DocsInfo = ({ 
+    metaData, 
+    wordsCount, 
+    starCount, 
+    docsViewRank 
+}: { 
+    metaData: Metadata; 
+    wordsCount: number; 
+    starCount: number; 
+    docsViewRank: number;
+}) => {
     const lastUpdateDate = new Date(metaData.last_update);
     const createdAtDate = new Date(metaData.created_at);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -81,7 +91,7 @@ const DocsInfo = ({ metaData, wordsCount, docsViewRank }: { metaData: Metadata; 
                 </div>
 
                 {/* 메타데이터 섹션 - 더 시각적으로 개선 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-6">
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Calendar size={20} className="text-indigo-600 mt-1" />
                         <div>
@@ -103,6 +113,14 @@ const DocsInfo = ({ metaData, wordsCount, docsViewRank }: { metaData: Metadata; 
                         <div>
                             <p className="text-sm text-gray-500 font-medium">단어 개수</p>
                             <p className="text-base text-gray-800">{new Intl.NumberFormat().format(wordsCount)}개</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+                        <Star size={20} className="text-yellow-600 mt-1" />
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">즐겨찾기</p>
+                            <p className="text-base text-gray-800">{new Intl.NumberFormat().format(starCount)}명</p>
                         </div>
                     </div>
 
