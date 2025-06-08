@@ -7,7 +7,8 @@ import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type'
 import Spinner from "@/app/components/Spinner";
 import CodeMirror from '@uiw/react-codemirror';
-import { FileUp, Download, FilePlus, Trash2, HelpCircle } from 'lucide-react';
+import { FileUp, Download, FilePlus, Trash2 } from 'lucide-react';
+import HelpModalA from '@/app/components/HelpModal';
 
 const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount }: {
     fileContent: string;
@@ -135,12 +136,11 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
 };
 
 
-const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen, seterrorModalView }:
+const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalView }:
     {
         fileContent: string,
         setFileContent: React.Dispatch<React.SetStateAction<string>>,
         setLineCount: React.Dispatch<React.SetStateAction<number>>,
-        setHelpMoalOpen: React.Dispatch<React.SetStateAction<0 | 1 | 2>>,
         seterrorModalView: React.Dispatch<React.SetStateAction<ErrorMessage | null>>
     }
 ) => {
@@ -472,10 +472,71 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                     도구
                 </h1>
                 <div className="flex items-center">
-                    <div className="relative w-6 h-6 cursor-pointer hover:opacity-80 transition-opacity">
-                        <HelpCircle
-                            onClick={() => window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.3gxircxieo6c", "_blank", "noopener,noreferrer")}
-                        />
+                    <div>
+                        <HelpModalA
+                            title="도구 사용 가이드"
+                            triggerClassName="relative cursor-pointer hover:opacity-80 transition-opacity"
+                            triggerText="도움말"
+                        >
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">📝 편집 기록</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>실행 취소:</strong> 이전 작업을 되돌립니다.</li>
+                                        <li>• <strong>다시 실행:</strong> 취소한 작업을 다시 실행합니다.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔤 정렬 도구</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>ㄱㄴㄷ순 정렬 v1:</strong> 한글 가나다순으로 정렬합니다.</li>
+                                        <li>• <strong>ㄱㄴㄷ순 정렬 v2:</strong> 한글 가나다순으로 정렬하고 알파벳별로 그룹화합니다.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">✏️ 내용 편집</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>단어 제거:</strong> 일치하는 단어를 텍스트파일에서 제거합니다.</li>
+                                        <li>• <strong>중복 제거:</strong> 중복된 단어들을 삭제합니다.</li>
+                                        <li>• <strong>빈 줄 제거:</strong> 빈줄을 삭제합니다.</li>
+                                        <li>• <strong>공백 → 줄바꿈:</strong> 공백을 줄바꿈으로 바꿉니다. 이 웹사이트의 대부분 내용들은 줄바꿈을 한 단어로 인식합니다.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔧 특정 문자 교체</h3>
+                                    <p className="text-sm mb-2">특정문자를 바꿉니다.</p>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시1:</p>
+                                        <p><strong>대상:</strong> =</p>
+                                        <p><strong>대체값:</strong> 비워둠 (비워두면 기본값으로 다 공백으로 치환합니다.)</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가=나다라마바사</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가나다라마바사</code>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시2:</p>
+                                        <p><strong>대상:</strong> =</p>
+                                        <p><strong>대체값:</strong> X</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가=나다라마바사</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가X나다라마바사</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </HelpModalA>
                     </div>
                 </div>
             </div>
@@ -491,8 +552,8 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                     <div className="flex gap-2">
                         <button
                             className={`flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium flex-1 transition-colors ${undoStack.length > 0
-                                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                                    : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
                                 }`}
                             onClick={handleUndo}
                             disabled={undoStack.length === 0}
@@ -502,8 +563,8 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                         </button>
                         <button
                             className={`flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium flex-1 transition-colors ${redoStack.length > 0
-                                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                                    : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
                                 }`}
                             onClick={handleRedo}
                             disabled={redoStack.length === 0}
@@ -533,9 +594,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                                 정렬하기
                             </button>
                             <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
-                                <HelpCircle
-                                    onClick={() => { setHelpMoalOpen(1) }}
-                                />
+                                <HelpModal wantGo={2} />
                             </div>
                         </div>
 
@@ -550,9 +609,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                                 정렬하기
                             </button>
                             <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
-                                <HelpCircle
-                                    onClick={() => { setHelpMoalOpen(2) }}
-                                />
+                                <HelpModal wantGo={3} />
                             </div>
                         </div>
                     </div>
@@ -625,12 +682,12 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen
                     </div>
                 </div>
 
-                {/* 특정 문자 제거 */}
+                {/* 특정 문자 교체 */}
                 <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
                             <FiType className="mr-2 text-purple-500" />
-                            특정 문자 제거
+                            특정 문자 교체
                         </h2>
                         <button
                             className="flex items-center text-purple-500 hover:text-purple-600 text-sm font-medium"
@@ -681,7 +738,6 @@ const ArrangeHome = () => {
     const [file, setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string>("");
     const [lineCount, setLineCount] = useState<number>(0);
-    const [helpModalopen, setHelpMoalOpen] = useState<0 | 1 | 2>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [loading, setLoading] = useState(false);
@@ -772,12 +828,10 @@ const ArrangeHome = () => {
                     fileContent={fileContent}
                     setFileContent={setFileContent}
                     setLineCount={setLineCount}
-                    setHelpMoalOpen={setHelpMoalOpen}
                     seterrorModalView={seterrorModalView}
                 />
             </div>
 
-            {helpModalopen && <HelpModal onClose={() => setHelpMoalOpen(0)} wantGo={helpModalopen} />}
             {errorModalView && <ErrorModal onClose={() => seterrorModalView(null)} error={errorModalView} />}
             {loading && (
                 <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
@@ -785,9 +839,6 @@ const ArrangeHome = () => {
                 </div>
             )}
         </div>
-
-
-
     );
 };
 
