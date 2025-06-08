@@ -11,7 +11,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
-import { Download, Play, HelpCircle, Settings, Zap, Info, Home } from "lucide-react";
+import { Download, Play, Settings, Zap, Home } from "lucide-react";
 import HelpModal from "./HelpModal";
 import Link from "next/link";
 import HelpModalA from "@/app/components/HelpModal";
@@ -159,7 +159,7 @@ const LoopWordExtractorApp = () => {
                                             <h3 className="font-semibold">설정</h3>
                                         </div>
                                         <div className="ml-6 space-y-2">
-                                            <p>원하는 돌림글자를 입력합니다. (예: "라", "기")</p>
+                                            <p>원하는 돌림글자를 입력합니다. (예: &quot;라&quot;, &quot;기&quot;)</p>
                                             <div className="bg-gray-50 p-3 rounded-lg border">
                                                 <div className="space-y-2">
                                                     <Label className="text-sm font-medium">돌림글자</Label>
@@ -250,7 +250,7 @@ const LoopWordExtractorApp = () => {
                                     <div className="space-y-3">
                                         <h3 className="font-semibold">사용 예시</h3>
                                         <div className="space-y-3">
-                                            사용예시는 "추출모드" 글자옆의 ?버튼 눌러 확인하세요.
+                                            사용예시는 &quot;추출모드&quot; 글자옆의 ?버튼 눌러 확인하세요.
                                         </div>
                                     </div>
 

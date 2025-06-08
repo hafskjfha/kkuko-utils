@@ -10,7 +10,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
-import { Download, Play, HelpCircle, Settings, Zap, Home } from "lucide-react";
+import { Download, Play, Settings, Zap, Home } from "lucide-react";
 import Link from "next/link";
 import HelpModal from "@/app/components/HelpModal";
 

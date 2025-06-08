@@ -10,7 +10,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Badge } from "@/app/components/ui/badge";
-import { Download, Play, HelpCircle, Settings, Zap, Home } from "lucide-react";
+import { Download, Play, Settings, Zap, Home } from "lucide-react";
 import Link from "next/link";
 import HelpModal from "@/app/components/HelpModal";
 
@@ -126,7 +126,7 @@ const WordExtractorApp = () => {
                                             <h3 className="font-semibold">설정</h3>
                                         </div>
                                         <div className="ml-6 space-y-2">
-                                            <p>원하는 앞글자를 입력합니다. (예: "이", "나나")</p>
+                                            <p>원하는 앞글자를 입력합니다. (예: &quot;이&quot;, &quot;나나&quot;)</p>
                                             <div className="bg-gray-50 p-3 rounded-lg border">
                                                 <div className="space-y-2">
                                                     <Label className="text-sm font-medium">앞글자</Label>
@@ -191,7 +191,7 @@ const WordExtractorApp = () => {
                                             </div>
                                             <div className="flex items-center justify-center">
                                                 <div className="text-center">
-                                                    <div className="text-sm text-gray-500">앞글자: "가" 추출</div>
+                                                    <div className="text-sm text-gray-500">앞글자: &quot;가&quot; 추출</div>
                                                     <div className="text-2xl">↓</div>
                                                 </div>
                                             </div>
