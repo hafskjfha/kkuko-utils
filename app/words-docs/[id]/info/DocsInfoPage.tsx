@@ -17,7 +17,8 @@ type docsInfoType = {
         typez: "letter" | "theme" | "ect";
         last_update: string;
     };
-    wordsCount: number
+    wordsCount: number;
+    starCount: number;
 }
 
 export default function DocsInfoPage({ id }: { id: number }) {
@@ -49,6 +50,8 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 return;
             }
             if (docsData === null) return setIsNotFound(true);
+            const {data: docsStarData, error: docsStarError} = await supabase.from('user_star_docs').select('user_id').eq('docs_id',docsData.id)
+            if (docsStarError) return setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${docsStarError.name ?? "알수없음"}\nError Message: ${docsStarError.message ?? "없음"}\nError code: ${docsStarError.code}`);
 
             updateLoadingState(40,"문서의 단어 정보 가져오는 중...");
             if (docsData.typez === "letter"){
@@ -60,7 +63,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 }
 
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1.length});
+                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1.length, starCount:docsStarData.length});
                 updateLoadingState(100,"완료!");
                 return;
             }
@@ -83,7 +86,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 }
 
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length});
+                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length, starCount:docsStarData.length});
 
                 updateLoadingState(100,"완료!");
                 return;
@@ -97,7 +100,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 }
 
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: words.length});
+                setDocsInfoData({metadata:docsData, wordsCount: words.length, starCount:docsStarData.length});
                 updateLoadingState(100,"완료!");
                 return;
             }
@@ -118,6 +121,6 @@ export default function DocsInfoPage({ id }: { id: number }) {
     }
 
     if (docsInfoData){
-        return <DocsInfo metaData={docsInfoData.metadata} wordsCount={docsInfoData.wordsCount} />
+        return <DocsInfo metaData={docsInfoData.metadata} wordsCount={docsInfoData.wordsCount} starCount={docsInfoData.starCount} />
     }
 }
