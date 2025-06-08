@@ -162,7 +162,7 @@ const WordExtractorApp = () => {
                                 </Button>
                             </Link>
                             <HelpModal
-                                title="영어 미션단어 추출 사용법"
+                                title="한국어 미션 단어 추출 - B 추출 사용법"
                                 triggerText="도움말"
                                 triggerClassName="border border-gray-200 border-1 rounded-md p-2"
                             >
