@@ -20,7 +20,8 @@ const eslintConfig = [
       '.next/',
       'public/',
       'dist/',
-      'test/'
+      'test/',
+      'supabase/'
     ]
   })
 ]
