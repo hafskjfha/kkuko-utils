@@ -2,7 +2,7 @@
 
 import Table from "./Table";
 import type { WordData } from "@/app/types/type";
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, memo } from "react";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
@@ -72,4 +72,4 @@ const WordsTableBody = ({
     );
 };
 
-export default WordsTableBody;
+export default memo(WordsTableBody);

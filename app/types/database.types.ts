@@ -621,6 +621,10 @@ export type Database = {
         Args: { docs_id: number }
         Returns: undefined
       }
+      update_last_updates: {
+        Args: { docs_ids: number[] }
+        Returns: undefined
+      }
     }
     Enums: {
       document_type: "letter" | "theme" | "ect"

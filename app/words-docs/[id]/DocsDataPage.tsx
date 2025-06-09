@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import TableOfContents from "./TableOfContents";
 import WordsTableBody from "./WordsTableBody";
 import Link from "next/link";
@@ -14,6 +14,13 @@ import { RootState } from "@/app/store/store";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import { PostgrestError } from "@supabase/supabase-js";
 import ErrorModal from "@/app/components/ErrModal";
+import { disassemble } from "es-hangul";
+
+const CHOSEONG_LIST = [
+  "ㄱ", "ㄴ", "ㄷ", "ㄹ",
+  "ㅁ", "ㅂ", "ㅅ", "ㅇ",
+  "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ",
+];
 
 interface DocsPageProp {
     id: number;
@@ -32,13 +39,30 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     const [_, setRefsState] = useState<{ [key: string]: React.RefObject<HTMLDivElement | null> }>({});
     const [tocList, setTocList] = useState<string[]>([]);
-    const [wordsData] = useState<WordData[]>(data);
-    const [grouped, setGrouped] = useState<DefaultDict<string, WordData[]>>(new DefaultDict<string, WordData[]>(() => []));
+    const [wordsData,setWordsData] = useState<WordData[]>([]);
     const [isLoading, setIsLoading] = useState(true); // ✅ 스켈레톤 상태
     const [isUserStarreda, setIsUserStarreda] = useState<boolean>(isUserStarred);
     const user = useSelector((state: RootState) => state.user);
     const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [selectChGroup,setSelectChGroup] = useState<string>('ㄱ');
+    const [grgr,setgrgr] = useState<Record<string,WordData[]>>({});
+
+    useEffect(()=>{
+        const k = makeChouGr(data);
+        setgrgr(k);
+        setWordsData(k['ㄱ'] ?? [])
+    },[])
+
+    const makeChouGr = (words: WordData[]) => {
+        const grWords: Record<string,WordData[]> = {};
+        const p: Record<string,string> = {"ㄲ":"ㄱ","ㄸ":"ㄷ","ㅉ":'ㅈ','ㅃ':'ㅂ','ㅆ':'ㅅ'};
+        for (const data of words){
+            const ch = disassemble(data.word)[0];
+            grWords[p[ch] || ch] = [...(grWords[p[ch] || ch] ?? []), data]
+        }
+        return grWords;
+    }
 
     // refs 초기화
     useEffect(() => {
@@ -60,6 +84,10 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
         return grouped;
     };
 
+    const memoizedGrouped = useMemo(() => {
+        return groupWordsBySyllable(wordsData);
+    }, [wordsData]);
+
     const updateToc = (data: WordData[]) => {
         return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
     };
@@ -67,7 +95,6 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
 
     useEffect(() => {
         setTocList(updateToc(wordsData));
-        setGrouped(groupWordsBySyllable(wordsData));
         setIsLoading(false); // ✅ 로딩 완료
     }, [wordsData]);
 
@@ -165,6 +192,34 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
             {/* 마지막 업데이트 시간 */}
             <p className="text-sm text-gray-500 mt-2">마지막 업데이트: {localTime}</p>
 
+            {/* 초성 선택 UI */}
+            <div className="flex flex-wrap gap-2 mt-4">
+  {CHOSEONG_LIST.map((ch) => {
+    const isDisabled = (grgr[ch]?.length ?? 0) === 0;
+
+    return (
+      <button
+        key={ch}
+        onClick={() => {
+          if (!isDisabled) {
+            setSelectChGroup(ch);
+            setWordsData(grgr[ch]);
+          }
+        }}
+        disabled={isDisabled}
+        className={`px-3 py-1 rounded-full border transition
+          ${selectChGroup === ch ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}
+          ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-400 hover:text-white'}
+        `}
+      >
+        {ch}
+      </button>
+    );
+  })}
+</div>
+
+
+
             {/* 목차 */}
             <div className="mt-4 p-2">
                 <TableOfContents items={items} />
@@ -184,7 +239,7 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
                     // ✅ 실제 데이터 렌더링
                     items.map(({ title, ref }) => (
                         <div key={title} ref={ref} className="mt-4">
-                            <WordsTableBody title={title} initialData={grouped.get(title)} id={`${id}`} aoK={metaData.typez === "ect"} />
+                            <WordsTableBody title={title} initialData={memoizedGrouped.get(title)} id={`${id}`} aoK={metaData.typez === "ect"} />
                         </div>
                     ))
                 )}
