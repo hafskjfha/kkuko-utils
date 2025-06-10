@@ -85,17 +85,34 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         }
     };
 
+    const mission = useMemo(()=>{
+        const m2gr= new DefaultDict<string, WordData[]>(() => []);
+        const m1gr = new DefaultDict<string, WordData[]>(() => []);
+
+        MISSION_CHARS.split('').forEach(char => {
+            data.forEach(item=>{
+                const count = (item.word.match(new RegExp(char, 'g')) || []).length;
+                if (count > 1){
+                    m2gr.get(char).push(item);
+                }
+                else if (count == 1){
+                    m1gr.get(char).push(item);
+                }
+            })
+        });
+        return {m2gr,m1gr}
+    },[data])
+
     const filteredData = useMemo(() => getFilteredData(activeTab), [activeTab, wordsData]);
 
     const groupWordsBySyllable = (data: WordData[]) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);
         
+        
         if (activeTab === "mission") {
             MISSION_CHARS.split('').forEach(char => {
-                const missionWords = data.filter(item => {
-                    const count = (item.word.match(new RegExp(char, 'g')) || []).length;
-                    return count >= 2;
-                });
+                const {m1gr, m2gr} = mission;
+                const missionWords: WordData[] = m2gr.get(char).length > 8 ? m2gr.get(char) : [...m2gr.get(char), ...m1gr.get(char)];
                 if (missionWords.length > 0) {
                     grouped.get(`${char}`).push(...missionWords);
                 }
@@ -120,7 +137,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                 const hasWords = data.some(item => {
                     const count = (item.word.match(new RegExp(char, 'g')) || []).length;
                     return count >= 2;
-                });
+                }); // 2미 단어가 별로 없으면 (8>) 1미도 표시 하게
                 return hasWords;
             }).map(char => `${char}`);
         } else {
