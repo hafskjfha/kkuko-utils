@@ -5,7 +5,6 @@ import WordsTableBody from "./WordsTableBody";
 import Link from "next/link";
 import type { WordData } from "@/app/types/type";
 import { DefaultDict } from "@/app/lib/collections";
-import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { 
     Star, 

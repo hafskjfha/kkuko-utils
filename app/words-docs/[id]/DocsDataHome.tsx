@@ -6,8 +6,6 @@ import ErrorPage from "@/app/components/ErrorPage";
 import { useState, useCallback, useEffect } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
-import { useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
 
 type wordsDataType = ({
     word: string;
@@ -28,7 +26,6 @@ export default function DocsDataHome({id}:{id:number}){
     const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
     const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}, starCount: string[]} | null>(null);
-    const user = useSelector((state: RootState) => state.user);
 
     const getDataOkWords = useCallback(async () => {
         const {data:dataA, error:error} = await supabase.from('docs_words').select('words(word)').eq('docs_id',id);

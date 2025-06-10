@@ -74,4 +74,4 @@ const WordsTableBody = ({
     );
 };
 
-export default WordsTableBody;
+export default memo(WordsTableBody);

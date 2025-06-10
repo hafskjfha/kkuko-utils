@@ -3,7 +3,6 @@ import { useState, lazy, Suspense, useCallback, useMemo } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import type { WordData } from "@/app/types/type";
-import TableRow from "./TableRow";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
