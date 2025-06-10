@@ -95,9 +95,8 @@ const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {
     };
 
     return (
-        <div className="w-full max-w-full sm:max-w-2xl md:max-w-4xl xl:max-w-5xl p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg transition-colors duration-300">
+        <div className="w-full max-w-full p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg transition-colors duration-300">
             <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">목차</h2>
                 <button
                     className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none flex items-center space-x-1 transition-colors duration-200"
                     onClick={() => setIsOpen(!isOpen)}

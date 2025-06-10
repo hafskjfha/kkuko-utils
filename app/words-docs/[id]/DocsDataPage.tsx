@@ -7,7 +7,19 @@ import type { WordData } from "@/app/types/type";
 import { DefaultDict } from "@/app/lib/collections";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Star, FileText, Target, AlignLeft } from "lucide-react";
+import { 
+    Star, 
+    FileText, 
+    Target, 
+    AlignLeft, 
+    Download, 
+    Info, 
+    Clock, 
+    BookOpen,
+    Loader2,
+    Calendar,
+    Users
+} from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
@@ -79,7 +91,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);
         
         if (activeTab === "mission") {
-            // 미션 모드에서는 각 미션 문자별로 그룹화
             MISSION_CHARS.split('').forEach(char => {
                 const missionWords = data.filter(item => {
                     const count = (item.word.match(new RegExp(char, 'g')) || []).length;
@@ -90,7 +101,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                 }
             });
         } else {
-            // 일반 모드에서는 첫 글자별로 그룹화
             data.forEach((item) => {
                 const firstSyllable = item.word[0].toLowerCase();
                 grouped.get(firstSyllable).push(item);
@@ -106,7 +116,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
 
     const updateToc = (data: WordData[]): string[] => {
         if (activeTab === "mission") {
-            // 미션 모드에서는 실제 단어가 있는 미션 문자만 표시
             return MISSION_CHARS.split('').filter(char => {
                 const hasWords = data.some(item => {
                     const count = (item.word.match(new RegExp(char, 'g')) || []).length;
@@ -115,12 +124,10 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                 return hasWords;
             }).map(char => `${char}`);
         } else {
-            // 일반 모드
             return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
         }
     };
 
-    // 가상화를 위한 아이템 목록 생성
     const virtualItems = useMemo(() => {
         return tocList.map((title, index) => ({
             title,
@@ -129,7 +136,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         }));
     }, [tocList, memoizedGrouped, activeTab]);
 
-    // TOC 아이템 생성
     const tocItems: VirtualTocItem[] = useMemo(() => {
         return tocList.map((title, index) => ({
             title,
@@ -137,29 +143,24 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         }));
     }, [tocList]);
 
-    // 가상화 설정 (동적 크기 지원)
     const virtualizer = useVirtualizer({
         count: virtualItems.length,
         getScrollElement: () => parentRef.current,
         estimateSize: (index) => {
-            // 각 섹션의 단어 개수에 따라 동적으로 크기 추정
             const item = virtualItems[index];
             const wordCount = item?.data?.length || 0;
-            // 기본 헤더 높이(80px) + 단어당 높이(약 50px) + 여백(40px)
             return Math.max(200, 80 + wordCount * 50 + 40);
         },
-        overscan: 1, // 동적 크기에서는 overscan을 줄임
+        overscan: 2,
         measureElement: (element) => {
-            // 실제 DOM 요소의 크기를 측정하여 정확한 크기 반영
             return element?.getBoundingClientRect().height ?? 0;
         },
     });
 
     useEffect(() => {
         const updateTabData = async () => {
-            if (!isLoading) { // 초기 로딩이 아닌 경우만
+            if (!isLoading) {
                 setIsTabSwitching(true);
-                // 약간의 지연을 주어 부드러운 전환 효과
                 await new Promise(resolve => setTimeout(resolve, 150));
             }
             
@@ -167,7 +168,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
             setIsLoading(false);
             setIsTabSwitching(false);
             
-            // 탭 변경시 가상화 리셋
             if (virtualizer) {
                 virtualizer.scrollToOffset(0);
             }
@@ -205,7 +205,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
     };
 
     const hadnleDocsStar = async () => {
-        console.log(user)
         if (!user.uuid) {
             return setLoginNeedModalOpen(true);
         }
@@ -229,7 +228,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         });
     };
 
-    // TOC 클릭 시 해당 아이템으로 스크롤
     const handleTocClick = (index: number) => {
         virtualizer.scrollToIndex(index, { align: 'start' });
     };
@@ -237,7 +235,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
     const getTabIcon = (tab: TabType) => {
         switch (tab) {
             case "all":
-                return <FileText className="w-4 h-4" />;
+                return <BookOpen className="w-4 h-4" />;
             case "mission":
                 return <Target className="w-4 h-4" />;
             case "long":
@@ -267,157 +265,216 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         return getFilteredData(tab).length;
     };
 
+    const currentStarCount = (user.uuid && starCount.includes(user.uuid) && !isUserStarreda) 
+        ? starCount.length - 1 
+        : (user.uuid && !starCount.includes(user.uuid) && isUserStarreda) 
+        ? starCount.length + 1 
+        : starCount.length;
+
     return (
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
-            {/* 문서 헤더 */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b pb-2">
-                <h1 className="text-2xl sm:text-3xl font-bold">{metaData.title}</h1>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <div
-                        className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto flex items-center gap-2 hover:cursor-pointer"
-                        onClick={hadnleDocsStar}
-                    >
-                        <Star fill={isUserStarreda ? "gold" : "white"} />
-                        <span>
-                            {(user.uuid && starCount.includes(user.uuid) && !isUserStarreda) ? starCount.length - 1 : (user.uuid && !starCount.includes(user.uuid) && isUserStarreda) ? starCount.length + 1 : starCount.length}
-                        </span>
-                    </div>
-
-                    <Link href={`/words-docs/${id}/info`}>
-                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto">
-                            문서 정보
-                        </button>
-                    </Link>
-                    <Link href={`/words-docs/${id}/logs`}>
-                        <button className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto">
-                            로그
-                        </button>
-                    </Link>
-                    <button
-                        className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto"
-                        onClick={handleDownload}
-                    >
-                        {activeTab === "all" ? "전체" : activeTab === "long" ? "장문" : "미션"} 단어 다운로드
-                    </button>
-                </div>
-            </div>
-
-            {/* 마지막 업데이트 시간 */}
-            <p className="text-sm text-gray-500 mt-2">마지막 업데이트: {localTime}</p>
-
-            {/* 탭 네ビ게이션 */}
-            <div className="mt-4 border-b">
-                <nav className="flex space-x-8" aria-label="Tabs">
-                    {(["all", "mission", "long"] as TabType[]).map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => handleTabChange(tab)}
-                            disabled={isTabSwitching}
-                            className={`${
-                                activeTab === tab
-                                    ? "border-blue-500 text-blue-600"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            } ${
-                                isTabSwitching ? "opacity-50 cursor-not-allowed" : ""
-                            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-opacity duration-150`}
-                        >
-                            {getTabIcon(tab)}
-                            {getTabLabel(tab)}
-                            <span className="ml-2 bg-gray-100 text-gray-600 rounded-full px-2 py-1 text-xs">
-                                {getTabCount(tab)}
-                            </span>
-                        </button>
-                    ))}
-                </nav>
-            </div>
-
-            {/* 목차 */}
-            {!isTabSwitching && (
-                <div className="mt-4 p-2">
-                    <ToC 
-                        items={tocItems} 
-                        onItemClick={handleTocClick} 
-                        isSp={activeTab === "mission"}
-                    />
-                </div>
-            )}
-
-            {/* 가상화된 단어 테이블 */}
-            <div>
-                {isLoading || isTabSwitching ? (
-                    // 스켈레톤 UI 또는 스피너
-                    <div className="mt-8">
-                        {isTabSwitching ? (
-                            <div className="flex justify-center items-center py-20">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                                <span className="ml-3 text-gray-600">로드 중...</span>
-                            </div>
-                        ) : (
-                            Array.from({ length: 5 }).map((_, idx) => (
-                                <div key={idx} className="mt-6">
-                                    <Skeleton height={28} width={80} className="mb-2" />
-                                    <Skeleton height={40} count={3} className="mb-4" />
-                                </div>
-                            ))
-                        )}
-                    </div>
-                ) : filteredData.length === 0 ? (
-                    <div className="mt-8 text-center py-12">
-                        <div className="text-gray-400 text-lg">
-                            {activeTab === "long" && "9자 이상의 장문 단어가 없습니다."}
-                            {activeTab === "mission" && "미션 조건에 해당하는 단어가 없습니다."}
-                        </div>
-                    </div>
-                ) : (
-                    // 가상화된 컨테이너
-                    <div
-                        ref={parentRef}
-                        className="mt-4 opacity-100 transition-opacity duration-200"
-                        style={{
-                            height: 'calc(100vh - 400px)', // 뷰포트 기준 동적 높이
-                            minHeight: '1200px',
-                            overflow: 'auto',
-                        }}
-                    >
-                        <div
-                            style={{
-                                height: `${virtualizer.getTotalSize()}px`,
-                                width: '100%',
-                                position: 'relative',
-                            }}
-                        >
-                            {virtualizer.getVirtualItems().map((virtualItem) => {
-                                const item = virtualItems[virtualItem.index];
-                                return (
-                                    <div
-                                        key={virtualItem.key}
-                                        data-index={virtualItem.index}
-                                        ref={virtualizer.measureElement}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            transform: `translateY(${virtualItem.start}px)`,
-                                        }}
-                                    >
-                                        <div className="mt-4 mb-8">
-                                            <WordsTableBody 
-                                                key={`${activeTab}-${item.title}-${item.data.length}`}
-                                                title={item.title} 
-                                                initialData={item.data || []} 
-                                                id={`${id}`} 
-                                                aoK={metaData.typez === "ect"}
-                                                isMa={activeTab === "mission"}
-                                                isL={activeTab==="long"}
-                                            />
-                                        </div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* 헤더 섹션 */}
+                <div className="bg-white rounded-2xl shadow-lg border-0 overflow-hidden mb-8">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                            <div className="flex-1">
+                                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                                    {metaData.title}
+                                </h1>
+                                <div className="flex items-center gap-4 text-blue-100">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" />
+                                        <span className="text-sm">마지막 업데이트: {localTime}</span>
                                     </div>
-                                );
-                            })}
+                                    <div className="flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        <span className="text-sm">{currentStarCount}명이 즐겨찾기</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* 액션 버튼들 */}
+                            <div className="flex flex-wrap gap-3">
+                                <button
+                                    className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                                        isUserStarreda 
+                                            ? "bg-yellow-400 text-yellow-900 hover:bg-yellow-300" 
+                                            : "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
+                                    }`}
+                                    onClick={hadnleDocsStar}
+                                >
+                                    <Star 
+                                        className="w-5 h-5" 
+                                        fill={isUserStarreda ? "currentColor" : "none"}
+                                    />
+                                    <span>{currentStarCount}</span>
+                                </button>
+
+                                <Link href={`/words-docs/${id}/info`}>
+                                    <button className="px-6 py-3 bg-white/20 text-white rounded-xl font-medium hover:bg-white/30 transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                        <Info className="w-5 h-5" />
+                                        <span className="hidden sm:inline">문서 정보</span>
+                                    </button>
+                                </Link>
+
+                                <Link href={`/words-docs/${id}/logs`}>
+                                    <button className="px-6 py-3 bg-white/20 text-white rounded-xl font-medium hover:bg-white/30 transition-all duration-200 flex items-center gap-2 backdrop-blur-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                        <Clock className="w-5 h-5" />
+                                        <span className="hidden sm:inline">로그</span>
+                                    </button>
+                                </Link>
+
+                                <button
+                                    className="px-6 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                                    onClick={handleDownload}
+                                >
+                                    <Download className="w-5 h-5" />
+                                    <span className="hidden sm:inline">다운로드</span>
+                                </button>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* 탭 네비게이션 */}
+                    <div className="px-8 pt-6 pb-2">
+                        <nav className="flex space-x-1" aria-label="Tabs">
+                            {(["all", "mission", "long"] as TabType[]).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => handleTabChange(tab)}
+                                    disabled={isTabSwitching}
+                                    className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-3 ${
+                                        activeTab === tab
+                                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                                            : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                                    } ${
+                                        isTabSwitching ? "opacity-50 cursor-not-allowed" : "hover:shadow-md transform hover:-translate-y-0.5"
+                                    }`}
+                                >
+                                    {getTabIcon(tab)}
+                                    <span>{getTabLabel(tab)}</span>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        activeTab === tab 
+                                            ? "bg-white/20 text-white" 
+                                            : "bg-gray-200 text-gray-600"
+                                    }`}>
+                                        {getTabCount(tab).toLocaleString()}
+                                    </span>
+                                    {activeTab === tab && (
+                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-500"></div>
+                                    )}
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+                </div>
+
+                {/* 목차 섹션 */}
+                {!isTabSwitching && (
+                    <div className="bg-white rounded-2xl shadow-lg border-0 p-6 mb-8">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                <FileText className="w-4 h-4 text-white" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-800">목차</h2>
+                        </div>
+                        <ToC 
+                            items={tocItems} 
+                            onItemClick={handleTocClick} 
+                            isSp={activeTab === "mission"}
+                        />
                     </div>
                 )}
+
+                {/* 컨텐츠 섹션 */}
+                <div className="bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
+                    {isLoading || isTabSwitching ? (
+                        <div className="p-8">
+                            {isTabSwitching ? (
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+                                    <p className="text-gray-600 text-lg font-medium">탭 전환 중...</p>
+                                    <p className="text-gray-400 text-sm mt-1">잠시만 기다려주세요</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-8">
+                                    {Array.from({ length: 5 }).map((_, idx) => (
+                                        <div key={idx} className="animate-pulse">
+                                            <div className="h-8 bg-gray-200 rounded-lg w-20 mb-4"></div>
+                                            <div className="space-y-3">
+                                                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : filteredData.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <FileText className="w-10 h-10 text-gray-400" />
+                            </div>
+                            <h3 className="text-xl font-medium text-gray-800 mb-2">
+                                단어를 찾을 수 없습니다
+                            </h3>
+                            <p className="text-gray-500">
+                                {activeTab === "long" && "9자 이상의 장문 단어가 없습니다."}
+                                {activeTab === "mission" && "미션 조건에 해당하는 단어가 없습니다."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div
+                            ref={parentRef}
+                            className="p-6"
+                            style={{
+                                height: 'calc(100vh - 500px)',
+                                minHeight: '800px',
+                                overflow: 'auto',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    height: `${virtualizer.getTotalSize()}px`,
+                                    width: '100%',
+                                    position: 'relative',
+                                }}
+                            >
+                                {virtualizer.getVirtualItems().map((virtualItem) => {
+                                    const item = virtualItems[virtualItem.index];
+                                    return (
+                                        <div
+                                            key={virtualItem.key}
+                                            data-index={virtualItem.index}
+                                            ref={virtualizer.measureElement}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                transform: `translateY(${virtualItem.start}px)`,
+                                            }}
+                                        >
+                                            <div className="mb-8">
+                                                <WordsTableBody 
+                                                    key={`${activeTab}-${item.title}-${item.data.length}`}
+                                                    title={item.title} 
+                                                    initialData={item.data || []} 
+                                                    id={`${id}`} 
+                                                    aoK={metaData.typez === "ect"}
+                                                    isMa={activeTab === "mission"}
+                                                    isL={activeTab==="long"}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {loginNeedModalOpen && (
