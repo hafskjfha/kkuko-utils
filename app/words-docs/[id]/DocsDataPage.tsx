@@ -17,7 +17,6 @@ import {
     BookOpen,
     Loader2,
     Calendar,
-    Users
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { useSelector } from "react-redux";
@@ -177,7 +176,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         const updateTabData = async () => {
             if (!isLoading) {
                 setIsTabSwitching(true);
-                await new Promise(resolve => setTimeout(resolve, 150));
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
             
             setTocList(updateToc(filteredData));
@@ -302,10 +301,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4" />
                                         <span className="text-sm">마지막 업데이트: {localTime}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="w-4 h-4" />
-                                        <span className="text-sm">{currentStarCount}명이 즐겨찾기</span>
                                     </div>
                                 </div>
                             </div>

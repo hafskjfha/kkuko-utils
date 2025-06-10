@@ -12,6 +12,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
 import CompleteModal from "@/app/components/CompleteModal";
+import Link from "next/link";
 
 const WorkModal = lazy(() => import("./WorkModal"));
 
@@ -920,9 +921,9 @@ const Table = ({
                 );
             },
             cell: ({ getValue }) => (
-                <span className="font-semibold text-gray-900">
+                <Link href={`/word/search/${getValue()}`} className="font-semibold text-gray-900 underline">
                     {getValue() as string}
-                </span>
+                </Link>
             )
         },
         { 
