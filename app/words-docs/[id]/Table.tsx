@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from "@/app/types/type";
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM, supabase } from '@/app/lib/supabaseClient';
 import type { PostgrestError } from "@supabase/supabase-js";
 import { noInjungTopicID } from "./const";
 import Spinner from "@/app/components/Spinner";
@@ -88,7 +88,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
     };
 
     const WriteDocsLog = useCallback(async (logsData: DocsLogDatas) => {
-        const { error: insertDocsLogDataError } = await supabase.from('docs_logs').insert(logsData);
+        const { error: insertDocsLogDataError } = await SCM.addDocsLog(logsData);
             if (insertDocsLogDataError) {
                 makeError(insertDocsLogDataError);
                 setIsProcessing(false);
@@ -97,7 +97,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
     },[]);
 
     const WriteWordLog = useCallback(async (logsData: WordLogDatas) => {
-        const { error: insertWordLogDataError } = await supabase.from('logs').insert(logsData);
+        const { error: insertWordLogDataError } = await SCM.addWordLog(logsData);
             if (insertWordLogDataError) {
                 makeError(insertWordLogDataError);
                 setIsProcessing(false);
@@ -128,41 +128,30 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
 
         try {
             // 1. 추가 요청 단어 정보 가져오기
-            const { data: getWaitWordData, error: getWaitWordDataError } = await supabase
-                .from('wait_words')
-                .select('*')
-                .eq('word', word)
-                .maybeSingle();
-            if (getWaitWordDataError) throw getWaitWordDataError;
+            const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.getWaitWordInfo(word);
+            if (getWaitWordDataError) return makeError(getWaitWordDataError)
             if (!getWaitWordData) return;
 
             // 2. 추가 요청 단어의 주제 정보 가져오기
-            const { data: getWordThemesData, error: getWordThemesDataError } = await supabase
-                .from('wait_word_themes')
-                .select('*,themes(name)')
-                .eq('wait_word_id', getWaitWordData.id);
-            if (getWordThemesDataError) throw getWordThemesDataError;
+            const { data: getWordThemesData, error: getWordThemesDataError } = await SCM.getWaitWordThemes(getWaitWordData.id);
+            if (getWordThemesDataError) makeError(getWordThemesDataError);
             if (!getWordThemesData) return;
 
             // 3. 단어 데이터 추가
             const isNoinWord = getWordThemesData.some((t) => noInjungTopicID.includes(t.theme_id));
             const insertWordData = { word: getWaitWordData.word, noin_canuse: isNoinWord, added_by: getWaitWordData.requested_by};
-            const { data: getAddAcceptData, error: getAddAcceptDataError } = await supabase
-                .from('words')
-                .insert(insertWordData)
-                .select('*')
-                .single();
-            if (getAddAcceptDataError) throw getAddAcceptDataError;
+            const { data: getAddAcceptDatab, error: getAddAcceptDataError } = await SCM.addWord([insertWordData])
+            if (getAddAcceptDataError) return makeError(getAddAcceptDataError);
+
+            const getAddAcceptData = getAddAcceptDatab[0];
 
             // 4. 단어 주제 데이터 추가
             const insertWordThemesData = getWordThemesData.map((t) => ({
                 word_id: getAddAcceptData.id,
                 theme_id: t.theme_id,
             }));
-            const { error: getAddAcceptThemesDataError } = await supabase
-                .from('word_themes')
-                .insert(insertWordThemesData);
-            if (getAddAcceptThemesDataError) throw getAddAcceptThemesDataError;
+            const { error: getAddAcceptThemesDataError } = await SCM.addWordThemes(insertWordThemesData);
+            if (getAddAcceptThemesDataError) return makeError(getAddAcceptThemesDataError);
 
             // 5. 단어 추가 로그 등록
             const insertWordLogData = {
@@ -172,7 +161,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 r_type: "add",
                 state: "approved",
             } as const;
-            WriteWordLog([insertWordLogData]);
+            await WriteWordLog([insertWordLogData]);
 
             // 6. 문서와 추가 요청 처리
             const { data: getAddAcceptDocsData, error: getAddAcceptDocsDataError } = await supabase
@@ -243,7 +232,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
             }
 
             // 7. 추가 요청 테이블에서 삭제
-            const { error: deleteWaitWordDataError } = await supabase
+            const { error: deleteWaitWordDataError } = await supabase   
                 .from('wait_words')
                 .delete()
                 .eq('id', getWaitWordData.id);
