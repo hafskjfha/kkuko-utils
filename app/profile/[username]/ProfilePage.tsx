@@ -678,7 +678,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                             </div>
 
                             {/* 관리자이면 관리자 홈으로 이동 가능하게 */}
-                            {isAdmin && (
+                            {isAdmin && isOwnProfile && (
                                 <Link href={'/admin'}>
                                     <Button
                                         className="w-full"
@@ -724,24 +724,22 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                     <div className="space-y-3">
                                                         {starredDocs.map((doc, index) => (
                                                             <Link href={`/words-docs/${doc.id}`} key={doc.id}>
-                                                                <div>
-                                                                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                                                                        <div className="flex items-center gap-3">
-                                                                            <FileText className="h-4 w-4 text-blue-500" />
-                                                                            <div>
-                                                                                <p className="font-medium">{doc.name}</p>
-                                                                                <p className="text-sm text-muted-foreground">
-                                                                                    {formatTimeAgo(doc.last_update)}에
-                                                                                    업데이트
-                                                                                </p>
-                                                                            </div>
+                                                                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <FileText className="h-4 w-4 text-blue-500" />
+                                                                        <div>
+                                                                            <p className="font-medium">{doc.name}</p>
+                                                                            <p className="text-sm text-muted-foreground">
+                                                                                {formatTimeAgo(doc.last_update)}에
+                                                                                업데이트
+                                                                            </p>
                                                                         </div>
-                                                                        <Badge variant="outline">{doc.typez}</Badge>
                                                                     </div>
-                                                                    {index < starredDocs.length - 1 && (
-                                                                        <Separator className="my-2" />
-                                                                    )}
+                                                                    <Badge variant="outline">{doc.typez}</Badge>
                                                                 </div>
+                                                                {index < starredDocs.length - 1 && (
+                                                                    <Separator className="my-2" />
+                                                                )}
                                                             </Link>
                                                         ))}
                                                     </div>
