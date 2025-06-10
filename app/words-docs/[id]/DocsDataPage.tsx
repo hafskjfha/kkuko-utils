@@ -14,13 +14,7 @@ import { RootState } from "@/app/store/store";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import { PostgrestError } from "@supabase/supabase-js";
 import ErrorModal from "@/app/components/ErrModal";
-import { disassemble } from "es-hangul";
-
-const CHOSEONG_LIST = [
-  "ㄱ", "ㄴ", "ㄷ", "ㄹ",
-  "ㅁ", "ㅂ", "ㅅ", "ㅇ",
-  "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ",
-];
+import VirtualTableOfContents from "./TableOfContents";
 
 interface DocsPageProp {
     id: number;
@@ -39,66 +33,6 @@ interface VirtualTocItem {
     index: number;
 }
 
-// 새로운 가상화된 목차 컴포넌트
-const VirtualTableOfContents = ({ items, onItemClick }: { 
-    items: VirtualTocItem[], 
-    onItemClick: (index: number) => void 
-}) => {
-    const parentRef = useRef<HTMLDivElement>(null);
-    
-    const virtualizer = useVirtualizer({
-        count: items.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 35,
-        overscan: 5,
-    });
-
-    return (
-        <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">목차</h3>
-            <div
-                ref={parentRef}
-                className="max-h-48 overflow-auto"
-                style={{
-                    height: Math.min(items.length * 35, 192) + 'px',
-                }}
-            >
-                <div
-                    style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        width: '100%',
-                        position: 'relative',
-                    }}
-                >
-                    {virtualizer.getVirtualItems().map((virtualItem) => {
-                        const item = items[virtualItem.index];
-                        return (
-                            <div
-                                key={virtualItem.key}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: `${virtualItem.size}px`,
-                                    transform: `translateY(${virtualItem.start}px)`,
-                                }}
-                            >
-                                <button
-                                    onClick={() => onItemClick(item.index)}
-                                    className="text-blue-600 hover:text-blue-800 hover:underline text-left w-full py-1"
-                                >
-                                    {item.title}
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPageProp) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const [tocList, setTocList] = useState<string[]>([]);
@@ -108,8 +42,6 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
     const user = useSelector((state: RootState) => state.user);
     const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const [selectChGroup, setSelectChGroup] = useState<string>('ㄱ');
-    const [grgr, setgrgr] = useState<Record<string, WordData[]>>({});
 
     const groupWordsBySyllable = (data: WordData[]) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);

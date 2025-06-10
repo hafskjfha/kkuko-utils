@@ -723,8 +723,8 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                 ) : (
                                                     <div className="space-y-3">
                                                         {starredDocs.map((doc, index) => (
-                                                            <Link href={`/words-docs/${doc.id}`}>
-                                                                <div key={doc.id}>
+                                                            <Link href={`/words-docs/${doc.id}`} key={doc.id}>
+                                                                <div>
                                                                     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                                                                         <div className="flex items-center gap-3">
                                                                             <FileText className="h-4 w-4 text-blue-500" />
