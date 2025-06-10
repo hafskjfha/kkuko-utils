@@ -848,7 +848,10 @@ const Table = ({
     
     // isM.m이 true일 때는 포함개수 기준 내림차순으로 기본 정렬
     const [sorting, setSorting] = useState<SortingState>(
-        isM.m ? [{ id: "count", desc: true }] : isL ? [{ id: "length", desc: true }] : []
+        isM.m ? [
+            { id: "count", desc: true },
+            { id: "length", desc: true }
+        ] : isL ? [{ id: "length", desc: true }] : []
     );
     
     const [modal, setModal] = useState<{ 
@@ -899,6 +902,19 @@ const Table = ({
                 </span>
             ),
             enableSorting: true,
+            // 포함개수가 같을 때 길이로 정렬하기 위한 sortingFn 추가
+            sortingFn: isM.m ? (rowA, rowB) => {
+                const countA = getCharCount(rowA.original.word, isM.t || '');
+                const countB = getCharCount(rowB.original.word, isM.t || '');
+                
+                // 포함개수가 다르면 포함개수로 정렬
+                if (countA !== countB) {
+                    return countA - countB;
+                }
+                
+                // 포함개수가 같으면 길이로 정렬 (길이가 긴 것이 위로)
+                return rowA.original.word.length - rowB.original.word.length;
+            } : undefined,
         },
         { 
             accessorKey: "word", 

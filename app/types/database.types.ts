@@ -461,6 +461,36 @@ export type Database = {
           },
         ]
       }
+      word_first_letter_counts: {
+        Row: {
+          count: number
+          first_letter: string
+        }
+        Insert: {
+          count?: number
+          first_letter: string
+        }
+        Update: {
+          count?: number
+          first_letter?: string
+        }
+        Relationships: []
+      }
+      word_last_letter_counts: {
+        Row: {
+          count: number
+          last_letter: string
+        }
+        Insert: {
+          count?: number
+          last_letter: string
+        }
+        Update: {
+          count?: number
+          last_letter?: string
+        }
+        Relationships: []
+      }
       word_themes: {
         Row: {
           theme_id: number
