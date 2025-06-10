@@ -33,60 +33,14 @@ interface WordLogData {
 type DocsLogDatas = DocsLogData[];
 type WordLogDatas = WordLogData[];
 
-
-const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string, isEct: boolean }) => {
-    const [data] = useState(initialData);
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
-    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
-    const user = useSelector((state: RootState) => state.user);
-
-    const columns: ColumnDef<WordData>[] = [
-        {
-            accessorFn: (row) => row.word.length,
-            id: "length",
-            header: "길이",
-            cell: (info) => info.getValue(),
-            enableSorting: true,
-        },
-        { accessorKey: "word", header: "단어" },
-        { accessorKey: "status", header: "상태" },
-    ];
-
-    const table = useReactTable({
-        data,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        state: { sorting },
-        onSortingChange: setSorting,
-    });
-
-    const openWork = useCallback((word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string) => {
-        setModal({ word, status, requer });
-    },[]) 
-
-    const closeWork = () => {
-        setModal(null);
-    }
-
-    const CompleWork = () => {
-        setModal(null);
-        setIsCompleteModalOpen(true);
-    }
-
-    const makeError = (error: PostgrestError) => {
-        closeWork();
-        seterrorModalView({
-            ErrName: error.name,
-            ErrMessage: error.message,
-            ErrStackRace: error.stack,
-            inputValue: null
-        });
-    };
-
+const useWorkFunc = ({makeError, setIsProcessing, user, isProcessing, id, CompleWork}:{
+    makeError: (error: PostgrestError) => void,
+    setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>,
+    user: RootState['user'],
+    id: string,
+    CompleWork: () => void,
+    isProcessing: boolean
+}) => {
     const WriteDocsLog = useCallback(async (logsData: DocsLogDatas) => {
         const { error: insertDocsLogDataError } = await SCM.addDocsLog(logsData);
             if (insertDocsLogDataError) {
@@ -104,7 +58,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 return;
             }
     },[]);
-
+    
     const AddDocs = useCallback(async (docsAddData: { word_id: number; docs_id: number }[]) => {
         try {
             const { data: insertAddAcceptDocsData, error: insertAddAcceptDocsDataError } = await supabase
@@ -872,6 +826,83 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
         return;
     },[]);
 
+    return {AddAccept, DeleteAccept, AddReject, DeleteReject, CancelAddRequest, CancelDeleteRequest, DeleteByAdmin, RequestDelete, DeleteWordFromDocsByAdin, DeleteWordFromDocsRequest, onCancelDeleteFromDocsRequest, onAddFromDocsAccept, onAddFromDocsReject, onDeleteFromDocsAccept, onDeleteFromDocsReject}
+
+}
+
+
+const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string, isEct: boolean }) => {
+    const [data] = useState(initialData);
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
+    const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+    const [isProcessing, setIsProcessing] = useState<boolean>(false);
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+    const user = useSelector((state: RootState) => state.user);
+
+    const columns: ColumnDef<WordData>[] = [
+        {
+            accessorFn: (row) => row.word.length,
+            id: "length",
+            header: "길이",
+            cell: (info) => info.getValue(),
+            enableSorting: true,
+        },
+        { accessorKey: "word", header: "단어" },
+        { accessorKey: "status", header: "상태" },
+    ];
+
+    const table = useReactTable({
+        data,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        state: { sorting },
+        onSortingChange: setSorting,
+    });
+
+    const openWork = useCallback((word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string) => {
+        setModal({ word, status, requer });
+    },[]) 
+
+    const closeWork = () => {
+        setModal(null);
+    }
+
+    const CompleWork = () => {
+        setModal(null);
+        setIsCompleteModalOpen(true);
+    }
+
+    const makeError = (error: PostgrestError) => {
+        closeWork();
+        seterrorModalView({
+            ErrName: error.name,
+            ErrMessage: error.message,
+            ErrStackRace: error.stack,
+            inputValue: null
+        });
+    };
+
+    const { 
+        AddAccept, 
+        AddReject, 
+        DeleteAccept, 
+        DeleteReject, 
+        CancelAddRequest, 
+        CancelDeleteRequest, 
+        RequestDelete, 
+        DeleteByAdmin, 
+        DeleteWordFromDocsByAdin, 
+        DeleteWordFromDocsRequest, 
+        onCancelDeleteFromDocsRequest, 
+        onAddFromDocsReject, 
+        onAddFromDocsAccept, 
+        onDeleteFromDocsAccept, 
+        onDeleteFromDocsReject 
+    } = useWorkFunc({makeError, setIsProcessing, user, id, CompleWork, isProcessing})
+
+    
     return (
         <div className="w-full mx-auto px-2 sm:px-3 overflow-x-auto">
             <table className="border-collapse border border-gray-300 w-full min-w-[600px] text-center">
