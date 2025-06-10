@@ -6,8 +6,6 @@ import ErrorPage from "@/app/components/ErrorPage";
 import { useState, useCallback, useEffect } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
-import { useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
 
 type wordsDataType = ({
     word: string;
@@ -27,8 +25,7 @@ export default function DocsDataHome({id}:{id:number}){
     const [isNotFound,setIsNotFound] = useState(false);
     const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
-    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}, starCount: number, isUserStarred: boolean} | null>(null);
-    const user = useSelector((state: RootState) => state.user);
+    const [wordsData,setWordsData] = useState<{words:wordsDataType[], metadata:{title:string, lastUpdate:string, typez: "letter" | "theme" | "ect"}, starCount: string[]} | null>(null);
 
     const getDataOkWords = useCallback(async () => {
         const {data:dataA, error:error} = await supabase.from('docs_words').select('words(word)').eq('docs_id',id);
@@ -98,7 +95,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
                 const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
-                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.map(({user_id})=>user_id)});
                 await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 updateLoadingState(100, "완료!");
                 return;
@@ -141,7 +138,7 @@ export default function DocsDataHome({id}:{id:number}){
                 
                 const wordsData = [...Data3InWait, ...Data4In6Wait, ...Data2InWaitAdd, ...Data2InWaitDelete, ...Data1NotInData2And3And6 ];
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
-                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.map(({user_id})=>user_id)});
                 await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
 
                 updateLoadingState(100, "완료!");
@@ -162,7 +159,7 @@ export default function DocsDataHome({id}:{id:number}){
                 const wordsData = [...wordsNotInC,...CwordsNotInB, ...B]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
                 
-                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.length, isUserStarred: docsStarData.some(({user_id})=>user_id===user.uuid)});
+                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.map(({user_id})=>user_id)});
                 await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
                 updateLoadingState(100, "완료!");
                 return;
@@ -184,6 +181,6 @@ export default function DocsDataHome({id}:{id:number}){
     }
 
     if (wordsData){
-        return <DocsDataPage id={id} data={wordsData.words} metaData={wordsData.metadata} starCount={wordsData.starCount} isUserStarred={wordsData.isUserStarred}/>
+        return <DocsDataPage id={id} data={wordsData.words.sort((a,b)=>a.word.localeCompare(b.word,'ko'))} metaData={wordsData.metadata} starCount={wordsData.starCount}/>
     }
 }
