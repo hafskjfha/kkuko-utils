@@ -72,4 +72,4 @@ const WordsTableBody = ({
     );
 };
 
-export default memo(WordsTableBody);
+export default WordsTableBody;

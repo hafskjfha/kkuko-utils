@@ -7,14 +7,14 @@ import type { WordData } from "@/app/types/type";
 import { DefaultDict } from "@/app/lib/collections";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Star } from "lucide-react";
+import { Star, FileText, Target, AlignLeft } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import { PostgrestError } from "@supabase/supabase-js";
 import ErrorModal from "@/app/components/ErrModal";
-import VirtualTableOfContents from "./TableOfContents";
+import ToC from "./TableOfContents";
 
 interface DocsPageProp {
     id: number;
@@ -32,47 +32,102 @@ interface VirtualTocItem {
     index: number;
 }
 
+type TabType = "all" | "mission" | "long";
+
+const MISSION_CHARS = "가나다라마바사아자차카타파하";
+
 const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const [tocList, setTocList] = useState<string[]>([]);
     const [wordsData] = useState<WordData[]>(data);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isTabSwitching, setIsTabSwitching] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<TabType>("all");
     const user = useSelector((state: RootState) => state.user);
     const [isUserStarreda, setIsUserStarreda] = useState<boolean>(false);
     const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
-    useEffect(()=>{
-        if (user.uuid){
+    useEffect(() => {
+        if (user.uuid) {
             setIsUserStarreda(starCount.includes(user.uuid))
         }
-    },[user])
+    }, [user, starCount])
+
+    // 탭별 데이터 필터링
+    const getFilteredData = (tabType: TabType): WordData[] => {
+        switch (tabType) {
+            case "all":
+                return wordsData;
+            case "long":
+                return wordsData.filter(item => item.word.length >= 9);
+            case "mission":
+                return wordsData.filter(item => {
+                    return MISSION_CHARS.split('').some(char => {
+                        const count = (item.word.match(new RegExp(char, 'g')) || []).length;
+                        return count >= 2;
+                    });
+                });
+            default:
+                return wordsData;
+        }
+    };
+
+    const filteredData = useMemo(() => getFilteredData(activeTab), [activeTab, wordsData]);
 
     const groupWordsBySyllable = (data: WordData[]) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);
-        data.forEach((item) => {
-            const firstSyllable = item.word[0].toLowerCase();
-            grouped.get(firstSyllable).push(item);
-        });
+        
+        if (activeTab === "mission") {
+            // 미션 모드에서는 각 미션 문자별로 그룹화
+            MISSION_CHARS.split('').forEach(char => {
+                const missionWords = data.filter(item => {
+                    const count = (item.word.match(new RegExp(char, 'g')) || []).length;
+                    return count >= 2;
+                });
+                if (missionWords.length > 0) {
+                    grouped.get(`${char} (2개 이상)`).push(...missionWords);
+                }
+            });
+        } else {
+            // 일반 모드에서는 첫 글자별로 그룹화
+            data.forEach((item) => {
+                const firstSyllable = item.word[0].toLowerCase();
+                grouped.get(firstSyllable).push(item);
+            });
+        }
+        
         return grouped;
     };
 
     const memoizedGrouped = useMemo(() => {
-        return groupWordsBySyllable(wordsData);
-    }, [wordsData]);
+        return groupWordsBySyllable(filteredData);
+    }, [filteredData, activeTab]);
 
-    const updateToc = (data: WordData[]) => {
-        return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
+    const updateToc = (data: WordData[]): string[] => {
+        if (activeTab === "mission") {
+            // 미션 모드에서는 실제 단어가 있는 미션 문자만 표시
+            return MISSION_CHARS.split('').filter(char => {
+                const hasWords = data.some(item => {
+                    const count = (item.word.match(new RegExp(char, 'g')) || []).length;
+                    return count >= 2;
+                });
+                return hasWords;
+            }).map(char => `${char} (2개 이상)`);
+        } else {
+            // 일반 모드
+            return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
+        }
     };
 
     // 가상화를 위한 아이템 목록 생성
     const virtualItems = useMemo(() => {
         return tocList.map((title, index) => ({
             title,
-            data: memoizedGrouped.get(title),
+            data: memoizedGrouped.get(title) || [],
             index
         }));
-    }, [tocList, memoizedGrouped]);
+    }, [tocList, memoizedGrouped, activeTab]);
 
     // TOC 아이템 생성
     const tocItems: VirtualTocItem[] = useMemo(() => {
@@ -101,22 +156,40 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
     });
 
     useEffect(() => {
-        setTocList(updateToc(wordsData));
-        setIsLoading(false);
-    }, [wordsData]);
+        const updateTabData = async () => {
+            if (!isLoading) { // 초기 로딩이 아닌 경우만
+                setIsTabSwitching(true);
+                // 약간의 지연을 주어 부드러운 전환 효과
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+            
+            setTocList(updateToc(filteredData));
+            setIsLoading(false);
+            setIsTabSwitching(false);
+            
+            // 탭 변경시 가상화 리셋
+            if (virtualizer) {
+                virtualizer.scrollToOffset(0);
+            }
+        };
+
+        updateTabData();
+    }, [filteredData, activeTab]);
 
     const lastUpdateDate = new Date(metaData.lastUpdate);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
 
     const handleDownload = () => {
-        const wordsText = wordsData
+        const currentData = getFilteredData(activeTab);
+        const wordsText = currentData
             .map((w) => w.word)
             .sort((a, b) => a.localeCompare(b, "ko"))
             .join("\n");
 
         const formattedDate = new Date(metaData.lastUpdate).toISOString().slice(0, 10);
-        const fileName = `${metaData.title} 단어장(${formattedDate}).txt`;
+        const tabSuffix = activeTab === "all" ? "" : activeTab === "long" ? "_장문" : "_미션";
+        const fileName = `${metaData.title}${tabSuffix} 단어장(${formattedDate}).txt`;
 
         const blob = new Blob([wordsText], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -161,6 +234,39 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         virtualizer.scrollToIndex(index, { align: 'start' });
     };
 
+    const getTabIcon = (tab: TabType) => {
+        switch (tab) {
+            case "all":
+                return <FileText className="w-4 h-4" />;
+            case "mission":
+                return <Target className="w-4 h-4" />;
+            case "long":
+                return <AlignLeft className="w-4 h-4" />;
+        }
+    };
+
+    const getTabLabel = (tab: TabType) => {
+        switch (tab) {
+            case "all":
+                return "전체";
+            case "mission":
+                return "미션";
+            case "long":
+                return "장문";
+        }
+    };
+
+    const handleTabChange = async (newTab: TabType) => {
+        if (newTab === activeTab) return;
+        
+        setIsTabSwitching(true);
+        setActiveTab(newTab);
+    };
+
+    const getTabCount = (tab: TabType): number => {
+        return getFilteredData(tab).length;
+    };
+
     return (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
             {/* 문서 헤더 */}
@@ -191,7 +297,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                         className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 w-full sm:w-auto"
                         onClick={handleDownload}
                     >
-                        단어장 다운로드
+                        {activeTab === "all" ? "전체" : activeTab === "long" ? "장문" : "미션"} 단어 다운로드
                     </button>
                 </div>
             </div>
@@ -199,26 +305,74 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
             {/* 마지막 업데이트 시간 */}
             <p className="text-sm text-gray-500 mt-2">마지막 업데이트: {localTime}</p>
 
-            {/* 가상화된 목차 */}
-            <div className="mt-4 p-2">
-                <VirtualTableOfContents items={tocItems} onItemClick={handleTocClick} />
+            {/* 탭 네ビ게이션 */}
+            <div className="mt-4 border-b">
+                <nav className="flex space-x-8" aria-label="Tabs">
+                    {(["all", "mission", "long"] as TabType[]).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => handleTabChange(tab)}
+                            disabled={isTabSwitching}
+                            className={`${
+                                activeTab === tab
+                                    ? "border-blue-500 text-blue-600"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            } ${
+                                isTabSwitching ? "opacity-50 cursor-not-allowed" : ""
+                            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-opacity duration-150`}
+                        >
+                            {getTabIcon(tab)}
+                            {getTabLabel(tab)}
+                            <span className="ml-2 bg-gray-100 text-gray-600 rounded-full px-2 py-1 text-xs">
+                                {getTabCount(tab)}
+                            </span>
+                        </button>
+                    ))}
+                </nav>
             </div>
+
+            {/* 목차 */}
+            {!isTabSwitching && (
+                <div className="mt-4 p-2">
+                    <ToC 
+                        items={tocItems} 
+                        onItemClick={handleTocClick} 
+                        isSp={activeTab === "mission"}
+                    />
+                </div>
+            )}
 
             {/* 가상화된 단어 테이블 */}
             <div>
-                {isLoading ? (
-                    // 스켈레톤 UI
-                    Array.from({ length: 5 }).map((_, idx) => (
-                        <div key={idx} className="mt-6">
-                            <Skeleton height={28} width={80} className="mb-2" />
-                            <Skeleton height={40} count={3} className="mb-4" />
+                {isLoading || isTabSwitching ? (
+                    // 스켈레톤 UI 또는 스피너
+                    <div className="mt-8">
+                        {isTabSwitching ? (
+                            <div className="flex justify-center items-center py-20">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                                <span className="ml-3 text-gray-600">로드 중...</span>
+                            </div>
+                        ) : (
+                            Array.from({ length: 5 }).map((_, idx) => (
+                                <div key={idx} className="mt-6">
+                                    <Skeleton height={28} width={80} className="mb-2" />
+                                    <Skeleton height={40} count={3} className="mb-4" />
+                                </div>
+                            ))
+                        )}
+                    </div>
+                ) : filteredData.length === 0 ? (
+                    <div className="mt-8 text-center py-12">
+                        <div className="text-gray-400 text-lg">
+                            {activeTab === "long" && "9자 이상의 장문 단어가 없습니다."}
+                            {activeTab === "mission" && "미션 조건에 해당하는 단어가 없습니다."}
                         </div>
-                    ))
+                    </div>
                 ) : (
                     // 가상화된 컨테이너
                     <div
                         ref={parentRef}
-                        className="mt-4"
+                        className="mt-4 opacity-100 transition-opacity duration-200"
                         style={{
                             height: 'calc(100vh - 400px)', // 뷰포트 기준 동적 높이
                             minHeight: '1200px',
@@ -249,8 +403,9 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                     >
                                         <div className="mt-4 mb-8">
                                             <WordsTableBody 
+                                                key={`${activeTab}-${item.title}-${item.data.length}`}
                                                 title={item.title} 
-                                                initialData={item.data} 
+                                                initialData={item.data || []} 
                                                 id={`${id}`} 
                                                 aoK={metaData.typez === "ect"} 
                                             />

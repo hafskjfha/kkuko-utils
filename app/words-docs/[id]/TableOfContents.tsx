@@ -11,9 +11,10 @@ interface TocItem {
 interface TocProps {
     items: TocItem[];
     onItemClick: (index: number) => void;
+    isSp?: boolean;
 }
 
-const TableOfContents = ({ items, onItemClick }: TocProps) => {
+const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     // 초성 리스트 (ㄱ과 ㄲ, ㄷ과 ㄸ 등은 같은 그룹으로 묶기 위함)
@@ -56,29 +57,34 @@ const TableOfContents = ({ items, onItemClick }: TocProps) => {
 
     // 그룹화 및 정렬된 데이터 생성
     const groupedItems = useMemo(() => {
-        // 정렬 + 그룹화
-        const grouped = items.reduce((acc, item) => {
-            const group = getChoseongGroup(item.title[0]);
-            if (!acc[group]) acc[group] = [];
-            acc[group].push(item);
-            return acc;
-        }, {} as Record<string, TocItem[]>);
+    if (isSp) {
+        return [{
+            group: "",
+            items
+        }];
+    }
 
-        // 각 그룹 내부 항목 정렬 (한글 순서)
-        for (const group in grouped) {
-            grouped[group].sort((a, b) =>
-                a.title.localeCompare(b.title, 'ko')
-            );
-        }
+    const grouped = items.reduce((acc, item) => {
+        const group = getChoseongGroup(item.title[0]);
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(item);
+        return acc;
+    }, {} as Record<string, TocItem[]>);
 
-        // 그룹 정렬 순서대로 반환
-        const orderedGroups = CHOSEONG_ORDER.filter(group => grouped[group]);
-        
-        return orderedGroups.map(group => ({
-            group,
-            items: grouped[group]
-        }));
-    }, [items]);
+    for (const group in grouped) {
+        grouped[group].sort((a, b) =>
+            a.title.localeCompare(b.title, 'ko')
+        );
+    }
+
+    const orderedGroups = CHOSEONG_ORDER.filter(group => grouped[group]);
+
+    return orderedGroups.map(group => ({
+        group,
+        items: grouped[group]
+    }));
+}, [items, isSp]);
+
     
 
     const displayItems = groupedItems;
