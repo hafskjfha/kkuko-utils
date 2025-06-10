@@ -24,8 +24,7 @@ interface DocsPageProp {
         lastUpdate: string;
         typez: "letter" | "theme" | "ect"
     };
-    starCount: number;
-    isUserStarred: boolean;
+    starCount: string[];
 }
 
 interface VirtualTocItem {
@@ -33,15 +32,21 @@ interface VirtualTocItem {
     index: number;
 }
 
-const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPageProp) => {
+const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
     const parentRef = useRef<HTMLDivElement>(null);
     const [tocList, setTocList] = useState<string[]>([]);
     const [wordsData] = useState<WordData[]>(data);
     const [isLoading, setIsLoading] = useState(true);
-    const [isUserStarreda, setIsUserStarreda] = useState<boolean>(isUserStarred);
     const user = useSelector((state: RootState) => state.user);
+    const [isUserStarreda, setIsUserStarreda] = useState<boolean>(false);
     const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
+
+    useEffect(()=>{
+        if (user.uuid){
+            setIsUserStarreda(starCount.includes(user.uuid))
+        }
+    },[user])
 
     const groupWordsBySyllable = (data: WordData[]) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);
@@ -168,7 +173,7 @@ const DocsDataPage = ({ id, data, metaData, starCount, isUserStarred }: DocsPage
                     >
                         <Star fill={isUserStarreda ? "gold" : "white"} />
                         <span>
-                            {(isUserStarred && !isUserStarreda) ? starCount - 1 : (!isUserStarred && isUserStarreda) ? starCount + 1 : starCount}
+                            {(user.uuid && starCount.includes(user.uuid) && !isUserStarreda) ? starCount.length - 1 : (user.uuid && !starCount.includes(user.uuid) && isUserStarreda) ? starCount.length + 1 : starCount.length}
                         </span>
                     </div>
 
