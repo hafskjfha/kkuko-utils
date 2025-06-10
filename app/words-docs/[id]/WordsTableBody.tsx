@@ -14,8 +14,10 @@ const WordsTableBody = ({
     title,
     initialData,
     id,
-    aoK
-}: { initialData: WordData[]; title: string, id: string, aoK: boolean }) => {
+    aoK,
+    isMa,
+    isL
+}: { initialData: WordData[]; title: string, id: string, aoK: boolean, isMa: boolean, isL: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 
@@ -51,7 +53,7 @@ const WordsTableBody = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} id={id} isEct={aoK}/>
+                <Table initialData={initialData} id={id} isEct={aoK} isM={!isMa ? {m: false, t: null} : {m: true, t: title}} isL={isL}/>
             </motion.div>
 
             {wordAddModalOpen && (

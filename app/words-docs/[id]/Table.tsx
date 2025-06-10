@@ -1,6 +1,7 @@
 "use client";
-import { useState, lazy, Suspense, useCallback } from "react";
+import { useState, lazy, Suspense, useCallback, useMemo } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, ColumnDef, SortingState } from "@tanstack/react-table";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import type { WordData } from "@/app/types/type";
 import TableRow from "./TableRow";
 import { useSelector } from 'react-redux';
@@ -830,27 +831,131 @@ const useWorkFunc = ({makeError, setIsProcessing, user, isProcessing, id, Comple
 
 }
 
-
-const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string, isEct: boolean }) => {
+const Table = ({ 
+    initialData, 
+    id, 
+    isEct, 
+    isM = { m: false, t: null },
+    isL = false
+}: { 
+    initialData: WordData[], 
+    id: string, 
+    isEct: boolean, 
+    isM?: { m: false, t: null } | { m: true, t: string } 
+    isL?: boolean
+}) => {
     const [data] = useState(initialData);
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [modal, setModal] = useState<{ word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string } | null>(null);
+    
+    // isM.m이 true일 때는 포함개수 기준 내림차순으로 기본 정렬
+    const [sorting, setSorting] = useState<SortingState>(
+        isM.m ? [{ id: "count", desc: true }] : isL ? [{ id: "length", desc: true }] : []
+    );
+    
+    const [modal, setModal] = useState<{ 
+        word: string, 
+        status: "add" | "delete" | "ok" | "eadd" | "edelete", 
+        requer: string 
+    } | null>(null);
+    
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
     const user = useSelector((state: RootState) => state.user);
 
-    const columns: ColumnDef<WordData>[] = [
+    // 특정 문자 포함 개수를 계산하는 함수
+    const getCharCount = useCallback((word: string, char: string): number => {
+        if (!char) return 0;
+        return (word.match(new RegExp(char, 'g')) || []).length;
+    }, []);
+
+    const columns: ColumnDef<WordData>[] = useMemo(() => [
         {
-            accessorFn: (row) => row.word.length,
-            id: "length",
-            header: "길이",
-            cell: (info) => info.getValue(),
+            accessorFn: (row) => 
+                isM.m && isM.t 
+                    ? getCharCount(row.word, isM.t)
+                    : row.word.length,
+            id: isM.m ? "count" : "length",
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted();
+                return (
+                    <button
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        {isM.m ? `포함수` : "길이"}
+                        {isSorted === "desc" ? (
+                            <ArrowDown className="h-4 w-4" />
+                        ) : isSorted === "asc" ? (
+                            <ArrowUp className="h-4 w-4" />
+                        ) : (
+                            <ArrowUpDown className="h-4 w-4" />
+                        )}
+                    </button>
+                );
+            },
+            cell: (info) => (
+                <span className="font-medium text-blue-600">
+                    {String(info.getValue())}
+                </span>
+            ),
             enableSorting: true,
         },
-        { accessorKey: "word", header: "단어" },
-        { accessorKey: "status", header: "상태" },
-    ];
+        { 
+            accessorKey: "word", 
+            header: ({ column }) => {
+                const isSorted = column.getIsSorted();
+                return (
+                    <button
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        단어
+                        {isSorted === "desc" ? (
+                            <ArrowDown className="h-4 w-4" />
+                        ) : isSorted === "asc" ? (
+                            <ArrowUp className="h-4 w-4" />
+                        ) : (
+                            <ArrowUpDown className="h-4 w-4" />
+                        )}
+                    </button>
+                );
+            },
+            cell: ({ getValue }) => (
+                <span className="font-semibold text-gray-900">
+                    {getValue() as string}
+                </span>
+            )
+        },
+        { 
+            accessorKey: "status", 
+            header: "상태",
+            cell: ({ getValue }) => {
+                const status = getValue() as string;
+                const getStatusStyle = (status: string) => {
+                    switch (status) {
+                        case "ok":
+                            return "bg-green-100 text-green-800 border-green-200";
+                        case "add":
+                            return "bg-blue-100 text-blue-800 border-blue-200";
+                        case "delete":
+                            return "bg-red-100 text-red-800 border-red-200";
+                        case "eadd":
+                            return "bg-purple-100 text-purple-800 border-purple-200";
+                        case "edelete":
+                            return "bg-orange-100 text-orange-800 border-orange-200";
+                        default:
+                            return "bg-gray-100 text-gray-800 border-gray-200";
+                    }
+                };
+                
+                return (
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusStyle(status)}`}>
+                        {status}
+                    </span>
+                );
+            }
+        },
+    ], [isM, getCharCount]);
 
     const table = useReactTable({
         data,
@@ -863,16 +968,16 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
 
     const openWork = useCallback((word: string, status: "add" | "delete" | "ok" | "eadd" | "edelete", requer: string) => {
         setModal({ word, status, requer });
-    },[]) 
+    }, []);
 
     const closeWork = () => {
         setModal(null);
-    }
+    };
 
     const CompleWork = () => {
         setModal(null);
         setIsCompleteModalOpen(true);
-    }
+    };
 
     const makeError = (error: PostgrestError) => {
         closeWork();
@@ -900,57 +1005,102 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
         onAddFromDocsAccept, 
         onDeleteFromDocsAccept, 
         onDeleteFromDocsReject 
-    } = useWorkFunc({makeError, setIsProcessing, user, id, CompleWork, isProcessing})
+    } = useWorkFunc({ makeError, setIsProcessing, user, id, CompleWork, isProcessing });
 
-    
     return (
-        <div className="w-full mx-auto px-2 sm:px-3 overflow-x-auto">
-            <table className="border-collapse border border-gray-300 w-full min-w-[600px] text-center">
-                <thead>
-                    <tr className="bg-gray-200">
-                        <th
-                            className="border px-3 py-2 cursor-pointer whitespace-nowrap"
-                            onClick={() => table.getColumn("length")?.toggleSorting()}
-                        >
-                            <div className="flex items-center justify-center gap-1">
-                                길이
-                                {table.getState().sorting.find((s) => s.id === "length")?.desc === undefined ? "↕️" :
-                                    table.getState().sorting.find((s) => s.id === "length")?.desc ? "🔽" : "🔼"}
-                            </div>
-                        </th>
-
-                        <th
-                            className="border px-3 py-2 cursor-pointer whitespace-nowrap"
-                            onClick={() => table.getColumn("word")?.toggleSorting()}
-                        >
-                            <div className="flex items-center justify-center gap-1">
-                                단어
-                                {table.getState().sorting.find((s) => s.id === "word")?.desc === undefined ? "↕️" :
-                                    table.getState().sorting.find((s) => s.id === "word")?.desc ? "🔽" : "🔼"}
-                            </div>
-                        </th>
-
-                        <th className="border px-3 py-2 whitespace-nowrap">상태</th>
-                        <th className="border px-3 py-2 whitespace-nowrap">작업</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {table.getRowModel().rows.map((row) => {
-                        const wordData = row.original;
-                        return (
-                            <TableRow
-                                key={wordData.word}
-                                {...wordData}
-                                openWork={user.uuid !== undefined ? () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : undefined}
-                            />
-                        );
-                    })}
-                </tbody>
-            </table>
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <th
+                                            key={header.id}
+                                            className="px-6 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap"
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : typeof header.column.columnDef.header === 'function'
+                                                ? header.column.columnDef.header(header.getContext())
+                                                : header.column.columnDef.header}
+                                        </th>
+                                    ))}
+                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                        작업
+                                    </th>
+                                </tr>
+                            ))}
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {table.getRowModel().rows.map((row, index) => {
+                                const wordData = row.original;
+                                return (
+                                    <tr 
+                                        key={wordData.word}
+                                        className={`hover:bg-gray-50 transition-colors ${
+                                            index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                                        }`}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <td
+                                                key={cell.id}
+                                                className="px-6 py-4 text-sm whitespace-nowrap"
+                                            >
+                                                {typeof cell.column.columnDef.cell === 'function'
+                                                    ? cell.column.columnDef.cell(cell.getContext())
+                                                    : cell.getValue() as string}
+                                            </td>
+                                        ))}
+                                        {/* 작업 버튼 */}
+                                        <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                                            {openWork !== undefined && (
+                                                <button
+                                                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                                                    onClick={user.uuid !== undefined ? 
+                                                        () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : 
+                                                        undefined
+                                                    }
+                                                >
+                                                    작업
+                                                </button>
+                                            )}
+                                        </td>
+                                        {/* <td className="px-6 py-4 text-sm whitespace-nowrap">
+                                            <TableRow
+                                                key={wordData.word}
+                                                {...wordData}
+                                                openWork={user.uuid !== undefined ? 
+                                                    () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : 
+                                                    undefined
+                                                }
+                                            />
+                                        </td> */}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {/* 테이블이 비어있을 때 */}
+                {table.getRowModel().rows.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">데이터가 없습니다.</p>
+                    </div>
+                )}
+            </div>
 
             {/* 모달 영역 */}
             {modal && (
-                <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg" ><Spinner /></div>}>
+                <Suspense fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                        <div className="bg-white rounded-lg p-6">
+                            <Spinner />
+                        </div>
+                    </div>
+                }>
                     <WorkModal
                         isEct={isEct}
                         isSaving={isProcessing}
@@ -972,7 +1122,7 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                         onCancelDeleteFromDocsRequest={() => onCancelDeleteFromDocsRequest(modal.word)}
                         onDeleteFromDocsAccept={() => onDeleteFromDocsAccept(modal.word)}
                         onDeleteFromDocsReject={() => onDeleteFromDocsReject(modal.word)}
-                        onCancelAddFromDocsRequest={()=> onCancelDeleteFromDocsRequest(modal.word)}
+                        onCancelAddFromDocsRequest={() => onCancelDeleteFromDocsRequest(modal.word)}
                         onAddFromDocsAccept={() => onAddFromDocsAccept(modal.word)}
                         onAddFromDocsReject={() => onAddFromDocsReject(modal.word)}
                     />
@@ -986,11 +1136,22 @@ const Table = ({ initialData, id, isEct }: { initialData: WordData[], id: string
                 />
             )}
 
-            {isProcessing && <Spinner />}
-            {isCompleteModalOpen && <CompleteModal onClose={() => setIsCompleteModalOpen(false)} open={isCompleteModalOpen}/>}
+            {isProcessing && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg p-6">
+                        <Spinner />
+                    </div>
+                </div>
+            )}
+            
+            {isCompleteModalOpen && (
+                <CompleteModal 
+                    onClose={() => setIsCompleteModalOpen(false)} 
+                    open={isCompleteModalOpen}
+                />
+            )}
         </div>
-
     );
-}
+};
 
 export default Table;

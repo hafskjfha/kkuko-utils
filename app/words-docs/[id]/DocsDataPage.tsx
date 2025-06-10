@@ -86,7 +86,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                     return count >= 2;
                 });
                 if (missionWords.length > 0) {
-                    grouped.get(`${char} (2개 이상)`).push(...missionWords);
+                    grouped.get(`${char}`).push(...missionWords);
                 }
             });
         } else {
@@ -113,7 +113,7 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                     return count >= 2;
                 });
                 return hasWords;
-            }).map(char => `${char} (2개 이상)`);
+            }).map(char => `${char}`);
         } else {
             // 일반 모드
             return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));
@@ -407,7 +407,9 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                                 title={item.title} 
                                                 initialData={item.data || []} 
                                                 id={`${id}`} 
-                                                aoK={metaData.typez === "ect"} 
+                                                aoK={metaData.typez === "ect"}
+                                                isMa={activeTab === "mission"}
+                                                isL={activeTab==="long"}
                                             />
                                         </div>
                                     </div>
