@@ -723,24 +723,26 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                 ) : (
                                                     <div className="space-y-3">
                                                         {starredDocs.map((doc, index) => (
-                                                            <div key={doc.id}>
-                                                                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <FileText className="h-4 w-4 text-blue-500" />
-                                                                        <div>
-                                                                            <p className="font-medium">{doc.name}</p>
-                                                                            <p className="text-sm text-muted-foreground">
-                                                                                {formatTimeAgo(doc.last_update)}에
-                                                                                업데이트
-                                                                            </p>
+                                                            <Link href={`/words-docs/${doc.id}`}>
+                                                                <div key={doc.id}>
+                                                                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <FileText className="h-4 w-4 text-blue-500" />
+                                                                            <div>
+                                                                                <p className="font-medium">{doc.name}</p>
+                                                                                <p className="text-sm text-muted-foreground">
+                                                                                    {formatTimeAgo(doc.last_update)}에
+                                                                                    업데이트
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
+                                                                        <Badge variant="outline">{doc.typez}</Badge>
                                                                     </div>
-                                                                    <Badge variant="outline">{doc.typez}</Badge>
+                                                                    {index < starredDocs.length - 1 && (
+                                                                        <Separator className="my-2" />
+                                                                    )}
                                                                 </div>
-                                                                {index < starredDocs.length - 1 && (
-                                                                    <Separator className="my-2" />
-                                                                )}
-                                                            </div>
+                                                            </Link>
                                                         ))}
                                                     </div>
                                                 )}
