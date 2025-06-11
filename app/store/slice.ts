@@ -29,9 +29,9 @@ const UserSlice = createSlice({
     initialState: initialState.user,
     reducers:{
         setInfo: (state,action:PayloadAction<{username?:string, role: "guest" | "r1" | "r2" | "r3" | "r4" | "admin", uuid?: string}>) => {
-            state.username = action.payload.username ?? state.username;
-            state.role = action.payload.role ?? state.role;
-            state.uuid = action.payload.uuid ?? state.uuid;
+            state.username = action.payload.username;
+            state.role = action.payload.role;
+            state.uuid = action.payload.uuid;
         }
     }
 });
