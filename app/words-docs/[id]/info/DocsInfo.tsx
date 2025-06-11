@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Calendar, Clock, User, FileText, Tag, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, User, FileText, Tag, ArrowLeft, Star, Eye, TrendingUp } from "lucide-react";
 
 interface Metadata {
     id: number;
@@ -11,9 +11,20 @@ interface Metadata {
     } | null;
     typez: "letter" | "theme" | "ect";
     last_update: string;
-}
+    views: number;
+};
 
-const DocsInfo = ({ metaData, wordsCount }: { metaData: Metadata; wordsCount: number }) => {
+const DocsInfo = ({ 
+    metaData, 
+    wordsCount, 
+    starCount, 
+    docsViewRank 
+}: { 
+    metaData: Metadata; 
+    wordsCount: number; 
+    starCount: number; 
+    docsViewRank: number;
+}) => {
     const lastUpdateDate = new Date(metaData.last_update);
     const createdAtDate = new Date(metaData.created_at);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -72,7 +83,7 @@ const DocsInfo = ({ metaData, wordsCount }: { metaData: Metadata; wordsCount: nu
                         </span>
                     </div>
                     {metaData.users && (
-                        <Link href={`/profile?username=${metaData.users.nickname}`} className="flex items-center gap-2 hover:bg-gray-100 rounded-full px-3 py-1 transition-colors">
+                        <Link href={`/profile/${metaData.users.nickname}`} className="flex items-center gap-2 hover:bg-gray-100 rounded-full px-3 py-1 transition-colors">
                             <User size={16} className="text-gray-600" />
                             <span className="font-medium text-gray-800">{metaData.users.nickname}</span>
                         </Link>
@@ -80,7 +91,7 @@ const DocsInfo = ({ metaData, wordsCount }: { metaData: Metadata; wordsCount: nu
                 </div>
 
                 {/* 메타데이터 섹션 - 더 시각적으로 개선 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-6">
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Calendar size={20} className="text-indigo-600 mt-1" />
                         <div>
@@ -106,10 +117,34 @@ const DocsInfo = ({ metaData, wordsCount }: { metaData: Metadata; wordsCount: nu
                     </div>
 
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+                        <Star size={20} className="text-yellow-600 mt-1" />
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">즐겨찾기</p>
+                            <p className="text-base text-gray-800">{new Intl.NumberFormat().format(starCount)}명</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Tag size={20} className="text-rose-600 mt-1" />
                         <div>
                             <p className="text-sm text-gray-500 font-medium">문서 ID</p>
                             <p className="text-base text-gray-800">{metaData.id}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+                        <Eye size={20} className="text-blue-600 mt-1" />
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">조회수</p>
+                            <p className="text-base text-gray-800">{new Intl.NumberFormat().format(metaData.views)}회</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
+                        <TrendingUp size={20} className="text-purple-600 mt-1" />
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">조회수 랭킹</p>
+                            <p className="text-base text-gray-800">{docsViewRank}위</p>
                         </div>
                     </div>
                 </div>

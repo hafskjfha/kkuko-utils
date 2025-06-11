@@ -232,8 +232,12 @@ export default function WordsAddHome() {
             }
         }
 
+        setProgress(50);
         const needCheckedWordsDatas:{id: number, word: string}[] = []
-        for (const chuckChecks of chunkArray(needCheckWord,100)){
+        const abab = chunkArray(needCheckWord,100)
+        for (let i=0;i<abab.length;i++){
+            const chuckChecks = abab[i];
+            setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
             const { data: needCheckedWordsData, error: ff } = await supabase.from('words').select('id,word').in('word', chuckChecks);
             if (ff) return makeError(ff)
             needCheckedWordsDatas.push(...needCheckedWordsData)
@@ -310,10 +314,8 @@ export default function WordsAddHome() {
         const { error: rpcError1 } = await supabase.rpc('increment_contribution', { target_id: user.uuid, inc_amount: addWordCount })
         if (rpcError1) return makeError(rpcError1)
 
-        for (const docsId of updateThemeDocsIds) {
-            const { error: rpcError2 } = await supabase.rpc('update_last_update', { docs_id: docsId })
-            if (rpcError2) return makeError(rpcError2);
-        }
+        const { error: rpcError2 } = await supabase.rpc('update_last_updates', { docs_ids: [...updateThemeDocsIds] })
+        if (rpcError2) return makeError(rpcError2);
 
         setProgress(100);
         setCurrentTask('완료!')

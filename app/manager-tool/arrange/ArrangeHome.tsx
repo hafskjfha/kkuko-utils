@@ -1,88 +1,165 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
-import Image from "next/image";
+import React, { useState, useRef, useEffect } from "react";
+import { FiArrowLeft, FiArrowRight, FiSettings, FiTrash2, FiEdit2, FiAlignLeft, FiType } from 'react-icons/fi';
 import HelpModal from "./HelpModal";
 import ErrorModal from "@/app/components/ErrModal";
 import type { ErrorMessage } from '@/app/types/type'
 import Spinner from "@/app/components/Spinner";
+import CodeMirror from '@uiw/react-codemirror';
+import { FileUp, Download, FilePlus, Trash2 } from 'lucide-react';
+import HelpModalA from '@/app/components/HelpModal';
 
-const FileSector: React.FC<{ fileContent: string, fileInputRef: React.RefObject<HTMLInputElement | null>, handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void, file: File | null, lineCount: number }> = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount }) => {
+const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount, setFileContent }: {
+    fileContent: string;
+    fileInputRef: React.RefObject<HTMLInputElement | null>;
+    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    file: File | null;
+    lineCount: number;
+    setFile: React.Dispatch<React.SetStateAction<File | null>>;
+    setLineCount: React.Dispatch<React.SetStateAction<number>>;
+    setFileContent: React.Dispatch<React.SetStateAction<string>>
+}) => {
+    // 에디터 내용
+    const [editorContent, setEditorContent] = useState(fileContent);
+
+    // 파일 콘텐츠 변경되면 업데이트
+    useEffect(() => {
+        setEditorContent(fileContent);
+    }, [fileContent]);
+
+    // 파일 다운로드 처리
+    const handleDownload = () => {
+        const blob = new Blob([editorContent], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const today = new Date();
+        const formattedDate = `${today.getFullYear().toString().slice(-2)}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+        a.download = `${file?.name.split(".")[0] || 'document'}_${formattedDate}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+    // 파일 삭제
+    const clearFile = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+            setEditorContent("");
+            setFile(null)
+            setLineCount(0)
+        }
+    };
 
     return (
-        <>
-            {/* 위쪽: 파일 업로드 */}
-            <div className="bg-white dark:bg-gray-800 p-2 shadow rounded mb-2">
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="border rounded p-2 w-full text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                    onChange={handleFileUpload}
-                    accept=".txt"
-                />
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+            {/* 헤더 */}
+            <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    파일 에디터
+                </h2>
             </div>
 
-            {/* 가운데: 파일 내용 */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 shadow rounded border border-gray-300 dark:border-gray-700 overflow-y-auto mb-2 max-h-[400px]">
-                <div className="flex flex-col gap-2 h-full">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-base font-semibold dark:text-gray-100">파일 내용</h2>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                            줄 개수: {lineCount}
-                        </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto border border-gray-300 dark:border-gray-700 p-2">
-                        <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                            {fileContent || "파일 내용을 불러오세요."}
+            {/* 파일 업로드 영역 */}
+            <div className="p-4 bg-white dark:bg-gray-800">
+                <div className="flex items-center">
+                    <div className="relative flex-1">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            id="file-upload"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={handleFileUpload}
+                            accept=".txt"
+                        />
+                        <div className="flex items-center space-x-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3 text-gray-500 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                            <FileUp size={20} />
+                            <span className="text-sm">
+                                {file ? file.name : '파일을 업로드하세요 (.txt)'}
+                            </span>
                         </div>
                     </div>
+
+                    {file && (
+                        <button
+                            onClick={clearFile}
+                            className="ml-2 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+                            title="파일 제거"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* 아래쪽: 파일 다운로드 */}
-            <div className="bg-white dark:bg-gray-800 p-2 shadow rounded text-center">
+            {/* 에디터 영역 */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-900">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center space-x-2">
+                        <FilePlus size={18} className="text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">에디터</span>
+                    </div>
+                    <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full text-gray-600 dark:text-gray-300">
+                        {lineCount} 줄
+                    </span>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <CodeMirror
+                        value={editorContent}
+                        height="400px"
+                        theme={false ? 'dark' : 'light'}
+                        extensions={[]}
+                        onChange={(value) => {
+                            setEditorContent(value);
+                            setFileContent(value)
+                        }}
+                        className="text-sm"
+                    />
+                </div>
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                 <button
-                    className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-700 text-sm w-full md:w-auto"
-                    disabled={!fileContent}
-                    onClick={() => {
-                        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        const today = new Date();
-                        const formattedDate = `${today.getFullYear().toString().slice(-2)}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-                        a.download = `${file?.name.split(".")[0]}_${formattedDate}.txt`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        if (fileInputRef.current) {
-                            fileInputRef.current.value = "";
-                        }
-                    }}
+                    className="flex items-center justify-center space-x-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!editorContent}
+                    onClick={handleDownload}
                 >
-                    파일 다운로드
+                    <Download size={18} />
+                    <span>파일 다운로드</span>
                 </button>
             </div>
-        </>
+        </div>
+    );
+};
 
 
-
-    )
-}
-
-const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch<React.SetStateAction<string>>, setLineCount: React.Dispatch<React.SetStateAction<number>>, setHelpMoalOpen: React.Dispatch<React.SetStateAction<0|1|2>>, seterrorModalView: React.Dispatch<React.SetStateAction<ErrorMessage|null>> }> = ({ fileContent, setFileContent, setLineCount, setHelpMoalOpen, seterrorModalView }) => {
+const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalView }:
+    {
+        fileContent: string,
+        setFileContent: React.Dispatch<React.SetStateAction<string>>,
+        setLineCount: React.Dispatch<React.SetStateAction<number>>,
+        seterrorModalView: React.Dispatch<React.SetStateAction<ErrorMessage | null>>
+    }
+) => {
     const [undoStack, setUndoStack] = useState<string[]>([]);
     const [redoStack, setRedoStack] = useState<string[]>([]);
     const [replaceTarget, setReplaceTarget] = useState<string>("");
     const [replaceValue, setReplaceValue] = useState<string>("");
     const [removeWord, setRemoveWord] = useState<string>("");
     const [replaceOpen, setReplaceOpen] = useState<boolean>(false);
+    const [patternToDelete, setPatternToDelete] = useState<string>("");
 
+    // 도구 스택 undo푸시 함수
     const pushToUndoStack = (content: string) => {
-        try{
+        try {
             setUndoStack((prev) => [...prev, content]);
             setRedoStack([]);
-        } catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -103,7 +180,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
     };
 
     const handleUndo = () => {
-        try{
+        try {
             if (undoStack.length > 0) {
                 const previousContent = undoStack[undoStack.length - 1];
                 setUndoStack((prev) => prev.slice(0, -1));
@@ -111,7 +188,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
                 setFileContent(previousContent); // 이전 상태로 복원
                 setLineCount(previousContent.split("\n").length);
             }
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -132,7 +209,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
     };
 
     const handleRedo = () => {
-        try{    
+        try {
             if (redoStack.length > 0) {
                 const nextContent = redoStack[0];
                 setRedoStack((prev) => prev.slice(1));
@@ -140,7 +217,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
                 setFileContent(nextContent); // Redo 상태로 복원
                 setLineCount(nextContent.split("\n").length);
             }
-        } catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -160,14 +237,15 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 공백을 줄바꿈으로 바꾸기
     const handleReplaceSpacesWithNewlines = () => {
-        try{
+        try {
             const updatedContent = fileContent.replace(/ +/g, "\n");
             if (updatedContent === fileContent) return;
             pushToUndoStack(fileContent);
             setFileContent(updatedContent);
             setLineCount(updatedContent.split("\n").length);
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -187,8 +265,9 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 빈줄 삭제
     const handleRemoveEmptyLines = () => {
-        try{
+        try {
             const updatedContent = fileContent
                 .split("\n")
                 .filter((line) => line.trim() !== "")
@@ -197,7 +276,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
             pushToUndoStack(fileContent);
             setFileContent(updatedContent);
             setLineCount(updatedContent.split("\n").length);
-        } catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -217,8 +296,9 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 단어 삭제
     const handleRemoveWord = (word: string) => {
-        try{
+        try {
             const updatedContent = fileContent
                 .split("\n")
                 .map((line) => line.replaceAll(word, ""))
@@ -228,7 +308,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
             setFileContent(updatedContent);
             setLineCount(updatedContent.split("\n").length);
             setRemoveWord("");
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -248,8 +328,9 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // replace처리 
     const handleReplaceCharacter = (target: string, replacement: string) => {
-        try{
+        try {
             const updatedContent = fileContent.replaceAll(target, replacement);
             if (updatedContent === fileContent) return;
             pushToUndoStack(fileContent);
@@ -257,7 +338,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
             setLineCount(updatedContent.split("\n").length);
             setReplaceTarget("");
             setReplaceValue("");
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -277,8 +358,9 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 중복 제거
     const handleRemoveDuplicates = () => {
-        try{
+        try {
             const okSet = new Set<string>();
             const temp: string[] = [];
             for (const w of fileContent.split("\n")) {
@@ -290,8 +372,8 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
             if (updatedContent === fileContent) return;
             pushToUndoStack(fileContent);
             setFileContent(updatedContent);
-            setLineCount(updatedContent.length);
-        }catch(err){
+            setLineCount(temp.length);
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -311,15 +393,16 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 정렬 v1
     const handleSortWordv1 = () => {
-        try{
+        try {
             const updatedContent = fileContent.split("\n").sort((a, b) => a.localeCompare(b, "ko-KR"));
             if (updatedContent.join('\n') === fileContent) return;
             pushToUndoStack(fileContent);
             setFileContent(updatedContent.join('\n'));
             setLineCount(updatedContent.length);
             console.log(updatedContent)
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -339,8 +422,9 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 정렬 v2
     const handleSortWordv2 = () => {
-        try{
+        try {
             let groupedText = '';
             let currentChar: string | null = null;
             for (const word of fileContent.split("\n").sort((a, b) => a.localeCompare(b, "ko-KR"))) {
@@ -362,7 +446,7 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
             pushToUndoStack(fileContent);
             setFileContent(updatedContent);
             setLineCount(updatedContent.split("\n").length);
-        }catch(err){
+        } catch (err) {
             if (err instanceof Error) {
                 seterrorModalView({
                     ErrName: err.name,
@@ -382,199 +466,365 @@ const ToolSector: React.FC<{ fileContent: string, setFileContent: React.Dispatch
         }
     };
 
+    // 패턴삭제
+    const handleDeleteByPattern = (pattern: string) => {
+        try {
+            // 정규식 예약 문자들을 이스케이프 처리하는 함수
+            const escapeRegExp = (string: string) => {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            };
+
+            // ?를 임시 플레이스홀더로 치환
+            const tempPattern = pattern.replace(/\?/g, '___WILDCARD___');
+
+            // 나머지 특수문자들을 이스케이프 처리
+            const escapedPattern = escapeRegExp(tempPattern);
+
+            // 플레이스홀더를 .+로 치환하여 정규식 패턴 생성
+            const regexPattern = escapedPattern.replace(/___WILDCARD___/g, '.+');
+            const regex = new RegExp(regexPattern, 'g');
+
+            const updatedContent = fileContent.replace(regex, '');
+            if (updatedContent === fileContent) return;
+
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent);
+            setLineCount(updatedContent.split("\n").length);
+            setPatternToDelete("");
+        } catch (err) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `DeleteByPattern | ${fileContent}`
+                });
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `DeleteByPattern | ${fileContent}`
+                });
+            }
+        }
+    };
+
     return (
-        <div className="p-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-h-screen">
-            <h1 className="flex items-center text-2xl md:text-3xl font-bold mb-4">
-                도구
-                <span className="relative w-6 h-6 ml-2">
-                    <Image 
-                    src="/help1-log.svg"
-                    alt="도움말"
-                    fill // 자동 크기 조정
-                    className="object-contain"
-                    onClick={()=>window.open("https://docs.google.com/document/d/1vbo0Y_kUKhCh_FUCBbpu-5BMXLBOOpvgxiJ_Hirvrt4/edit?tab=t.0#heading=h.3gxircxieo6c", "_blank", "noopener,noreferrer")}
-                    />
-                </span>
-            </h1>
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+            {/* 헤더 */}
+            <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h1 className="flex items-center text-2xl font-bold text-gray-800 dark:text-gray-100">
+                    <FiSettings className="mr-2 text-blue-500" />
+                    도구
+                </h1>
+                <div className="flex items-center">
+                    <div>
+                        <HelpModalA
+                            title="도구 사용 가이드"
+                            triggerClassName="relative cursor-pointer hover:opacity-80 transition-opacity"
+                            triggerText="도움말"
+                        >
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">📝 편집 기록</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>실행 취소:</strong> 이전 작업을 되돌립니다.</li>
+                                        <li>• <strong>다시 실행:</strong> 취소한 작업을 다시 실행합니다.</li>
+                                    </ul>
+                                </div>
 
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔤 정렬 도구</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>ㄱㄴㄷ순 정렬 v1:</strong> 한글 가나다순으로 정렬합니다.</li>
+                                        <li>• <strong>ㄱㄴㄷ순 정렬 v2:</strong> 한글 가나다순으로 정렬하고 알파벳별로 그룹화합니다.</li>
+                                    </ul>
+                                </div>
 
-            <div className="flex flex-col gap-4">
-                {/* Undo / Redo */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        className={`flex items-center justify-center px-3 py-1 rounded text-sm w-full sm:w-auto ${undoStack.length > 0
-                            ? "bg-green-500 text-white hover:bg-green-600"
-                            : "bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
-                            }`}
-                        onClick={handleUndo}
-                        disabled={undoStack.length === 0}
-                    >
-                        <FiArrowLeft className="text-lg mr-1" />
-                        Undo
-                    </button>
-                    <button
-                        className={`flex items-center justify-center px-3 py-1 rounded text-sm w-full sm:w-auto ${redoStack.length > 0
-                            ? "bg-green-500 text-white hover:bg-green-600"
-                            : "bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
-                            }`}
-                        onClick={handleRedo}
-                        disabled={redoStack.length === 0}
-                    >
-                        <FiArrowRight className="text-lg mr-1" />
-                        Redo
-                    </button>
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">✏️ 내용 편집</h3>
+                                    <ul className="space-y-1 text-sm">
+                                        <li>• <strong>단어 제거:</strong> 일치하는 단어를 텍스트파일에서 제거합니다.</li>
+                                        <li>• <strong>중복 제거:</strong> 중복된 단어들을 삭제합니다.</li>
+                                        <li>• <strong>빈 줄 제거:</strong> 빈줄을 삭제합니다.</li>
+                                        <li>• <strong>공백 → 줄바꿈:</strong> 공백을 줄바꿈으로 바꿉니다. 이 웹사이트의 대부분 내용들은 줄바꿈을 한 단어로 인식합니다.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔍 패턴 삭제</h3>
+                                    <p className="text-sm mb-2">간단한 패턴을 사용해 텍스트를 삭제합니다.</p>
+                                    <ul className="space-y-1 text-sm mb-2">
+                                        <li>• <strong>?</strong>: 하나 이상의 임의 문자를 의미합니다.</li>
+                                    </ul>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시:</p>
+                                        <p><strong>패턴:</strong> [?]</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">안녕하세요 [abc] 반갑습니다 [def] 감사합니다</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">안녕하세요  반갑습니다  감사합니다</code>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 mb-2">🔧 특정 문자 교체</h3>
+                                    <p className="text-sm mb-2">특정문자를 바꿉니다.</p>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시1:</p>
+                                        <p><strong>대상:</strong> =</p>
+                                        <p><strong>대체값:</strong> 비워둠 (비워두면 기본값으로 다 공백으로 치환합니다.)</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가=나다라마바사</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가나다라마바사</code>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gray-100 p-3 rounded text-sm">
+                                        <p className="font-medium">예시2:</p>
+                                        <p><strong>대상:</strong> =</p>
+                                        <p><strong>대체값:</strong> X</p>
+                                        <div className="mt-2">
+                                            <p className="text-xs text-gray-600">입력 파일:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가=나다라마바사</code>
+                                        </div>
+                                        <div className="mt-1">
+                                            <p className="text-xs text-gray-600">출력 결과:</p>
+                                            <code className="bg-white px-2 py-1 rounded">가X나다라마바사</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </HelpModalA>
+                    </div>
                 </div>
+            </div>
 
-                {/* ㄱㄴㄷ 순 정렬 v1 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">ㄱㄴㄷ 순 정렬 v1:</span>
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent}
-                        onClick={handleSortWordv1}
-                    >
-                        확인
-                    </button>
-                    <Image
-                        src="/help1-log.svg"
-                        alt="도움말"
-                        width={20}
-                        height={20}
-                        className="cursor-pointer"
-                        onClick={()=>{setHelpMoalOpen(1)}}
-                    />
-                </div>
-
-                {/* ㄱㄴㄷ 순 정렬 v2 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">ㄱㄴㄷ 순 정렬 v2:</span>
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent}
-                        onClick={handleSortWordv2}
-                    >
-                        확인
-                    </button>
-                    <Image
-                        src="/help1-log.svg"
-                        alt="도움말"
-                        width={20}
-                        height={20}
-                        className="cursor-pointer"
-                        onClick={()=>{setHelpMoalOpen(2)}}
-                    />
-                </div>
-
-                {/* 단어 제거 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">단어 제거:</span>
-                    <input
-                        type="text"
-                        className="flex-1 border rounded px-2 py-1 text-sm w-full sm:w-auto dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                        placeholder="제거할 단어 입력"
-                        value={removeWord}
-                        onChange={(e) => setRemoveWord(e.target.value)}
-                    />
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent || !removeWord}
-                        onClick={() => handleRemoveWord(removeWord)}
-                    >
-                        확인
-                    </button>
-                </div>
-
-                {/* 중복 제거 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">중복제거:</span>
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent}
-                        onClick={handleRemoveDuplicates}
-                    >
-                        확인
-                    </button>
-                </div>
-
-                {/* 빈 줄 제거 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">빈 줄 제거:</span>
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent}
-                        onClick={handleRemoveEmptyLines}
-                    >
-                        확인
-                    </button>
-                </div>
-
-                {/* 공백 -> 줄바꿈 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium">공백 → 줄바꿈:</span>
-                    <button
-                        className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        disabled={!fileContent}
-                        onClick={handleReplaceSpacesWithNewlines}
-                    >
-                        확인
-                    </button>
-                </div>
-
-                {/* 특정 문자 제거 */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium">특정 문자 제거:</span>
+            {/* 도구 목록 */}
+            <div className="p-4 space-y-4">
+                {/* Undo / Redo 영역 */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                        <FiEdit2 className="mr-2 text-blue-500" />
+                        편집 기록
+                    </h2>
+                    <div className="flex gap-2">
                         <button
-                            className="w-full sm:w-auto bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600 text-sm"
+                            className={`flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium flex-1 transition-colors ${undoStack.length > 0
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                }`}
+                            onClick={handleUndo}
+                            disabled={undoStack.length === 0}
+                        >
+                            <FiArrowLeft className="mr-2" />
+                            실행 취소
+                        </button>
+                        <button
+                            className={`flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium flex-1 transition-colors ${redoStack.length > 0
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                }`}
+                            onClick={handleRedo}
+                            disabled={redoStack.length === 0}
+                        >
+                            <FiArrowRight className="mr-2" />
+                            다시 실행
+                        </button>
+                    </div>
+                </div>
+
+                {/* 정렬 도구 */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                        <FiAlignLeft className="mr-2 text-green-500" />
+                        정렬 도구
+                    </h2>
+
+                    <div className="space-y-3">
+                        {/* ㄱㄴㄷ 순 정렬 v1 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">ㄱㄴㄷ 순 정렬 v1:</span>
+                            <button
+                                className="flex-1 bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleSortWordv1}  // handleSortWordv1 함수 연결 필요
+                            >
+                                정렬하기
+                            </button>
+                            <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
+                                <HelpModal wantGo={2} />
+                            </div>
+                        </div>
+
+                        {/* ㄱㄴㄷ 순 정렬 v2 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">ㄱㄴㄷ 순 정렬 v2:</span>
+                            <button
+                                className="flex-1 bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleSortWordv2}  // handleSortWordv2 함수 연결 필요
+                            >
+                                정렬하기
+                            </button>
+                            <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
+                                <HelpModal wantGo={3} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 내용 편집 도구 */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                        <FiTrash2 className="mr-2 text-red-500" />
+                        내용 편집
+                    </h2>
+
+                    <div className="space-y-3">
+                        {/* 단어 제거 */}
+                        <div className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-full sm:w-auto">단어 제거:</span>
+                            <div className="flex flex-1 gap-2">
+                                <input
+                                    type="text"
+                                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="제거할 단어 입력"
+                                    value={removeWord}
+                                    onChange={(e) => setRemoveWord(e.target.value)}
+                                />
+                                <button
+                                    className="bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-red-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    disabled={!fileContent || !removeWord}
+                                    onClick={() => handleRemoveWord(removeWord)}  // handleRemoveWord 함수 연결 필요
+                                >
+                                    제거하기
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 중복 제거 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">중복 제거:</span>
+                            <button
+                                className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded-md hover:bg-blue-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleRemoveDuplicates}  // handleRemoveDuplicates 함수 연결 필요
+                            >
+                                중복 제거하기
+                            </button>
+                        </div>
+
+                        {/* 빈 줄 제거 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">빈 줄 제거:</span>
+                            <button
+                                className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded-md hover:bg-blue-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleRemoveEmptyLines}  // handleRemoveEmptyLines 함수 연결 필요
+                            >
+                                빈 줄 제거하기
+                            </button>
+                        </div>
+
+                        {/* 공백 -> 줄바꿈 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">공백 → 줄바꿈:</span>
+                            <button
+                                className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded-md hover:bg-blue-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleReplaceSpacesWithNewlines}  // handleReplaceSpacesWithNewlines 함수 연결 필요
+                            >
+                                변환하기
+                            </button>
+                        </div>
+                        {/* 패턴 삭제 */}
+                        <div className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-full sm:w-auto">패턴 삭제:</span>
+                            <div className="flex flex-1 gap-2">
+                                <input
+                                    type="text"
+                                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="패턴 입력 (예: [?] - ?는 임의 문자)"
+                                    value={patternToDelete}
+                                    onChange={(e) => setPatternToDelete(e.target.value)}
+                                />
+                                <button
+                                    className="bg-orange-500 text-white px-3 py-1.5 rounded-md hover:bg-orange-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    disabled={!fileContent || !patternToDelete}
+                                    onClick={() => handleDeleteByPattern(patternToDelete)}
+                                >
+                                    삭제하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 특정 문자 교체 */}
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                            <FiType className="mr-2 text-purple-500" />
+                            특정 문자 교체
+                        </h2>
+                        <button
+                            className="flex items-center text-purple-500 hover:text-purple-600 text-sm font-medium"
                             onClick={() => setReplaceOpen((prev) => !prev)}
                         >
-                            {replaceOpen ? "도구 접기" : "도구 열기"}
+                            {replaceOpen ? "접기" : "펼치기"}
                         </button>
                     </div>
 
                     {replaceOpen && (
-                        <div className="flex flex-col gap-2 pl-6">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium">대상:</span>
+                        <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-md space-y-3 mt-2">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">대상 문자:</label>
                                 <input
                                     type="text"
-                                    className="w-full sm:w-auto border rounded px-2 py-1 text-sm flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-gray-200"
                                     placeholder="대상 문자 입력"
                                     value={replaceTarget}
                                     onChange={(e) => setReplaceTarget(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium">대체값:</span>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">대체 문자:</label>
                                 <input
                                     type="text"
-                                    className="w-full sm:w-auto border rounded px-2 py-1 text-sm flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                                    placeholder="대체값 문자 입력"
+                                    className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="대체 문자 입력 (빈 값 가능)"
                                     value={replaceValue}
                                     onChange={(e) => setReplaceValue(e.target.value)}
                                 />
                             </div>
                             <button
-                                className="w-full sm:w-auto bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                className="w-full bg-purple-500 text-white px-3 py-2 rounded-md hover:bg-purple-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                                 disabled={!fileContent || !replaceTarget}
-                                onClick={() => handleReplaceCharacter(replaceTarget, replaceValue)}
+                                onClick={() => handleReplaceCharacter(replaceTarget, replaceValue)}  // handleReplaceCharacter 함수 연결 필요
                             >
-                                확인
+                                문자 교체하기
                             </button>
                         </div>
                     )}
                 </div>
             </div>
         </div>
+    );
+};
 
-    )
-}
-
-const ArrangeHome: React.FC = () => {
+const ArrangeHome = () => {
     const [file, setFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string>("");
     const [lineCount, setLineCount] = useState<number>(0);
-    const [helpModalopen,setHelpMoalOpen] = useState<0|1|2>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
     const [loading, setLoading] = useState(false);
@@ -592,27 +842,25 @@ const ArrangeHome: React.FC = () => {
                 reader.onload = (e) => {
                     const text = e.target?.result;
                     if (typeof text === "string") {
-                        
-                        
-                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b","")); // Update state with file content
+                        setFileContent(text.replace(/\r/g, "").replace(/\s+$/, "").replaceAll("\u200b", "")); // Update state with file content
                         setLineCount(text.split("\n").length); // Count lines
                         setLoading(false);
                     }
-                    else{
+                    else {
                         throw new Error('fail to read file');
                     }
-                    
+
                 };
 
                 reader.onerror = (event) => {
                     const error = event.target?.error;
-                    try{
-                        if(error){
+                    try {
+                        if (error) {
                             const errorObj = new Error(`FileReader Error: ${error.message}`);
                             errorObj.name = error.name; // DOMException의 name 속성을 Error 객체에 복사
                             throw errorObj;
                         }
-                    }catch(err){
+                    } catch (err) {
                         if (err instanceof Error) {
                             seterrorModalView({
                                 ErrName: err.name,
@@ -620,7 +868,7 @@ const ArrangeHome: React.FC = () => {
                                 ErrStackRace: err.stack,
                                 inputValue: null
                             });
-            
+
                         } else {
                             seterrorModalView({
                                 ErrName: null,
@@ -629,13 +877,13 @@ const ArrangeHome: React.FC = () => {
                                 inputValue: null
                             });
                         }
-                    } finally{
+                    } finally {
                         setLoading(false);
                     }
                 };
                 setLoading(true);
                 reader.readAsText(file, "utf-8");
-                
+
 
             } else {
                 alert("지원되지 않는 파일 형식입니다. UTF-8 형식의 .txt 파일만 업로드해주세요.");
@@ -655,6 +903,9 @@ const ArrangeHome: React.FC = () => {
                     handleFileUpload={handleFileUpload}
                     file={file}
                     lineCount={lineCount}
+                    setFile={setFile}
+                    setLineCount={setLineCount}
+                    setFileContent={setFileContent}
                 />
             </div>
 
@@ -664,22 +915,17 @@ const ArrangeHome: React.FC = () => {
                     fileContent={fileContent}
                     setFileContent={setFileContent}
                     setLineCount={setLineCount}
-                    setHelpMoalOpen={setHelpMoalOpen}
                     seterrorModalView={seterrorModalView}
                 />
             </div>
 
-            {helpModalopen && <HelpModal onClose={()=>setHelpMoalOpen(0)} wantGo={helpModalopen}/>}
-            {errorModalView && <ErrorModal onClose={()=>seterrorModalView(null)} error={errorModalView} />}
+            {errorModalView && <ErrorModal onClose={() => seterrorModalView(null)} error={errorModalView} />}
             {loading && (
                 <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-gray-900 bg-opacity-50">
                     <Spinner />
                 </div>
             )}
         </div>
-
-
-
     );
 };
 

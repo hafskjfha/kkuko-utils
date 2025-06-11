@@ -9,6 +9,8 @@ import { disassemble } from 'es-hangul';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import axios from 'axios';
 import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
+import { useRouter } from 'next/navigation';
+import { sum } from 'es-toolkit';
 
 interface WordInfoProps {
     word: string;
@@ -22,8 +24,8 @@ interface WordInfoProps {
     };
     isChainable: boolean;
     isSeniorApproved: boolean;
-    goFirstLetterWords: string[];
-    goLastLetterWords: string[];
+    goFirstLetterWords: number;
+    goLastLetterWords: number;
     status: "ok" | "추가요청" | "삭제요청";
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
@@ -31,6 +33,8 @@ interface WordInfoProps {
     requester_uuid?: string;
     requestTime?: string;
     moreExplanation?: React.ReactNode;
+    goFirstLetterWord: (f:string[]) => Promise<void>;
+    goLastLetterWord: (l: string[]) => Promise<void>
 }
 
 const calculateKoreanInitials = (word: string): string => {
@@ -41,6 +45,7 @@ export default function WordInfoPage({ query }: { query: string }) {
     const [errorView, setErrorView] = useState<ErrorMessage | null>(null);
     const [wordInfo, setWordInfo] = useState<WordInfoProps | null>(null);
     const [isNotFound, setIsNotFound] = useState(false);
+    const router = useRouter();
 
     // 로딩 상태를 더 상세하게 관리하기 위한 상태
     const { loadingState, updateLoadingState } = useLoadingState();
@@ -69,8 +74,8 @@ export default function WordInfoPage({ query }: { query: string }) {
             waitAdd: string[];
             waitDel: string[];
         },
-        goFirstLetterWords: string[];
-        goLastLetterWords: string[];
+        goFirstLetterWords: number;
+        goLastLetterWords: number;
         exp?: string;
     }) => {
         const mission: [string, number][] = [];
@@ -92,6 +97,37 @@ export default function WordInfoPage({ query }: { query: string }) {
             </a>)
         }
 
+        const gf = async (f: string[]) => {
+            updateLoadingState(10, "단어 정보 확인 중...");
+            const {data,error} = await supabase.rpc('random_word_ff',{fir1: f});
+            const {data:data2, error:error2} = await supabase.rpc('random_wait_word_ff',{prefixes: f});
+            if (error) return makeError(error)
+            if (error2) return makeError(error2)
+            if (data){
+                router.push(`/word/search/${data[0].word}`)
+            } else if (data2){
+                router.push(`/word/search/${data2[0].word}`)
+            } else {
+                router.push(`/word/search/${wordInfo.word}`)
+            }
+            
+        }
+
+        const lf = async (l: string[]) => {
+            updateLoadingState(10, "단어 정보 확인 중...");
+            const {data, error} = await supabase.rpc('random_word_ll',{fir1:l})
+            const {data:data2, error:error2} = await supabase.rpc('random_wait_word_ll',{prefixes: l}) 
+            if (error) return makeError(error)
+            if (error2) return makeError(error2)
+            if (data){
+                router.push(`/word/search/${data[0].word}`)
+            } else if (data2){
+                router.push(`/word/search/${data2[0].word}`)
+            } else {
+                router.push(`/word/search/${wordInfo.word}`)
+            }
+        }
+
         setWordInfo({
             word: wordInfo.word,
             initial: calculateKoreanInitials(wordInfo.word),
@@ -108,7 +144,9 @@ export default function WordInfoPage({ query }: { query: string }) {
             topic: wordInfo.themes,
             goFirstLetterWords: wordInfo.goFirstLetterWords,
             goLastLetterWords: wordInfo.goLastLetterWords,
-            moreExplanation: wordInfo.exp ? gget() : undefined
+            moreExplanation: wordInfo.exp ? gget() : undefined,
+            goFirstLetterWord: gf,
+            goLastLetterWord: lf
         });
     };
 
@@ -180,14 +218,32 @@ export default function WordInfoPage({ query }: { query: string }) {
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const fir1 = reverDuemLaw(wordTableCheck.word[0])
+                    const fir1 = reverDuemLaw(wordTableCheck.word[0]);
+                    const las1 = [DuemRaw(wordTableCheck.word[wordTableCheck.word.length - 1])];
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+                    // 🔸 firWords count
+                    const { data: firWordsCount1, error: firWordsError1 } = await supabase
+                    .from('word_last_letter_counts')
+                    .select('*')
+                    .in('last_letter', fir1);
+                    
 
-                    const las1 = [DuemRaw(wordTableCheck.word[wordTableCheck.word.length - 1])]
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
+                    const { count: firWordsCount2, error: firWordsError2 } = await supabase
+                    .from('wait_words')
+                    .select('*', { count: 'exact', head: true })
+                    .or(fir1.map(c => `word.ilike.%${c}%`).join(','));
+
+                    // 🔸 lasWords count
+                    const { data: lasWordsCount1, error: lasWordsError1 } = await supabase
+                    .from('word_first_letter_counts')
+                    .select('*')
+                    .in('first_letter', las1);
+
+                    const { count: lasWordsCount2, error: lasWordsError2 } = await supabase
+                    .from('wait_words')
+                    .select('*', { count: 'exact', head: true })
+                    .or(las1.map(c => `word.ilike.%${c}%`).join(','));
+
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
@@ -196,6 +252,10 @@ export default function WordInfoPage({ query }: { query: string }) {
                         }
                     }
                     
+                    // 🔸 총합 (필요 시 null 체크 후 더하기)
+                    const totalFirCount = (sum((firWordsCount1 ?? []).map(({count})=>count))) + (firWordsCount2 || 0);
+                    const totalLasCount = (sum((lasWordsCount1 ?? []).map(({count})=>count))) + (lasWordsCount2 || 0);
+
                     let kkukoWikiok = false
 
                     const url = `/api/get_kkukowiki?title=${wordTableCheck.word}`;
@@ -209,6 +269,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                     }
 
                     updateLoadingState(90, "정보 가공 중...");
+                    await new Promise(resolve => setTimeout(resolve, 1));
 
                     // 단어 정보 가공 및 설정
                     wordSetFunc({
@@ -226,8 +287,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                         requested_by: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.users?.nickname : wordTableCheck.users?.nickname,
                         requested_by_uuid: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_by : wordTableCheck.added_by,
                         requested_at: waitTableCheck && waitTableCheck.request_type === "delete" ? waitTableCheck.requested_at : wordTableCheck.added_at,
-                        goFirstLetterWords: [...firWords1?.map(w => w.word) ?? [], ...firWords2?.map(w => w.word) ?? []],
-                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []],
+                        goFirstLetterWords: totalFirCount,
+                        goLastLetterWords: totalLasCount,
                         exp: kkukoWikiok ? `https://kkukowiki.kr/w/${wordTableCheck.word}` : undefined
                     });
 
@@ -263,14 +324,37 @@ export default function WordInfoPage({ query }: { query: string }) {
 
                     updateLoadingState(80, "단어의 연결되는 단어 가져오는 중...");
 
-                    const fir1 = reverDuemLaw(waitTableCheck.word[0])
+                    const fir1 = reverDuemLaw(waitTableCheck.word[0]);
+                    const las1 = [DuemRaw(waitTableCheck.word[waitTableCheck.word.length - 1])];
 
-                    const { data: firWords1, error: firWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('last_letter', fir1);
-                    const { data: firWords2, error: firWordsError2 } = await supabase.from('wait_words').select('word').or(fir1.map((c)=>`word.ilike.%${c}%`).join(','));
+                    // 🔸 firWords count
+                    const { count: firWordsCount1, error: firWordsError1 } = await supabase
+                    .from('words')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('k_canuse', true)
+                    .in('last_letter', fir1);
 
-                    const las1 = [DuemRaw(waitTableCheck.word[waitTableCheck.word.length - 1])]
-                    const { data: lasWords1, error: lasWordsError1 } = await supabase.from('words').select('word').eq('k_canuse', true).in('first_letter', las1);
-                    const { data: lasWords2, error: lasWordsError2 } = await supabase.from('wait_words').select('word').or(las1.map((c)=>`word.ilike.%${c}%`).join(','))
+                    const { count: firWordsCount2, error: firWordsError2 } = await supabase
+                    .from('wait_words')
+                    .select('*', { count: 'exact', head: true })
+                    .or(fir1.map(c => `word.ilike.%${c}%`).join(','));
+
+                    // 🔸 lasWords count
+                    const { count: lasWordsCount1, error: lasWordsError1 } = await supabase
+                    .from('words')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('k_canuse', true)
+                    .in('first_letter', las1);
+
+                    const { count: lasWordsCount2, error: lasWordsError2 } = await supabase
+                    .from('wait_words')
+                    .select('*', { count: 'exact', head: true })
+                    .or(las1.map(c => `word.ilike.%${c}%`).join(','));
+
+                    // 🔸 총합 (필요 시 null 체크 후 더하기)
+                    const totalFirCount = (firWordsCount1 || 0) + (firWordsCount2 || 0);
+                    const totalLasCount = (lasWordsCount1 || 0) + (lasWordsCount2 || 0);
+
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
                         if (error) {
@@ -295,8 +379,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                         requested_by: waitTableCheck.users?.nickname,
                         requested_by_uuid: waitTableCheck.requested_by,
                         requested_at: waitTableCheck.requested_at,
-                        goFirstLetterWords: [...firWords1?.map(w => w.word) ?? [], ...firWords2?.map(w => w.word) ?? []],
-                        goLastLetterWords: [...lasWords1?.map(w => w.word) ?? [], ...lasWords2?.map(w => w.word) ?? []]
+                        goFirstLetterWords: totalFirCount,
+                        goLastLetterWords: totalLasCount
                     });
                 } else {
                     setIsNotFound(true);

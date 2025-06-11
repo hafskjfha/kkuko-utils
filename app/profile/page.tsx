@@ -1,12 +1,14 @@
-import ProfilePage from "./ProfilePage";
-import { Suspense } from "react";
+import ProfileHomePage from "./ProfileHome";
+
+export async function generateMetadata() {
+    return {
+        title: `끄코 유틸리티 - 프로필 페이지`,
+        description: `끄코 유틸리티 - 프로필 페이지 홈`,
+    }
+}
 
 export default function ProfilePageA() {
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <Suspense fallback={<div>Loading...</div>}>
-                <ProfilePage />
-            </Suspense>
-        </div>
+        <ProfileHomePage />
     );
 }

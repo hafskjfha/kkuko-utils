@@ -54,7 +54,13 @@ export default function WordSearch() {
             // 결과 합치기
             const words = getWords?.map((item) => item.word) || [];
             const waitWords = getWaitWords?.map((item) => item.word) || [];
-            const allWords = [...words, ...waitWords];
+            const allWords = [...words];
+            const wordsSet = new Set(words)
+            waitWords.forEach((word)=>{
+                if (!wordsSet.has(word)){
+                    allWords.push(word)   
+                }
+            })
             
             setResults(allWords);
         } catch (error) {

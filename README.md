@@ -8,19 +8,24 @@
 
 ## 목차 (Contents)
 
-1. [기능(Features)](#기능-features)
-2. [사용 방법(Usage)](#사용-방법-usage)
-3. [기술 스택(Tech Stack)](#기술-스택-tech-stack)
-4. [기여 방법(Contributing)](#기여-방법-contributing)
-5. [버그 신고 / 기능 추가 요청 (Bug Report / Feature Suggestions)](#버그-신고--기능-추가-요청-bug-report--feature-suggestions)
-6. [라이선스(License)](#라이선스-license)
+- [끄코 도구 (kkuko-utils)](#끄코-도구-kkuko-utils)
+  - [웹사이트 (Link)](#웹사이트-link)
+  - [목차 (Contents)](#목차-contents)
+  - [기능 (Features)](#기능-features)
+  - [사용 방법 (Usage)](#사용-방법-usage)
+  - [기술 스택 (Tech Stack)](#기술-스택-tech-stack)
+  - [기여 방법 (Contributing)](#기여-방법-contributing)
+  - [버그 신고 / 기능 추가 요청 (Bug Report / Feature Suggestions)](#버그-신고--기능-추가-요청-bug-report--feature-suggestions)
+  - [라이선스 (License)](#라이선스-license)
 
 ## 기능 (Features)
 
 - **기능 1**: 단어 조합기 (글자조각으로 6,5글자 조합하여 낱장,휘장 상자 휙득)
 - **기능 2**: 단어장 정리 도구 (글자순 정렬, 특정 단어들 추출 등)
-- **기능 3**: 매달 단어추가 요청 정리
+- **기능 3**: 오픈 db단어 다운로드 / 검색 등
 - **기능 4**: 빌런 단어장 게시
+- **기능 5**: 타자연습 (예정)
+- **기능 6**: 루트전 엔진 (예정)
 
 ## 사용 방법 (Usage)
 

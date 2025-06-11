@@ -141,7 +141,7 @@ const Header = () => {
                                     )}
                                 </div>
                                 <div className="py-2">
-                                    <Link href={isLoggedIn ? "/profile" : "/auth"}>
+                                    <Link href={isLoggedIn ? `/profile/${username}` : "/auth"}>
                                         <div className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
                                             <User size={16} className="mr-3 text-gray-500" />
                                             {isLoggedIn ? "프로필 페이지" : "로그인"}
@@ -194,7 +194,7 @@ const Header = () => {
                                         안녕하세요, <span className="text-white font-medium">{username}</span>님
                                     </div>
                                     <Link 
-                                        href="/profile"
+                                        href={`/profile/${username}`}
                                         className="block px-4 py-3 text-gray-300 hover:text-blue-400 hover:bg-gray-800/50 rounded-lg transition-colors"
                                     >
                                         프로필 페이지
