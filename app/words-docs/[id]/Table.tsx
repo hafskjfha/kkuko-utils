@@ -914,7 +914,8 @@ const Table = ({
                 
                 // 포함개수가 같으면 길이로 정렬 (길이가 긴 것이 위로)
                 return rowA.original.word.length - rowB.original.word.length;
-            } : undefined,
+            } : (rowA, rowB) => rowA.original.word.length - rowB.original.word.length
+            ,
         },
         { 
             accessorKey: "word", 
