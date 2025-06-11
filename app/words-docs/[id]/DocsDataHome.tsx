@@ -91,7 +91,7 @@ export default function DocsDataHome({id}:{id:number}){
                 if (docsData.duem){
                     q = q.in('last_letter',reverDuemLaw(docsData.name.trim()));
                 } else {
-                    q = q.eq('lastletter',docsData.name.trim())
+                    q = q.eq('last_letter',docsData.name.trim())
                 }
                 const {data:LetterDatas1, error:error1} = await q;
                 if (error1) return MakeError(error1);
