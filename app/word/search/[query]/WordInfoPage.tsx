@@ -221,11 +221,11 @@ export default function WordInfoPage({ query }: { query: string }) {
                     const las1 = [DuemRaw(wordTableCheck.word[wordTableCheck.word.length - 1])];
 
                     // 🔸 firWords count
-                    const { count: firWordsCount1, error: firWordsError1 } = await supabase
-                    .from('words')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('k_canuse', true)
+                    const { data: firWordsCount1, error: firWordsError1 } = await supabase
+                    .from('word_last_letter_counts')
+                    .select('*')
                     .in('last_letter', fir1);
+                    
 
                     const { count: firWordsCount2, error: firWordsError2 } = await supabase
                     .from('wait_words')
@@ -233,20 +233,15 @@ export default function WordInfoPage({ query }: { query: string }) {
                     .or(fir1.map(c => `word.ilike.%${c}%`).join(','));
 
                     // 🔸 lasWords count
-                    const { count: lasWordsCount1, error: lasWordsError1 } = await supabase
-                    .from('words')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('k_canuse', true)
+                    const { data: lasWordsCount1, error: lasWordsError1 } = await supabase
+                    .from('word_first_letter_counts')
+                    .select('*')
                     .in('first_letter', las1);
 
                     const { count: lasWordsCount2, error: lasWordsError2 } = await supabase
                     .from('wait_words')
                     .select('*', { count: 'exact', head: true })
                     .or(las1.map(c => `word.ilike.%${c}%`).join(','));
-
-                    // 🔸 총합 (필요 시 null 체크 후 더하기)
-                    const totalFirCount = (firWordsCount1 || 0) + (firWordsCount2 || 0);
-                    const totalLasCount = (lasWordsCount1 || 0) + (lasWordsCount2 || 0);
 
                     if (firWordsError1 || firWordsError2 || lasWordsError1 || lasWordsError2) {
                         const error = firWordsError1 ?? firWordsError2 ?? lasWordsError1 ?? lasWordsError2;
@@ -256,6 +251,10 @@ export default function WordInfoPage({ query }: { query: string }) {
                         }
                     }
                     
+                    // 🔸 총합 (필요 시 null 체크 후 더하기)
+                    const totalFirCount = ((firWordsCount1 ?? []).map(({count})=>count).reduce((acc, cur) => acc + cur, 0) || 0) + (firWordsCount2 || 0);
+                    const totalLasCount = ((lasWordsCount1 ?? []).map(({count})=>count).reduce((acc, cur) => acc + cur, 0) || 0) + (lasWordsCount2 || 0);
+
                     let kkukoWikiok = false
 
                     const url = `/api/get_kkukowiki?title=${wordTableCheck.word}`;
@@ -269,6 +268,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                     }
 
                     updateLoadingState(90, "정보 가공 중...");
+                    await new Promise(resolve => setTimeout(resolve, 1));
 
                     // 단어 정보 가공 및 설정
                     wordSetFunc({
