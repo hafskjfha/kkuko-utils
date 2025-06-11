@@ -64,25 +64,6 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         }
     }, [user, starCount])
 
-    // 탭별 데이터 필터링
-    const getFilteredData = (tabType: TabType): WordData[] => {
-        switch (tabType) {
-            case "all":
-                return wordsData;
-            case "long":
-                return wordsData.filter(item => item.word.length >= 9);
-            case "mission":
-                return wordsData.filter(item => {
-                    return MISSION_CHARS.split('').some(char => {
-                        const count = (item.word.match(new RegExp(char, 'g')) || []).length;
-                        return count >= 2;
-                    });
-                });
-            default:
-                return wordsData;
-        }
-    };
-
     const mission = useMemo(()=>{
         const m2gr= new DefaultDict<string, WordData[]>(() => []);
         const m1gr = new DefaultDict<string, WordData[]>(() => []);
@@ -100,6 +81,26 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
         });
         return {m2gr,m1gr}
     },[data])
+
+    // 탭별 데이터 필터링
+    const getFilteredData = (tabType: TabType): WordData[] => {
+        switch (tabType) {
+            case "all":
+                return wordsData;
+            case "long":
+                return wordsData.filter(item => item.word.length >= 9);
+            case "mission":
+                const {m1gr, m2gr} = mission;
+                const m: WordData[]=[];
+                MISSION_CHARS.split('').forEach(char => {
+                    const missionWords: WordData[] = m2gr.get(char).length > 8 ? m2gr.get(char) : [...m2gr.get(char), ...m1gr.get(char)];
+                    m.push(...missionWords);
+                });
+                return [...new Set(m)];
+            default:
+                return wordsData;
+        }
+    };
 
     const filteredData = useMemo(() => getFilteredData(activeTab), [activeTab, wordsData]);
 
@@ -131,12 +132,9 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
 
     const updateToc = (data: WordData[]): string[] => {
         if (activeTab === "mission") {
+            const {m1gr, m2gr} = mission;
             return MISSION_CHARS.split('').filter(char => {
-                const hasWords = data.some(item => {
-                    const count = (item.word.match(new RegExp(char, 'g')) || []).length;
-                    return count >= 2;
-                }); // 2미 단어가 별로 없으면 (8>) 1미도 표시 하게
-                return hasWords;
+                return m2gr.get(char).length + m1gr.get(char).length > 0;
             }).map(char => `${char}`);
         } else {
             return [...new Set(data.map((v) => v.word[0]))].sort((a, b) => a.localeCompare(b, "ko"));

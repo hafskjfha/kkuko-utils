@@ -848,10 +848,7 @@ const Table = ({
     
     // isM.m이 true일 때는 포함개수 기준 내림차순으로 기본 정렬
     const [sorting, setSorting] = useState<SortingState>(
-        isM.m ? [
-            { id: "count", desc: true },
-            { id: "length", desc: true }
-        ] : isL ? [{ id: "length", desc: true }] : []
+        isM.m ? [{ id: "count", desc: true }] : isL ? [{ id: "length", desc: true }] : []
     );
     
     const [modal, setModal] = useState<{ 
