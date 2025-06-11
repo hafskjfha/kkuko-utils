@@ -5,6 +5,7 @@ import ErrorPage from "@/app/components/ErrorPage"
 import { useCallback, useEffect, useState } from "react";
 import DocsInfo from "./DocsInfo";
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import { reverDuemLaw } from "@/app/lib/DuemLaw";
 
 type docsInfoType = {
     metadata: {
@@ -58,7 +59,14 @@ export default function DocsInfoPage({ id }: { id: number }) {
 
             updateLoadingState(40,"문서의 단어 정보 가져오는 중...");
             if (docsData.typez === "letter"){
-                const {data:LetterDatas1, error:error1} = await supabase.from('words').select('word').eq('last_letter',docsData.name.trim()).eq('k_canuse',true);
+                let q= supabase.from('words').select('*',{ count: 'exact', head: true }).eq('k_canuse',true).neq('length',1);
+                 
+                if (docsData.duem){
+                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()[0]));
+                } else {
+                    q = q.eq('last_letter',docsData.name.trim())
+                }
+                const {count:LetterDatas1, error:error1} = await q;
                 if (error1){
                     setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error1.name ?? "알수없음"}\nError Message: ${error1.message ?? "없음"}\nError code: ${error1.code}`)
                     updateLoadingState(100,"ERR");
@@ -71,7 +79,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                     return;
                 }
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1.length, rank:data, starCount:docsStarData.length});
+                setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1 ?? -1, rank:data, starCount:docsStarData.length});
 
                 updateLoadingState(100,"완료!");
                 return;
@@ -87,7 +95,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 if (!themeData) return setIsNotFound(true);
 
                 updateLoadingState(50,"문서의 단어 정보 가져오는 중...");
-                const {data: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
+                const {count: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('*',{ count: 'exact', head: true }).eq('theme_id',themeData.id);
                 if (themeWordsError1){
                     setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${themeWordsError1.name ?? "알수없음"}\nError Message: ${themeWordsError1.message ?? "없음"}\nError code: ${themeWordsError1.code}`)
                     updateLoadingState(100,"ERR");
@@ -101,7 +109,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 }
 
                 updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1.length, rank: data, starCount:docsStarData.length});
+                setDocsInfoData({metadata:docsData, wordsCount: themeWordsData1 ?? -1, rank: data, starCount:docsStarData.length});
                 updateLoadingState(100,"완료!");
                 return;
             }
