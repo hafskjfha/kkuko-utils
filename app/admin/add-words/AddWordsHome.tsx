@@ -314,10 +314,8 @@ export default function WordsAddHome() {
         const { error: rpcError1 } = await supabase.rpc('increment_contribution', { target_id: user.uuid, inc_amount: addWordCount })
         if (rpcError1) return makeError(rpcError1)
 
-        for (const docsId of updateThemeDocsIds) {
-            const { error: rpcError2 } = await supabase.rpc('update_last_update', { docs_id: docsId })
-            if (rpcError2) return makeError(rpcError2);
-        }
+        const { error: rpcError2 } = await supabase.rpc('update_last_updates', { docs_ids: [...updateThemeDocsIds] })
+        if (rpcError2) return makeError(rpcError2);
 
         setProgress(100);
         setCurrentTask('완료!')

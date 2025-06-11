@@ -6,6 +6,7 @@ import ErrorPage from "@/app/components/ErrorPage";
 import { useState, useCallback, useEffect } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import { reverDuemLaw } from "@/app/lib/DuemLaw";
 
 type wordsDataType = ({
     word: string;
@@ -85,7 +86,14 @@ export default function DocsDataHome({id}:{id:number}){
 
             if (docsData.typez === "letter"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
-                const {data:LetterDatas1, error:error1} = await supabase.from('words').select('*').eq('last_letter',docsData.name.trim()).eq('k_canuse',true).neq('length',1);
+                let q= supabase.from('words').select('*').eq('k_canuse',true).neq('length',1);
+                
+                if (docsData.duem){
+                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()));
+                } else {
+                    q = q.eq('last_letter',docsData.name.trim())
+                }
+                const {data:LetterDatas1, error:error1} = await q;
                 if (error1) return MakeError(error1);
                 const {data:LetterDatas2, error:error2} = await supabase.from('wait_words').select('*').ilike('word',`%${docsData.name.trim()}`);
                 if (error2) return MakeError(error2);

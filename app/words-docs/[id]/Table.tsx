@@ -848,10 +848,7 @@ const Table = ({
     
     // isM.m이 true일 때는 포함개수 기준 내림차순으로 기본 정렬
     const [sorting, setSorting] = useState<SortingState>(
-        isM.m ? [
-            { id: "count", desc: true },
-            { id: "length", desc: true }
-        ] : isL ? [{ id: "length", desc: true }] : []
+        isM.m ? [{ id: "count", desc: true }] : isL ? [{ id: "length", desc: true }] : []
     );
     
     const [modal, setModal] = useState<{ 
@@ -914,7 +911,8 @@ const Table = ({
                 
                 // 포함개수가 같으면 길이로 정렬 (길이가 긴 것이 위로)
                 return rowA.original.word.length - rowB.original.word.length;
-            } : undefined,
+            } : (rowA, rowB) => rowA.original.word.length - rowB.original.word.length
+            ,
         },
         { 
             accessorKey: "word", 
@@ -1071,7 +1069,7 @@ const Table = ({
                                         ))}
                                         {/* 작업 버튼 */}
                                         <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
-                                            {openWork !== undefined && (
+                                            {openWork !== undefined && user.uuid && (
                                                 <button
                                                     className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
                                                     onClick={user.uuid !== undefined ? 
@@ -1083,16 +1081,6 @@ const Table = ({
                                                 </button>
                                             )}
                                         </td>
-                                        {/* <td className="px-6 py-4 text-sm whitespace-nowrap">
-                                            <TableRow
-                                                key={wordData.word}
-                                                {...wordData}
-                                                openWork={user.uuid !== undefined ? 
-                                                    () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : 
-                                                    undefined
-                                                }
-                                            />
-                                        </td> */}
                                     </tr>
                                 );
                             })}

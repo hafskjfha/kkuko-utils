@@ -10,6 +10,7 @@ import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import axios from 'axios';
 import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 import { useRouter } from 'next/navigation';
+import { sum } from 'es-toolkit';
 
 interface WordInfoProps {
     word: string;
@@ -252,8 +253,8 @@ export default function WordInfoPage({ query }: { query: string }) {
                     }
                     
                     // 🔸 총합 (필요 시 null 체크 후 더하기)
-                    const totalFirCount = ((firWordsCount1 ?? []).map(({count})=>count).reduce((acc, cur) => acc + cur, 0) || 0) + (firWordsCount2 || 0);
-                    const totalLasCount = ((lasWordsCount1 ?? []).map(({count})=>count).reduce((acc, cur) => acc + cur, 0) || 0) + (lasWordsCount2 || 0);
+                    const totalFirCount = (sum((firWordsCount1 ?? []).map(({count})=>count))) + (firWordsCount2 || 0);
+                    const totalLasCount = (sum((lasWordsCount1 ?? []).map(({count})=>count))) + (lasWordsCount2 || 0);
 
                     let kkukoWikiok = false
 

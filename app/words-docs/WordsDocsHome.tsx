@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { convertQwertyToHangul } from "es-hangul";
 
 interface Document {
     id: string;
@@ -109,7 +110,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
         
         const query = searchQuery.toLowerCase().trim();
         return docs.filter(doc => 
-            doc.name.toLowerCase().includes(query)
+            doc.name.toLowerCase().includes(query) || doc.name.toLocaleLowerCase().includes(convertQwertyToHangul(query))
         );
     }, [docs, searchQuery]);
 
