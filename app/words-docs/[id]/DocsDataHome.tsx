@@ -89,9 +89,9 @@ export default function DocsDataHome({id}:{id:number}){
                 let q= supabase.from('words').select('*').eq('k_canuse',true).neq('length',1);
                 
                 if (docsData.duem){
-                    q = q.in('first_letter',reverDuemLaw(docsData.name.trim()));
+                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()));
                 } else {
-                    q = q.eq('first_letter',docsData.name.trim())
+                    q = q.eq('lastletter',docsData.name.trim())
                 }
                 const {data:LetterDatas1, error:error1} = await q;
                 if (error1) return MakeError(error1);
