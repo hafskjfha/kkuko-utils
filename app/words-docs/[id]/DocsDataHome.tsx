@@ -87,9 +87,9 @@ export default function DocsDataHome({id}:{id:number}){
             if (docsData.typez === "letter"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
                 let q= supabase.from('words').select('*').eq('k_canuse',true).neq('length',1);
-                
+                 
                 if (docsData.duem){
-                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()));
+                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()[0]));
                 } else {
                     q = q.eq('last_letter',docsData.name.trim())
                 }
