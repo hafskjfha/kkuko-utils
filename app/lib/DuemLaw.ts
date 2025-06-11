@@ -35,25 +35,24 @@ export function reverDuemLaw(c: string): string[]{
     const reversDuemLetter: string[] = [c];
     if (jamos_list.length < 2) return reversDuemLetter;
 
-    if (jamos_list[0] == 'ㄴ' && jamos_list[1] in ch_list1){
+    if (jamos_list[0] == 'ㄴ' && ch_list1.includes(jamos_list[1])){
         jamos_list[0] = 'ㄹ'
         const i_letter = assemble(jamos_list)
         reversDuemLetter.push(i_letter)
         jamos_list[0] = 'ㄴ'
     }
-    if (jamos_list[0] == 'ㅇ' && jamos_list[1] in ch_list2){
+    if (jamos_list[0] == 'ㅇ' && ch_list2.includes(jamos_list[1])){
         jamos_list[0] = 'ㄹ'
         const i_letter = assemble(jamos_list)
         reversDuemLetter.push(i_letter)
         jamos_list[0] = 'ㅇ'
     }
-    if (jamos_list[0] == 'ㅇ' && jamos_list[1] in ch_list3){
+    if (jamos_list[0] == 'ㅇ' && ch_list3.includes(jamos_list[1])){
         jamos_list[0] = 'ㄴ'
         const i_letter = assemble(jamos_list)
         reversDuemLetter.push(i_letter)
         jamos_list[0] = 'ㅇ'
     }
-    console.log(c,reversDuemLetter)
 
     return reversDuemLetter
 
