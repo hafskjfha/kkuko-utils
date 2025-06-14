@@ -1,3 +1,4 @@
+"use client";
 import { useState, useRef, ChangeEvent, DragEvent } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import {

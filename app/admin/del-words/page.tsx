@@ -1,4 +1,4 @@
-import AdminDelHomeWrapper from "./AdminDelHomeWrapper";
+import WordsDelHome from "./DelWordsHome";
 
 export async function generateMetadata() {
     return {
@@ -8,5 +8,5 @@ export async function generateMetadata() {
 }
 
 export default function AdminDelPage(){
-    return <AdminDelHomeWrapper />
+    return <WordsDelHome/>
 }

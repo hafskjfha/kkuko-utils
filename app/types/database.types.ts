@@ -523,21 +523,34 @@ export type Database = {
       }
       word_themes_wait: {
         Row: {
+          req_at: string | null
+          req_by: string | null
           theme_id: number
           typez: Database["public"]["Enums"]["request_type_enum"]
           word_id: number
         }
         Insert: {
+          req_at?: string | null
+          req_by?: string | null
           theme_id: number
           typez: Database["public"]["Enums"]["request_type_enum"]
           word_id: number
         }
         Update: {
+          req_at?: string | null
+          req_by?: string | null
           theme_id?: number
           typez?: Database["public"]["Enums"]["request_type_enum"]
           word_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "word_themes_wait_req_by_fkey"
+            columns: ["req_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "word_themes_wait_theme_id_fkey"
             columns: ["theme_id"]
@@ -603,6 +616,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_word_themes_bulk: {
+        Args: { pairs: Json }
+        Returns: {
+          word_id: number
+          word: string
+          theme_id: number
+          theme_name: string
+        }[]
+      }
+      delete_word_themes_wait_bulk: {
+        Args: { pairs: Json }
+        Returns: undefined
+      }
       get_doc_rank: {
         Args: { doc_id: number }
         Returns: number

@@ -1,4 +1,4 @@
-import AdminAddHomeWrapper from "./Wrapper";
+import WordsAddHome from "./AddWordsHome";
 
 export async function generateMetadata() {
     return {
@@ -8,5 +8,5 @@ export async function generateMetadata() {
 }
 
 export default function WordsAddPage(){
-    return <AdminAddHomeWrapper />
+    return <WordsAddHome/>
 }

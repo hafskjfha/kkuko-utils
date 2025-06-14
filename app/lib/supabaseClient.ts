@@ -7,7 +7,7 @@ export const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
-class SupabaseClientManager{
+export class SupabaseClientManager{
     public async addDocsLog(logsData:DocsLogData[]) {
         return await supabase.from('docs_logs').insert(logsData);
     }
@@ -33,7 +33,7 @@ class SupabaseClientManager{
     }
 
     public async addWordThemes(insertWordThemesData: addWordThemeQueryType[]){
-        return await supabase.from('word_themes').insert(insertWordThemesData);
+        return await supabase.from('word_themes').insert(insertWordThemesData).select('words(*),themes(*)');
     }
 
     public async getDocs(){
@@ -59,12 +59,38 @@ class SupabaseClientManager{
         return await supabase.from('words').delete().eq('id',wordId);
     }
 
+    public async deleteWordcIds(wordIds: number[]){
+        return await supabase.from('words').delete().in('id',wordIds).select('*');
+    }
+
     public async getWordNomalInfo(word: string){
         return await supabase.from('words').select('*').eq('word', word).maybeSingle();
     }
 
     public async addWaitWordTable(insertWaitWordData: {word: string, requested_by: string | null, request_type: "delete"}){
         return await supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
+    }
+
+    public async deleteWordTheme(deleteQuery: {word_id:number, theme_id: number}[]){
+        if (deleteQuery.length === 0) { return {data: [], error: null} }
+        return await supabase.rpc('delete_word_themes_bulk',{pairs: deleteQuery})
+    }
+
+    public async getAllDocs(){
+        return await supabase.from('docs').select('*');
+    }
+
+    public async updateDocsLastUpdate(docs_ids: number[]){
+        await supabase.rpc('update_last_updates',{docs_ids})
+    }
+
+    public async getWordThemes(wordIds: number[]){
+        return await supabase.from('word_themes').select('words(id,word),themes(*)').in('word_id',wordIds);
+    }
+
+    public async deleteWaitWordThemes(query:{word_id: number, theme_id: number}[]){
+        if (query.length === 0) { return {data: null, error: null} }
+        return await supabase.rpc('delete_word_themes_wait_bulk',{pairs: query})
     }
 
 }
