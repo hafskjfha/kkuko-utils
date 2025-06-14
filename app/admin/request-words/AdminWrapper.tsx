@@ -1,9 +1,6 @@
 "use client";
 import AdminHome from "./AdminRequestHome";
-import NotFound from '@/app/not-found-client';
 import { supabase } from "../../lib/supabaseClient";
-import { useSelector } from 'react-redux';
-import { RootState } from "@/app/store/store";
 import { useEffect, useState } from 'react';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import ErrorPage from "../../components/ErrorPage";
@@ -13,6 +10,7 @@ import { DefaultDict } from "../../lib/collections";
 type Theme = {
     theme_id: number;
     theme_name: string;
+    theme_code: string;
     typez?: "add" | "delete"; // 주제 추가/삭제 요청에서만 사용
 }
 
@@ -28,9 +26,6 @@ type WordRequest = {
 }
 
 export default function AdminHomeWrapper(){
-    const [isBlock,setIsBlock] = useState(false);
-    const [checkingRole,setCheckingRole] = useState(true)
-    const user = useSelector((state: RootState) => state.user);
     const { loadingState, updateLoadingState } = useLoadingState();
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
     const [waitDatas,setWaitDatas] = useState<WordRequest[] | null>(null);
@@ -43,7 +38,7 @@ export default function AdminHomeWrapper(){
 
     const getWaitQueue = async () => {
         updateLoadingState(10, "기존 단어 주제 수정 요청 목록 가져오는 중...");
-        const {data: waitThemeWordData, error: waitThemeWordError} = await supabase.from('word_themes_wait').select('*,words(word),themes(name)')
+        const {data: waitThemeWordData, error: waitThemeWordError} = await supabase.from('word_themes_wait').select('*,words(word),themes(name,code)')
         if (waitThemeWordError) {
             MakeError(waitThemeWordError);
             return;
@@ -57,7 +52,7 @@ export default function AdminHomeWrapper(){
         }
 
         updateLoadingState(60,"추가 요청 단어의 주제 목록 가져오는 중...");
-        const {data: waitWordsThemesData, error: waitWordsThemesError} = await supabase.from('wait_word_themes').select('*,themes(name)').in('wait_word_id',waitWordsData.filter((d)=>d.request_type === "add").map(({id})=>id));
+        const {data: waitWordsThemesData, error: waitWordsThemesError} = await supabase.from('wait_word_themes').select('*,themes(name,code)').in('wait_word_id',waitWordsData.filter((d)=>d.request_type === "add").map(({id})=>id));
         if (waitWordsThemesError){
             MakeError(waitWordsThemesError);
             return;
@@ -85,7 +80,8 @@ export default function AdminHomeWrapper(){
             waitThemes.get(data.words.word).push({
                 theme_id: data.theme_id,
                 theme_name: data.themes.name,
-                typez: data.typez
+                typez: data.typez,
+                theme_code: data.themes.code
             })
         });
 
@@ -104,6 +100,7 @@ export default function AdminHomeWrapper(){
             waitWordsAddThemes.get(data.wait_word_id).push({
                 theme_id: data.theme_id,
                 theme_name: data.themes.name,
+                theme_code: data.themes.code,
                 typez: "add"
             })
         })
@@ -126,40 +123,8 @@ export default function AdminHomeWrapper(){
     }
 
     useEffect(()=>{
-        const checkSession = async () => {
-            const { data, error } = await supabase.auth.getSession();
-
-            if (!data || !data.session || error) {
-                setCheckingRole(false);
-                setIsBlock(true)
-                return;
-            }
-
-            const { data: ddata, error: err } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", data.session.user.id);
-
-            if (err || ddata.length == 0){
-                setCheckingRole(false);
-                setIsBlock(true)
-                return;
-            }
-            setCheckingRole(false);
-            getWaitQueue();
-        }
-        checkSession();
+        getWaitQueue();
     },[])
-
-
-
-
-
-
-
-    if (!["admin","r4"].includes(user.role) || isBlock || checkingRole){
-        return <NotFound />
-    }
 
     if (loadingState.isLoading) {
         return (

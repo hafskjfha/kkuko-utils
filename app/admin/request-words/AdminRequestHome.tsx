@@ -29,16 +29,19 @@ import {
     CardTitle
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
-import { supabase } from '../../lib/supabaseClient'
+import { SCM, supabase } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from '../../components/ErrModal'
+import { isNoin } from '@/app/lib/lib'
+import { addWordQueryType } from '@/app/types/type'
 
 // 타입 정의
 type Theme = {
     theme_id: number;
     theme_name: string;
+    theme_code: string;
     typez?: "add" | "delete"; // 주제 추가/삭제 요청에서만 사용
 }
 
@@ -53,13 +56,31 @@ type WordRequest = {
     word_id?: number; // 주제 변경 요청에서만 사용
 }
 
-export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordRequest[], refreshFn: ()=>Promise<void>}) {
+function isV(
+    value: unknown
+): value is Array<{ word_id: number; word: string; theme_id: number; theme_name: string }> {
+    return (
+        Array.isArray(value) &&
+        value.every(
+            (item) =>
+                typeof item === 'object' &&
+                item !== null &&
+                typeof item.word_id === 'number' &&
+                typeof item.word === 'string' &&
+                typeof item.theme_id === 'number' &&
+                typeof item.theme_name === 'string'
+        )
+    );
+}
+
+
+export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: WordRequest[], refreshFn: () => Promise<void> }) {
     const [selectedTab, setSelectedTab] = useState<string>("all");
     const [selectedRequests, setSelectedRequests] = useState<Set<number>>(new Set());
     const [selectedThemes, setSelectedThemes] = useState<Record<number, Set<number>>>({});
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [allSelected, setAllSelected] = useState<boolean>(false);
-    const [errorModalView, setErrorModalView] = useState<ErrorMessage|null>(null);
+    const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
     const user = useSelector((state: RootState) => state.user);
 
     const PAGE_SIZE = 30;
@@ -110,13 +131,13 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
 
         if (currentThemes.has(themeId)) {
             currentThemes.delete(themeId);
-            if (currentThemes.size===0){
+            if (currentThemes.size === 0) {
                 toggleRequest(requestId)
             }
         } else {
             currentThemes.add(themeId);
             const newSelected = new Set(selectedRequests);
-            if (!newSelected.has(requestId)){
+            if (!newSelected.has(requestId)) {
                 newSelected.add(requestId);
                 if (newSelected.size === currentRequests.length) {
                     setAllSelected(true);
@@ -159,115 +180,104 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
         });
 
         // 작업 처리
-        const wordAddThemesQuery: {word_id: number, theme_id: number}[] = []; // 단어의 주제 추가 요청 승인 쿼리
-        const wordDeleteThemesQuery: {word_id: number, theme_id: number}[] = []; // 단어의 주제 삭제 요청 승인 쿼리
-        const wordAddQuery: {word: string, added_by: string | null}[] = []; // 단어 추가 승인 쿼리
-        const wordDeleteQuery: {word_id: number}[] = []; //단어 삭제 승인 쿼리
-        const wordAddBeforeThemes: Record<string,number[]> = {}; // 단어 추가 되고 주제 추가 할 목록
+        const wordAddThemesQuery: { word_id: number, theme_id: number }[] = []; // 단어의 주제 추가 요청 승인 쿼리
+        const wordDeleteThemesQuery: { word_id: number, theme_id: number }[] = []; // 단어의 주제 삭제 요청 승인 쿼리
+        const wordAddQuery: addWordQueryType[] = []; // 단어 추가 승인 쿼리
+        const wordDeleteQuery: { word_id: number }[] = []; //단어 삭제 승인 쿼리
+        const wordAddBeforeThemes: Record<string, number[]> = {}; // 단어 추가 되고 주제 추가 할 목록
         const RequestBy: Record<string, string | null> = {};
 
         // 승인할 목록에서 쿼리에 맞게 배분
-        for (const req of requestsToApprove){
-            switch (req.request_type){
+        for (const req of requestsToApprove) {
+            switch (req.request_type) {
                 case "add":
                     if (!req.word || !req.selectedThemes) continue;
-                    wordAddQuery.push({word: req.word, added_by: req.requested_by_uuid ?? null});
-                    wordAddBeforeThemes[req.word] = req.selectedThemes.map((theme)=>theme.theme_id);
+                    wordAddQuery.push({ word: req.word, added_by: req.requested_by_uuid ?? null, noin_canuse: isNoin(req.selectedThemes.map((theme) => theme.theme_code)) });
+                    wordAddBeforeThemes[req.word] = req.selectedThemes.map((theme) => theme.theme_id);
                     RequestBy[req.word] = req.requested_by_uuid ?? null;
 
                 case "delete":
                     if (!req.word || !req.word_id) continue;
-                    wordDeleteQuery.push({word_id: req.word_id});
+                    wordDeleteQuery.push({ word_id: req.word_id });
                     RequestBy[req.word] = req.requested_by_uuid ?? null;
 
                 case "theme_change":
                     if (!req.word_id || !req.selectedThemes) continue;
-                    const addT: {word_id: number, theme_id: number}[] = [];
-                    const delT: {word_id: number, theme_id: number}[] = [];
-                    req.selectedThemes.forEach((theme)=>{
-                        if (theme.typez === "add"){
-                            addT.push({word_id: req.word_id as number, theme_id: theme.theme_id})
+                    const addT: { word_id: number, theme_id: number }[] = [];
+                    const delT: { word_id: number, theme_id: number }[] = [];
+                    req.selectedThemes.forEach((theme) => {
+                        if (theme.typez === "add") {
+                            addT.push({ word_id: req.word_id as number, theme_id: theme.theme_id })
                         }
-                        else if (theme.typez === "delete"){
-                            delT.push({word_id: req.word_id as number, theme_id: theme.theme_id})
+                        else if (theme.typez === "delete") {
+                            delT.push({ word_id: req.word_id as number, theme_id: theme.theme_id })
                         }
                     })
 
-                    wordAddThemesQuery.concat(addT);
-                    wordDeleteThemesQuery.concat(delT);
+                    wordAddThemesQuery.push(...addT);
+                    wordDeleteThemesQuery.push(...delT);
 
                 default:
                     continue;
             }
         }
 
+        const deleteWordIds = wordDeleteQuery.map(({ word_id }) => word_id);
+        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.getWordThemes(deleteWordIds);
+
         // db에 올리기
-        const {data: AddedWords, error: AddedWordsError} = await supabase.from('words').insert(wordAddQuery).select('*');
-        if (AddedWordsError){
-            makeError(AddedWordsError);
-            return;
-        }
-        
-        const {error: AddWordThemesError} = await supabase.from('word_themes').insert(wordAddThemesQuery);
-        if (wordDeleteThemesQuery.length > 0){
-            const conditions = wordDeleteThemesQuery
-            .map(p => `(word_id.eq.${p.word_id},theme_id.eq.${p.theme_id})`)
-            .join(',');
-            const {error: DeleteWordThemesError} = await supabase.from('word_themes').delete().or(conditions);
-            if (DeleteWordThemesError){
-                makeError(DeleteWordThemesError);
-                return;
-            }
-        }
-        
+        const { data: AddedWords, error: AddedWordsError } = await SCM.addWord(wordAddQuery);
+        if (AddedWordsError) { return makeError(AddedWordsError) }
 
-        if (AddWordThemesError){
-            makeError(AddWordThemesError);
-            return;
-        }
+        const { data: AddWordThemes, error: AddWordThemesError } = await SCM.addWordThemes(wordAddThemesQuery);
+        const { data: DeleteWordThemes, error: DeleteWordThemesError } = await SCM.deleteWordTheme(wordDeleteThemesQuery);
+        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.deleteWordcIds(deleteWordIds)
 
-        const {data: deletedWordsData ,error: DeleteWordsError} = await supabase.from('words').delete().in('id',wordDeleteQuery.map(({word_id})=>word_id)).select('*')
-        if (DeleteWordsError){
-            makeError(DeleteWordsError);
-            return;
-        }
+
+        if (DeleteWordThemesError) { return makeError(DeleteWordThemesError) }
+        if (AddWordThemesError) { return makeError(AddWordThemesError) }
+        if (DeleteWordsError) { return makeError(DeleteWordsError) }
+        if (beforeDeleteWordThemesError) { return makeError(beforeDeleteWordThemesError) }
 
         // 추가된 단어 주제 등록
-        const wordAddThemesQuery2: {word_id: number, theme_id: number}[] = [];
-        AddedWords.forEach(({word,id})=>{
+        const wordAddThemesQuery2: { word_id: number, theme_id: number }[] = [];
+        AddedWords.forEach(({ word, id }) => {
             const themes = wordAddBeforeThemes[word]
-            if (themes){
-                wordAddThemesQuery2.push(...themes.map((tid)=>({ 
+            if (themes) {
+                wordAddThemesQuery2.push(...themes.map((tid) => ({
                     word_id: id,
                     theme_id: tid
                 })))
             }
         });
 
-        const {data: AddWordThemeData,error: AddWordThemesError2} = await supabase.from('word_themes').insert(wordAddThemesQuery2).select('words(id,word,added_by),themes(name,id)')
+        const { data: AddWordThemeData, error: AddWordThemesError2 } = await SCM.addWordThemes(wordAddThemesQuery2);
         if (AddWordThemesError2) return makeError(AddWordThemesError2);
-        const AddedWordThemeRecord: Record<string,string[]> = {}
-        AddWordThemeData.forEach(({words,themes})=>{
-            AddedWordThemeRecord[words.word] = (AddedWordThemeRecord[words.word] ?? []).concat([themes.name])
-        })
+
+        const AddedWordThemeRecord: Record<string, string[]> = {}
+        AddWordThemeData.forEach(({ words, themes }) => { AddedWordThemeRecord[words.word] = (AddedWordThemeRecord[words.word] ?? []).concat([themes.name]) })
+
+        // 삭제된 단어 주제 정보 연결
+        const papa: Record<string,string[]> = {};
+        for (const {words, themes} of beforeDeleteWordThemes){
+            papa[words.word] = [...(papa[words.word] ?? []), themes.name]
+        }
 
         // 로그 등록을 위한 문서 정보 가져오기
         const docsIdInfo: Record<string, number> = {};
         const docsThemeIdInfo: Record<string, number> = {};
-        const {data: docsDatas, error: docsDataError} = await supabase.from('docs').select('*');
-        if (docsDataError){
-            return makeError(docsDataError)
-        }
-        docsDatas.filter(({typez})=>typez==="letter").forEach(({id, name})=>docsIdInfo[name]=id);
-        docsDatas.filter(({typez})=>typez==="theme").forEach(({id,name})=>docsThemeIdInfo[name]=id)
+        const { data: docsDatas, error: docsDataError } = await SCM.getAllDocs();
+        if (docsDataError) { return makeError(docsDataError) }
+        docsDatas.filter(({ typez }) => typez === "letter").forEach(({ id, name }) => docsIdInfo[name] = id);
+        docsDatas.filter(({ typez }) => typez === "theme").forEach(({ id, name }) => docsThemeIdInfo[name] = id)
 
         // 문서 로그 등록
-        const docsLogQuery: {docs_id: number, word: string, add_by: string | null, type: "add" | "delete"}[] = [];
-        const wordsLogQuery: {word: string, processed_by: string, make_by: string | null, state: "approved" | "rejected", r_type: "add" | "delete"}[] = []
+        const docsLogQuery: { docs_id: number, word: string, add_by: string | null, type: "add" | "delete" }[] = [];
+        const wordsLogQuery: { word: string, processed_by: string, make_by: string | null, state: "approved" | "rejected", r_type: "add" | "delete" }[] = []
 
-        for (const data of AddedWords){
+        for (const data of AddedWords) {
             const docsID = docsIdInfo[data.word[data.word.length - 1]];
-            if (docsID){
+            if (docsID) {
                 docsLogQuery.push({
                     docs_id: docsID,
                     word: data.word,
@@ -276,10 +286,10 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
                 })
             }
             const docsNames = AddedWordThemeRecord[data.word]
-            if (docsNames.length > 0){
-                docsNames.forEach((name)=>{
+            if (docsNames.length > 0) {
+                docsNames.forEach((name) => {
                     const docsId2 = docsThemeIdInfo[name]
-                    if (docsId2){
+                    if (docsId2) {
                         docsLogQuery.push({
                             docs_id: docsId2,
                             word: data.word,
@@ -298,9 +308,9 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
             })
         }
 
-        for (const data of deletedWordsData){
+        for (const data of deletedWordsData) {
             const docsID = docsIdInfo[data.word[data.word.length - 1]];
-            if (docsID){
+            if (docsID) {
                 docsLogQuery.push({
                     docs_id: docsID,
                     word: data.word,
@@ -315,42 +325,72 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
                 state: "approved",
                 r_type: "delete"
             })
-            // ㅅㅏㄱ제 관련도 문서 로그 추가해야함
+            for (const theme of (papa[data.word] ?? [])){
+                const docsID2 = docsThemeIdInfo[theme];
+                if (docsID2){
+                    docsLogQuery.push({
+                        docs_id: docsID2,
+                        word: data.word,
+                        add_by: RequestBy[data.word] ?? null,
+                        type: "delete"
+                    });
+                }
+            }
         };
 
-        const cont:Record<string,number> = {};
-        wordsLogQuery.forEach(({make_by})=>{
-            if (make_by){
+        for (const data of AddWordThemes) {
+            const docsId = docsThemeIdInfo[data.themes.name]
+            if (docsId) {
+                docsLogQuery.push({
+                    docs_id: docsId,
+                    word: data.words.word,
+                    add_by: null,
+                    type: "add"
+                })
+            }
+        }
+        for (const data of DeleteWordThemes){
+            const docsId = docsThemeIdInfo[data.theme_name]
+            if (docsId){
+                docsLogQuery.push({
+                    docs_id: docsId,
+                    word: data.word,
+                    add_by: null,
+                    type: "delete"
+                })
+            }
+        }
+
+        const cont: Record<string, number> = {};
+        wordsLogQuery.forEach(({ make_by }) => {
+            if (make_by) {
                 cont[make_by] = (cont[make_by] ?? 0) + 1
             }
         });
 
-        const {error: insertDocsLogError} = await supabase.from('docs_logs').insert(docsLogQuery);
+        const { error: insertDocsLogError } = await SCM.addDocsLog(docsLogQuery);
         if (insertDocsLogError) return makeError(insertDocsLogError);
 
-        const {error: insertWordLogError} = await supabase.from('logs').insert(wordsLogQuery);
+        const { error: insertWordLogError } = await SCM.addWordLog(wordsLogQuery);
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
-        const {error: deleteWaitQueueError} = await supabase.from('wait_words').delete().in('word',AddedWords.map(({word})=>word).concat(deletedWordsData.map(({word})=>word)));
+        const { error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('word', AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word)));
         if (deleteWaitQueueError) return makeError(deleteWaitQueueError);
 
-        if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0){
-            const conditions2 = wordDeleteThemesQuery.concat(wordAddThemesQuery)
-            .map(p => `(word_id.eq.${p.word_id},theme_id.eq.${p.theme_id})`)
-            .join(',');
-            const {error: deleteWaitQueueError2} = await supabase.from('word_themes_wait').delete().or(conditions2)
+        if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0) {
+            const k:{word_id:number, theme_id: number}[] = [];
+            wordDeleteThemesQuery.concat(wordAddThemesQuery)
+                .forEach(p=>k.push({word_id: p.word_id, theme_id: p.theme_id}))
+            const { error: deleteWaitQueueError2 } = await SCM.deleteWaitWordThemes(k);
             if (deleteWaitQueueError2) return makeError(deleteWaitQueueError2);
         }
-        
 
-        docsLogQuery.forEach(async ({docs_id})=>{
-            await supabase.rpc('update_last_update', {docs_id});
-        })
+        const upDocosId: Set<number> = new Set();
+        docsLogQuery.forEach(({ docs_id })=>upDocosId.add(docs_id))
+        await SCM.updateDocsLastUpdate([...upDocosId])
 
-        for (const [key, value] of Object.entries(cont)){
-            await supabase.rpc('increment_contribution',{target_id: key, inc_amount: value})
-        }
+        for (const [key, value] of Object.entries(cont)) { await SCM.updateUserContribution({userId: key, amount: value}) }
 
         // 선택 상태 초기화
         setSelectedRequests(new Set());
@@ -380,7 +420,7 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
 
         // 실제로는 API 호출할 부분
         console.log("거절할 요청:", Array.from(requestsToReject));
-        alert(`${selectedRequests.size}개의 요청을 거절했습니다.`);
+        alert(`구현되지 않은 기능입니다.`);
 
         // 선택 상태 초기화
         setSelectedRequests(new Set());
@@ -445,7 +485,7 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
                                 <Button
                                     variant="outline"
                                     className="bg-green-100 hover:bg-green-200"
-                                    onClick={()=>{
+                                    onClick={() => {
                                         approveSelected()
                                     }}
                                 >
@@ -591,7 +631,7 @@ export default function AdminHome({requestDatas, refreshFn}:{requestDatas: WordR
                     </div>
                 </CardFooter>
             </Card>
-            {errorModalView && <ErrorModal error={errorModalView} onClose={()=>setErrorModalView(null)} />}
+            {errorModalView && <ErrorModal error={errorModalView} onClose={() => setErrorModalView(null)} />}
         </div>
     )
 }
