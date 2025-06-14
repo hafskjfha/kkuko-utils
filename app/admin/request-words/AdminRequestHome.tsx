@@ -56,24 +56,6 @@ type WordRequest = {
     word_id?: number; // 주제 변경 요청에서만 사용
 }
 
-function isV(
-    value: unknown
-): value is Array<{ word_id: number; word: string; theme_id: number; theme_name: string }> {
-    return (
-        Array.isArray(value) &&
-        value.every(
-            (item) =>
-                typeof item === 'object' &&
-                item !== null &&
-                typeof item.word_id === 'number' &&
-                typeof item.word === 'string' &&
-                typeof item.theme_id === 'number' &&
-                typeof item.theme_name === 'string'
-        )
-    );
-}
-
-
 export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: WordRequest[], refreshFn: () => Promise<void> }) {
     const [selectedTab, setSelectedTab] = useState<string>("all");
     const [selectedRequests, setSelectedRequests] = useState<Set<number>>(new Set());
