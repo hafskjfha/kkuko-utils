@@ -36,6 +36,8 @@ import { RootState } from "@/app/store/store";
 import ErrorModal from '../../components/ErrModal'
 import { isNoin } from '@/app/lib/lib'
 import { addWordQueryType } from '@/app/types/type'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 // 타입 정의
 type Theme = {
@@ -491,6 +493,22 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }).format(date);
     };
 
+    const downloadRequestsTXT = () => {
+        const lastUpdateDate = new Date();
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
+
+        const blob = new Blob([filteredRequests.map(req => req.word).join('\n')], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `요청목록(${localTime}).txt`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
     // 요청 타입 뱃지 렌더링
     const renderRequestTypeBadge = (type: string) => {
         switch (type) {
@@ -507,6 +525,13 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
     return (
         <div className="container mx-auto py-8">
+            {/* 관리자 대시보드로 이동 버튼 */}
+            <Link href={'/admin'} className="mb-4 flex">
+                <Button variant="outline">
+                    <ArrowLeft />
+                    관리자 대시보드로 이동
+                </Button>
+            </Link>
             <Card className="w-full">
                 <CardHeader>
                     <CardTitle>단어 DB 관리자 페이지</CardTitle>
@@ -541,6 +566,13 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
                                     onClick={rejectSelected}
                                 >
                                     선택 거절
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="bg-purple-100 hover:bg-purple-200"
+                                    onClick={downloadRequestsTXT}
+                                >
+                                    요청 리스트 다운로드 (TXT)
                                 </Button>
                             </div>
 

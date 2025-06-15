@@ -28,12 +28,6 @@ interface LogItem {
     } | null;
 }
 
-interface CacheKey {
-    page: number;
-    filterState: string;
-    filterType: string;
-}
-
 interface CachedData {
     logs: LogItem[];
     totalCount: number;

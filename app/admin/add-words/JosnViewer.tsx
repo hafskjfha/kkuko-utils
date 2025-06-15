@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
-type WordData = {
-  k_canuse: boolean;
-  noin_canuse: boolean;
-  themes: string[];
-};
-
-type WordEntry = {
-  word: string;
-} & WordData;
+type WordEntry = { word: string, themes: string[] }
 
 
 type JsonData = WordEntry[];
