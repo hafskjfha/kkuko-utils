@@ -8,52 +8,44 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
-import { FileJson, CheckCircle, AlertCircle } from "lucide-react";
-import { supabase } from "@/app/lib/supabaseClient";
+import { FileJson, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { SCM, supabase } from "@/app/lib/supabaseClient";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
 import { PostgrestError } from "@supabase/supabase-js";
 import { chunk as chunkArray } from "es-toolkit";
 import JsonViewer from "./JosnViewer"
+import Link from "next/link";
+import { isNoin } from "@/app/lib/lib";
 
+const keya = (word: string, themeName: string) => `[${word}, ${themeName}]`
 
-type WordData = {
-    k_canuse: boolean;
-    noin_canuse: boolean;
-    themes: string[];
-};
+type JsonData = { word: string, themes: string[] };
 
-type WordEntry = {
-    word: string;
-} & WordData;
-
-function isWordData(data: unknown): data is WordData {
-    if (
-        typeof data !== 'object' ||
-        data === null
-    ) {
+function isRecordOfStringArray(obj: unknown): obj is Record<string, string[]> {
+    if (typeof obj !== 'object' || obj === null) {
         return false;
     }
 
-    const obj = data as Record<string, unknown>;
+    for (const [key, value] of Object.entries(obj)) {
+        if (typeof key !== 'string') {
+            return false;
+        }
+        if (!Array.isArray(value)) {
+            return false;
+        }
+        if (!value.every(item => typeof item === 'string')) {
+            return false;
+        }
+    }
 
-    return (
-        typeof obj.k_canuse === 'boolean' &&
-        typeof obj.noin_canuse === 'boolean' &&
-        Array.isArray(obj.themes) &&
-        obj.themes.every((t) => typeof t === 'string')
-    );
+    return true;
 }
-
-
-
-// 전체 JSON 데이터 구조 (배열 형태)
-type JsonData = WordEntry[];
 
 export default function WordsAddHome() {
     // 상태 관리
-    const [jsonData, setJsonData] = useState<JsonData | null>(null);
+    const [jsonData, setJsonData] = useState<JsonData[] | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTask, setCurrentTask] = useState("");
@@ -83,18 +75,18 @@ export default function WordsAddHome() {
                     setFileUploaded(false);
                     return;
                 }
+                const parsedData: JsonData[] = [];
 
-                const parsedData: WordEntry[] = [];
-
-                for (const [word, value] of Object.entries(parsed)) {
-                    if (isWordData(value)) {
-                        parsedData.push({ word, ...value });
-                    } else {
-                        setError(`"${word}" 항목의 데이터 형식이 올바르지 않습니다.`);
-                        setFileUploaded(false);
-                        return;
+                if (isRecordOfStringArray(parsed)){
+                    for (const [word, themes] of Object.entries(parsed)){
+                        parsedData.push({word, themes})
                     }
+                }else{
+                    setError(`데이터 형식이 올바르지 않습니다.`);
+                    setFileUploaded(false);
+                    return;
                 }
+                
 
                 setJsonData(parsedData);
                 setFileUploaded(true);
@@ -122,7 +114,6 @@ export default function WordsAddHome() {
         setProgress(0);
         setCurrentTask("데이터 초기화 중...");
 
-        // 처리 로직 시뮬레이션 (실제로는 여기서 처리 로직을 구현하세요)
         await handleDbProcess();
     };
 
@@ -144,8 +135,28 @@ export default function WordsAddHome() {
 
         const { data: docsDatas, error: docsDataError } = await supabase.from('docs').select('*');
         if (docsDataError) return makeError(docsDataError);
-        const { data: themeData, error: themeError } = await supabase.from('themes').select('*')
+        const { data: themeData, error: themeError } = await supabase.from('themes').select('*');
         if (themeError) return makeError(themeError);
+
+        const { data: waitWords, error: waitWordsError } = await supabase.from('wait_words').select('*').eq('request_type', 'add')
+        const { data: waitThemeWord, error: waitThemeWordError } = await supabase.from('word_themes_wait').select('words(word),themes(*),*').eq('typez', 'add');
+
+        if (waitWordsError) { return makeError(waitWordsError); }
+        if (waitThemeWordError) { return makeError(waitThemeWordError); }
+
+        const { data: waitWordTheme, error: waitWordThemeError } = await supabase.from('wait_word_themes').select('wait_words(word),themes(*)').in('wait_word_id', waitWords.map(({ id }) => id))
+        if (waitWordThemeError) { return makeError(waitWordThemeError); }
+
+        const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
+        const waitTheme: Record<string, { req_by: string | null }> = {};
+
+        waitWords.forEach(({ id, word, requested_by }) => waitWord[word] = { id, requested_by });
+        waitThemeWord.forEach(({ words: { word }, themes: { name }, req_by }) => {
+            waitTheme[keya(word, name)] = { req_by }
+        })
+        waitWordTheme.forEach(({ wait_words: { word }, themes: { name } }) => {
+            waitTheme[keya(word, name)] = { req_by: waitWord[word]?.requested_by ?? null }
+        })
 
         const letterDocsInfo: Record<string, number> = {};
         const themeDocsInfo: Record<string, number> = {};
@@ -171,14 +182,16 @@ export default function WordsAddHome() {
         for (const data of jsonData) {
             wordAddQuery.push({
                 word: data.word,
-                k_canuse: data.k_canuse,
-                noin_canuse: data.noin_canuse,
-                added_by: user.uuid
+                k_canuse: true,
+                noin_canuse: isNoin(data.themes),
+                added_by: waitWord[data.word]?.requested_by ?? user.uuid
             })
         }
 
         const chuckQuerysA = chunkArray(wordAddQuery, 250)
         setProgress(20);
+        const com: Record<string, number> = {}; // uuid-기여수
+
         for (let i = 0; i < chuckQuerysA.length; i++) {
             const chuckQuery = chuckQuerysA[i]
             setCurrentTask(`단어 추가중... ${i}/${chuckQuerysA.length}`);
@@ -190,13 +203,14 @@ export default function WordsAddHome() {
                 continue
             }
 
-
             for (const data of insertedWordsData) {
-                inseredWordMap[data.word] = data.id
+                inseredWordMap[data.word] = data.id;
+                const make_by = waitWord[data.word]?.requested_by ?? user.uuid;
+                com[make_by] = (com[make_by] ?? 0) + 1;
                 logsQuery.push({
                     word: data.word,
                     processed_by: user.uuid,
-                    make_by: user.uuid,
+                    make_by,
                     r_type: "add" as const,
                     state: "approved" as const
                 })
@@ -205,7 +219,7 @@ export default function WordsAddHome() {
                     docsLogsQuery.push({
                         docs_id: letterDocsId,
                         word: data.word,
-                        add_by: user.uuid,
+                        add_by: make_by,
                         type: "add" as const
                     })
                 }
@@ -213,12 +227,10 @@ export default function WordsAddHome() {
         }
 
         setProgress(40);
-        let addWordCount = 0;
         const needCheckWord: string[] = [];
         for (const data of jsonData) {
             const wordId = inseredWordMap[data.word]
             if (wordId) {
-                addWordCount += 1;
                 for (const theme of data.themes) {
                     const themeId = themeCodeInfo[theme]
                     if (themeId) {
@@ -234,16 +246,16 @@ export default function WordsAddHome() {
         }
 
         setProgress(50);
-        const needCheckedWordsDatas:{id: number, word: string}[] = []
-        const abab = chunkArray(needCheckWord,100)
-        for (let i=0;i<abab.length;i++){
+        const needCheckedWordsDatas: { id: number, word: string }[] = []
+        const abab = chunkArray(needCheckWord, 100)
+        for (let i = 0; i < abab.length; i++) {
             const chuckChecks = abab[i];
             setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
             const { data: needCheckedWordsData, error: ff } = await supabase.from('words').select('id,word').in('word', chuckChecks);
             if (ff) return makeError(ff)
             needCheckedWordsDatas.push(...needCheckedWordsData)
         }
-        
+
 
         const checkedData: Record<string, number> = {};
         for (const data of needCheckedWordsDatas) {
@@ -284,10 +296,11 @@ export default function WordsAddHome() {
             for (const theme of themes) {
                 const themeDocsId = themeDocsInfo[theme]
                 if (themeDocsId) {
+                    const k = keya(word, theme)
                     docsLogsQuery.push({
                         docs_id: themeDocsId,
                         word: word,
-                        add_by: user.uuid,
+                        add_by: waitTheme[k]?.req_by ?? user.uuid,
                         type: "add" as const
                     })
                 }
@@ -296,7 +309,7 @@ export default function WordsAddHome() {
 
         setProgress(60);
         setCurrentTask('로그 등록중...')
-        const { error: logError } = await supabase.from('logs').insert(logsQuery);
+        const { error: logError } = await SCM.addWordLog(logsQuery);
         if (logError) {
             return makeError(logError);
         }
@@ -312,11 +325,17 @@ export default function WordsAddHome() {
 
         setProgress(80);
         setCurrentTask('마지막 처리 중...')
-        const { error: rpcError1 } = await supabase.rpc('increment_contribution', { target_id: user.uuid, inc_amount: addWordCount })
-        if (rpcError1) return makeError(rpcError1)
+        for (const [uuid, count] of Object.entries(com)) {
+            const { error: rpcError1 } = await supabase.rpc('increment_contribution', { target_id: uuid, inc_amount: count })
+            if (rpcError1) return makeError(rpcError1)
+        }
+
 
         const { error: rpcError2 } = await supabase.rpc('update_last_updates', { docs_ids: [...updateThemeDocsIds] })
         if (rpcError2) return makeError(rpcError2);
+
+        const {error} = await supabase.from('wait_words').delete().in('word',logsQuery.map(({word})=>word))
+        if (error) { return makeError(error); }
 
         setProgress(100);
         setCurrentTask('완료!')
@@ -331,6 +350,13 @@ export default function WordsAddHome() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
             <div className="w-full max-w-3xl bg-white rounded-lg shadow-md p-8">
+                {/* 관리자 대시보드로 이동 버튼 */}
+                <Link href={'/admin'} className="mb-4 flex">
+                    <Button variant="outline">
+                        <ArrowLeft />
+                        관리자 대시보드로 이동
+                    </Button>
+                </Link>
                 <h1 className="text-3xl font-bold text-center mb-8">JSON 파일 처리</h1>
 
                 {/* 파일 업로드 영역 */}
@@ -359,7 +385,6 @@ export default function WordsAddHome() {
                     </div>
                 </div>
 
-                {/* 파일 내용 표시 */}
                 {/* 파일 내용 표시 - 가상화 적용 */}
                 {fileUploaded && jsonData && (
                     <div className="mb-8 p-4 bg-gray-50 rounded-md">

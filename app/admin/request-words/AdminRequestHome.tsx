@@ -36,6 +36,8 @@ import { RootState } from "@/app/store/store";
 import ErrorModal from '../../components/ErrModal'
 import { isNoin } from '@/app/lib/lib'
 import { addWordQueryType } from '@/app/types/type'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 // 타입 정의
 type Theme = {
@@ -173,15 +175,17 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         for (const req of requestsToApprove) {
             switch (req.request_type) {
                 case "add":
-                    if (!req.word || !req.selectedThemes) continue;
+                    if (!req.word || !req.selectedThemes || req.selectedThemes.length === 0) continue;
                     wordAddQuery.push({ word: req.word, added_by: req.requested_by_uuid ?? null, noin_canuse: isNoin(req.selectedThemes.map((theme) => theme.theme_code)) });
                     wordAddBeforeThemes[req.word] = req.selectedThemes.map((theme) => theme.theme_id);
                     RequestBy[req.word] = req.requested_by_uuid ?? null;
+                    continue
 
                 case "delete":
                     if (!req.word || !req.word_id) continue;
                     wordDeleteQuery.push({ word_id: req.word_id });
                     RequestBy[req.word] = req.requested_by_uuid ?? null;
+                    continue
 
                 case "theme_change":
                     if (!req.word_id || !req.selectedThemes) continue;
@@ -198,6 +202,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
                     wordAddThemesQuery.push(...addT);
                     wordDeleteThemesQuery.push(...delT);
+                    continue;
 
                 default:
                     continue;
@@ -255,7 +260,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
         // 문서 로그 등록
         const docsLogQuery: { docs_id: number, word: string, add_by: string | null, type: "add" | "delete" }[] = [];
-        const wordsLogQuery: { word: string, processed_by: string, make_by: string | null, state: "approved" | "rejected", r_type: "add" | "delete" }[] = []
+        const wordsLogQuery: { word: string, processed_by: string, make_by: string | null, state: "approved", r_type: "add" | "delete" }[] = []
 
         for (const data of AddedWords) {
             const docsID = docsIdInfo[data.word[data.word.length - 1]];
@@ -382,12 +387,13 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
     };
 
     // 선택한 요청 거절 처리
-    const rejectSelected = () => {
+    const rejectSelected = async () => {
         if (selectedRequests.size === 0) {
             alert("선택된 요청이 없습니다.");
             return;
         }
 
+        // 거절할 처리할 요청과 선택된 주제 정보 구성
         const requestsToReject = Array.from(selectedRequests).map(reqId => {
             const request = requestDatas.find(r => r.id === reqId);
             const selectedThemeIds = selectedThemes[reqId] || new Set<number>();
@@ -400,14 +406,72 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
             };
         });
 
-        // 실제로는 API 호출할 부분
-        console.log("거절할 요청:", Array.from(requestsToReject));
-        alert(`구현되지 않은 기능입니다.`);
+
+        // 배분
+        const wordsLogQuery: { word: string, processed_by: string, make_by: string | null, state: "rejected", r_type: "add" | "delete" }[] = [];
+        const deleteWaitQuery: number[] = [];
+        const waitThemeQuery:  { word_id: number, theme_id: number }[] = [];
+
+        for (const req of requestsToReject){
+            switch (req.request_type){
+                case "add":
+                    if (!req.id || !req.word){ continue }
+                    wordsLogQuery.push({
+                        word: req.word,
+                        processed_by: user.uuid!,
+                        make_by: req.requested_by_uuid ?? null,
+                        state: "rejected" as const,
+                        r_type: req.request_type
+                    })
+                    deleteWaitQuery.push(req.id);
+                    continue;
+                case "delete":
+                    if (!req.id || !req.word){ continue }
+                    wordsLogQuery.push({
+                        word: req.word,
+                        processed_by: user.uuid!,
+                        make_by: req.requested_by_uuid ?? null,
+                        state: "rejected" as const,
+                        r_type: req.request_type
+                    })
+                    deleteWaitQuery.push(req.id);
+                    continue;
+                case "theme_change":
+                    if (!req.word_id || !req.selectedThemes) continue;
+                    const addT: { word_id: number, theme_id: number }[] = [];
+                    const delT: { word_id: number, theme_id: number }[] = [];
+                    req.selectedThemes.forEach((theme) => {
+                        if (theme.typez === "add") {
+                            addT.push({ word_id: req.word_id as number, theme_id: theme.theme_id })
+                        }
+                        else if (theme.typez === "delete") {
+                            delT.push({ word_id: req.word_id as number, theme_id: theme.theme_id })
+                        }
+                    })
+                    waitThemeQuery.push(...addT);
+                    waitThemeQuery.push(...delT);
+                    continue;
+
+                default:
+                    continue;
+            }
+        }
+
+        // 로그 등록
+        const {error: logError} = await SCM.addWordLog(wordsLogQuery);
+
+        // 대기큐에서 삭제
+        const {error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('id',[...new Set(deleteWaitQuery)]);
+        const { error: deleteWaitQueueError2 } = await SCM.deleteWaitWordThemes(waitThemeQuery);
+        if (deleteWaitQueueError) { return makeError(deleteWaitQueueError); }
+        if (deleteWaitQueueError2) { return makeError(deleteWaitQueueError2); }
+        if (logError) { return makeError(logError) };
 
         // 선택 상태 초기화
         setSelectedRequests(new Set());
         setSelectedThemes({});
         setAllSelected(false);
+        refreshFn();
     };
 
     // 페이지 변경시 선택 상태 초기화
@@ -429,6 +493,22 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }).format(date);
     };
 
+    const downloadRequestsTXT = () => {
+        const lastUpdateDate = new Date();
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
+
+        const blob = new Blob([filteredRequests.map(req => req.word).join('\n')], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `요청목록(${localTime}).txt`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
     // 요청 타입 뱃지 렌더링
     const renderRequestTypeBadge = (type: string) => {
         switch (type) {
@@ -445,6 +525,13 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
     return (
         <div className="container mx-auto py-8">
+            {/* 관리자 대시보드로 이동 버튼 */}
+            <Link href={'/admin'} className="mb-4 flex">
+                <Button variant="outline">
+                    <ArrowLeft />
+                    관리자 대시보드로 이동
+                </Button>
+            </Link>
             <Card className="w-full">
                 <CardHeader>
                     <CardTitle>단어 DB 관리자 페이지</CardTitle>
@@ -479,6 +566,13 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
                                     onClick={rejectSelected}
                                 >
                                     선택 거절
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="bg-purple-100 hover:bg-purple-200"
+                                    onClick={downloadRequestsTXT}
+                                >
+                                    요청 리스트 다운로드 (TXT)
                                 </Button>
                             </div>
 

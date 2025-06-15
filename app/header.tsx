@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from 'react-redux';
-import { Menu, X, User, ChevronDown } from 'lucide-react';
+import { Menu, X, User, ChevronDown, LayoutDashboard } from 'lucide-react';
 import type { RootState, AppDispatch } from "./store/store";
 import { supabase } from "./lib/supabaseClient";
 import { useRouter } from "next/navigation";
@@ -15,10 +15,11 @@ const Header = () => {
     const mobileMenuRef = useRef<HTMLDivElement>(null);
     const profileDropdownRef = useRef<HTMLDivElement>(null);
     const isLoggedIn = useSelector((state: RootState) => state.user.username) !== undefined; 
-    const username = useSelector((state: RootState) => state.user.username); 
+    const user = useSelector((state: RootState) => state.user); 
     const pathname = usePathname();
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
+    const username=user.username;
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -158,6 +159,15 @@ const Header = () => {
                                             로그아웃
                                         </button>
                                     )}
+                                    {['r4','admin'].includes(user.role) && (
+                                        <Link 
+                                        href={`/admin`}
+                                        className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                                        >
+                                            <LayoutDashboard size={16} className="mr-3 text-gray-500" />
+                                            관리자 페이지
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -205,6 +215,14 @@ const Header = () => {
                                     >
                                         로그아웃
                                     </button>
+                                    {['r4','admin'].includes(user.role) && (
+                                        <Link 
+                                        href={`/admin`}
+                                        className="block px-4 py-3 text-gray-300 hover:text-blue-400 hover:bg-gray-800/50 rounded-lg transition-colors"
+                                        >
+                                            관리자 페이지
+                                        </Link>
+                                    )}
                                 </>
                             ) : (
                                 <Link 

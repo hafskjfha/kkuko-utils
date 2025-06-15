@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, ChangeEvent, DragEvent } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -18,11 +18,13 @@ import { supabase } from '@/app/lib/supabaseClient';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { chunk as chunkArray } from "es-toolkit";
+import Link from "next/link";
 
 function isNumericString(str: string): boolean {
     return /^[0-9]+$/.test(str);
 }
 
+const keya = (word: string, themeName: string) => `[${word}, ${themeName}]`
 
 export default function WordsDelHome() {
     const [file, setFile] = useState<File | null>(null);
@@ -117,8 +119,6 @@ export default function WordsDelHome() {
         setProgress(0);
         setCurrentTask('파일 분석 중...');
 
-        // 실제 처리 로직은 사용자가 구현할 예정
-        // 여기서는 시뮬레이션만 진행
         await handleDbProcess();
     };
 
@@ -131,6 +131,26 @@ export default function WordsDelHome() {
         setProgress(0);
         const { data: docsDatas, error: docsDataError } = await supabase.from('docs').select('*');
         if (docsDataError) return makeError(docsDataError);
+
+        const { data: waitWords, error: waitWordsError } = await supabase.from('wait_words').select('*').eq('request_type', 'delete')
+        const { data: waitThemeWord, error: waitThemeWordError } = await supabase.from('word_themes_wait').select('words(word),themes(*),*').eq('typez', 'delete');
+
+        if (waitWordsError) { return makeError(waitWordsError); }
+        if (waitThemeWordError) { return makeError(waitThemeWordError); }
+
+        const { data: waitWordTheme, error: waitWordThemeError } = await supabase.from('wait_word_themes').select('wait_words(word),themes(*)').in('wait_word_id', waitWords.map(({ id }) => id))
+        if (waitWordThemeError) { return makeError(waitWordThemeError); }
+
+        const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
+        const waitTheme: Record<string, { req_by: string | null }> = {};
+
+        waitWords.forEach(({ id, word, requested_by }) => waitWord[word] = { id, requested_by });
+        waitThemeWord.forEach(({ words: { word }, themes: { name }, req_by }) => {
+            waitTheme[keya(word, name)] = { req_by }
+        })
+        waitWordTheme.forEach(({ wait_words: { word }, themes: { name } }) => {
+            waitTheme[keya(word, name)] = { req_by: waitWord[word]?.requested_by ?? null }
+        })
 
         const letterDocsInfo: Record<string, number> = {};
         const themeDocsInfo: Record<string, number> = {};
@@ -165,7 +185,7 @@ export default function WordsDelHome() {
         setCurrentTask("삭제할 단어의 주제 정보 가져오는 중...");
         setProgress(50);
 
-        const doct: Record<string,number[]> = {};
+        const doct: Record<string,string[]> = {};
         const nodel: Set<number> = new Set();
 
         for (const chuckchu of chunkArray(wordIds, 100)) {
@@ -173,13 +193,10 @@ export default function WordsDelHome() {
             if (wordThemeError) return makeError(wordThemeError)
 
             for (const data of wordThemeData) {
-                const themeDocsId = themeDocsInfo[data.themes.name]
                 if (isNumericString(data.themes.code)){
                     nodel.add(data.words.id)
                 }
-                if (themeDocsId) {
-                    doct[data.words.word] = [...(doct[data.words.word] ?? []), themeDocsId]
-                }
+                doct[data.words.word] = [...(doct[data.words.word] ?? []), data.themes.name]
             }
         }
 
@@ -189,7 +206,7 @@ export default function WordsDelHome() {
             logsQuery.push({
                 word: word,
                 processed_by: user.uuid,
-                make_by: user.uuid,
+                make_by: waitWord[word]?.requested_by ?? user.uuid,
                 r_type: "delete" as const,
                 state: "approved" as const
             })
@@ -198,17 +215,18 @@ export default function WordsDelHome() {
                 docsLogsQuery.push({
                     docs_id: docsId,
                     word: word,
-                    add_by: user.uuid,
+                    add_by: waitWord[word]?.requested_by ?? user.uuid,
                     type: "delete" as const
                 })
             } 
             const t = doct[word] ?? []
             if (t.length > 0){
-                for (const tid of t){
+                for (const tname of t){
+                    const tid = themeDocsInfo[tname]
                     docsLogsQuery.push({
                         docs_id: tid,
                         word: word,
-                        add_by: user.uuid,
+                        add_by: waitTheme[keya(word,tname)]?.req_by ?? user.uuid,
                         type: "delete" as const
                     })
                 }
@@ -266,6 +284,13 @@ export default function WordsDelHome() {
             </header>
 
             <main className="flex-grow">
+                {/* 관리자 대시보드로 이동 버튼 */}
+                <Link href={'/admin'} className="mb-4 flex">
+                    <Button variant="outline">
+                        <ArrowLeft />
+                        관리자 대시보드로 이동
+                    </Button>
+                </Link>
                 <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                     <h2 className="text-xl font-semibold mb-4">파일 업로드</h2>
 

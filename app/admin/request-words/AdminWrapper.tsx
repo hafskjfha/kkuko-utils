@@ -58,6 +58,11 @@ export default function AdminHomeWrapper(){
             return;
         }
 
+        const {data: deleteWordIds, error: deleteWordIdsError} = await supabase.from('words').select('*').in('word',waitWordsData.filter((d)=>d.request_type === "delete").map(({word})=>word));
+        if (deleteWordIdsError) { return MakeError(deleteWordIdsError); }
+
+        const wordIdMap: Record<string,number> = {};
+        deleteWordIds.forEach(({word,id})=>wordIdMap[word]=id);
         updateLoadingState(85, "데이터를 가공 중...");
         const waitQueue: WordRequest[] = [];
 
@@ -65,7 +70,9 @@ export default function AdminHomeWrapper(){
             id: number;
             request_type: "theme_change";
             word: string;
-            word_id: number
+            word_id: number;
+            requested_at: string;
+            requested_by: string;
         }
         const waitThemes: DefaultDict<string, Theme[]> = new DefaultDict(() => []);
         const waitThemesWord: Record<string, KK> = {}
@@ -74,7 +81,9 @@ export default function AdminHomeWrapper(){
                 id: 10**8 + index,
                 request_type: "theme_change",
                 word: data.words.word,
-                word_id: data.word_id
+                word_id: data.word_id,
+                requested_by: data.req_by ?? "unknow",
+                requested_at: data.req_at
             }
 
             waitThemes.get(data.words.word).push({
@@ -89,8 +98,6 @@ export default function AdminHomeWrapper(){
             const r: WordRequest ={
                 ...waitThemesWord[data[0]],
                 wait_themes: data[1],
-                requested_at: "unknown",
-                requested_by: "unknown"
             }
             waitQueue.push(r);
         });
@@ -113,7 +120,8 @@ export default function AdminHomeWrapper(){
                 requested_at: data.requested_at,
                 requested_by_uuid: data.requested_by ?? undefined,
                 requested_by: data.users?.nickname ?? "unknown",
-                wait_themes: data.request_type === "add" ? waitWordsAddThemes.get(data.id) : undefined
+                wait_themes: data.request_type === "add" ? waitWordsAddThemes.get(data.id) : undefined,
+                word_id: wordIdMap[data.word]
             }
             waitQueue.push(r);
         });
