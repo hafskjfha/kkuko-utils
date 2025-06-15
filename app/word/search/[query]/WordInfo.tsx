@@ -116,8 +116,8 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     };
 
     const handleThemeEditSave = async (newThemes: string[], delThemes: string[]) => {
-        const delThemesQuery = delThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const }));
-        const newThemesQuery = newThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const }));
+        const delThemesQuery = delThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const, req_by: user.uuid }));
+        const newThemesQuery = newThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const, req_by: user.uuid }));
 
         const { data: editRequestData, error: editRequestError } = await supabase.from('word_themes_wait').upsert([...delThemesQuery, ...newThemesQuery], { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
         if (editRequestError) {

@@ -523,21 +523,21 @@ export type Database = {
       }
       word_themes_wait: {
         Row: {
-          req_at: string | null
+          req_at: string
           req_by: string | null
           theme_id: number
           typez: Database["public"]["Enums"]["request_type_enum"]
           word_id: number
         }
         Insert: {
-          req_at?: string | null
+          req_at?: string
           req_by?: string | null
           theme_id: number
           typez: Database["public"]["Enums"]["request_type_enum"]
           word_id: number
         }
         Update: {
-          req_at?: string | null
+          req_at?: string
           req_by?: string | null
           theme_id?: number
           typez?: Database["public"]["Enums"]["request_type_enum"]
