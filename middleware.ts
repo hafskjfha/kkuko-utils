@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { Database } from './app/types/database.types';
 
-// 간단한 URL 로깅 미들웨어
 export async function middleware(request: NextRequest) {
     const isProtectedRoute = request.nextUrl.pathname.startsWith('/admin')
     if (!isProtectedRoute){
