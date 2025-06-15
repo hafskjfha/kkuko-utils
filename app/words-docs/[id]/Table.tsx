@@ -1022,7 +1022,7 @@ const Table = ({
     } = useWorkFunc({ makeError, setIsProcessing, user, id, CompleWork, isProcessing });
 
     return (
-        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full mx-auto">
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[600px]">

@@ -24,7 +24,7 @@ const WordsTableBody = ({
     const user = useSelector((state: RootState) => state.user);
 
     return (
-        <div className="w-full mx-auto px-3 sm:px-4 py-2">
+        <div className="w-full mx-auto py-2">
             {/* 제목 표시 */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-left">{title}</h1>
