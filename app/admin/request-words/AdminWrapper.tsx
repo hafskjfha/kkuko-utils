@@ -38,7 +38,7 @@ export default function AdminHomeWrapper(){
 
     const getWaitQueue = async () => {
         updateLoadingState(10, "기존 단어 주제 수정 요청 목록 가져오는 중...");
-        const {data: waitThemeWordData, error: waitThemeWordError} = await supabase.from('word_themes_wait').select('*,words(word),themes(name,code)')
+        const {data: waitThemeWordData, error: waitThemeWordError} = await supabase.from('word_themes_wait').select('*,words(word),themes(name,code),users(*)')
         if (waitThemeWordError) {
             MakeError(waitThemeWordError);
             return;
@@ -82,7 +82,8 @@ export default function AdminHomeWrapper(){
                 request_type: "theme_change",
                 word: data.words.word,
                 word_id: data.word_id,
-                requested_by: data.req_by ?? "unknow",
+                requested_by_uuid: data.req_by,
+                requested_by: data.users?.nickname ?? "unknow",
                 requested_at: data.req_at
             }
 
