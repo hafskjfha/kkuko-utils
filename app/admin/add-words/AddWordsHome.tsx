@@ -334,9 +334,10 @@ export default function WordsAddHome() {
         const { error: rpcError2 } = await supabase.rpc('update_last_updates', { docs_ids: [...updateThemeDocsIds] })
         if (rpcError2) return makeError(rpcError2);
 
-        
-        const {error} = await supabase.from('wait_words').delete().eq('request_type','add').in('word',logsQuery.map(({word})=>word));
-        if (error) { return makeError(error); }
+        for (const p of chunkArray(logsQuery.map(({word})=>word),100)){
+            const {error} = await supabase.from('wait_words').delete().eq('request_type','add').in('word',p);
+            if (error) { return makeError(error); }
+        }
 
         setProgress(100);
         setCurrentTask('완료!')
