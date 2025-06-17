@@ -73,6 +73,7 @@ export default function AdminHomeWrapper(){
             word_id: number;
             requested_at: string;
             requested_by: string;
+            requested_by_uuid?: string;
         }
         const waitThemes: DefaultDict<string, Theme[]> = new DefaultDict(() => []);
         const waitThemesWord: Record<string, KK> = {}
@@ -82,7 +83,7 @@ export default function AdminHomeWrapper(){
                 request_type: "theme_change",
                 word: data.words.word,
                 word_id: data.word_id,
-                requested_by_uuid: data.req_by,
+                requested_by_uuid: data.req_by ?? undefined,
                 requested_by: data.users?.nickname ?? "unknow",
                 requested_at: data.req_at
             }
