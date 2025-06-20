@@ -1,33 +1,31 @@
 import '@testing-library/jest-dom'
 
-// Mock window.fs if needed for file operations
-Object.defineProperty(window, 'fs', {
+// Mock window.fs
+Object.defineProperty(window as any, 'fs', {
   value: {
     readFile: jest.fn(),
   },
   writable: true,
 })
 
-// Mock URL.createObjectURL for file download tests
-Object.defineProperty(URL, 'createObjectURL', {
+// Mock URL methods
+Object.defineProperty(globalThis.URL, 'createObjectURL', {
   value: jest.fn(() => 'mocked-url'),
   writable: true,
 })
 
-Object.defineProperty(URL, 'revokeObjectURL', {
+Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
   value: jest.fn(),
   writable: true,
 })
 
 // Mock FileReader
 global.FileReader = class {
-  constructor() {
-    this.onload = null
-    this.onerror = null
-    this.result = null
-  }
-  
-  readAsText(file) {
+  onload: ((event: any) => void) | null = null
+  onerror: ((event: any) => void) | null = null
+  result: string | null = null
+
+  readAsText(file: File) {
     setTimeout(() => {
       this.result = 'mocked file content'
       if (this.onload) {
@@ -35,4 +33,4 @@ global.FileReader = class {
       }
     }, 0)
   }
-}
+} as any

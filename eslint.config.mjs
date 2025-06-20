@@ -10,10 +10,20 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // ✅ 테스트 및 설정 파일 무시
+  {
+    ignores: [
+      '**/*.test.tsx',
+      '**/*.test.ts',
+      'jest.config.ts',
+      'jest.setup.ts',
+    ],
+  },
+  // ✅ 기존 설정
   ...compat.config({
     extends: ["next/core-web-vitals", "next/typescript"],
     rules: {
-      'react-hooks/exhaustive-deps': 'off'
+      'react-hooks/exhaustive-deps': 'off',
     },
     ignorePatterns: [
       'node_modules/',
@@ -21,9 +31,9 @@ const eslintConfig = [
       'public/',
       'dist/',
       'test/',
-      'supabase/'
-    ]
-  })
-]
+      'supabase/',
+    ],
+  }),
+];
 
 export default eslintConfig;
