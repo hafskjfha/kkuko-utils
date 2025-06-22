@@ -10,6 +10,7 @@ type word = Database['public']['Tables']['words']['Row']
 type word_theme = {words: word, themes: theme }
 type docs = Database['public']['Tables']['docs']['Row']
 type user = Database['public']['Tables']['users']['Row'];
+type docs_log = Database['public']['Tables']['docs_logs']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -37,6 +38,7 @@ export interface IGetManager{
     allTheme(): Promise<PostgrestSingleResponse<theme[]>>
     theme(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
     docsStarCount(id: number): Promise<{ data: number; error: PostgrestError | null;}>
+    docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
 }
 
 // delete 관련 타입
