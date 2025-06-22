@@ -73,7 +73,7 @@ const DocsInfo = ({
                 <span>문서로 돌아가기</span>
             </Link>
 
-            {/* 헤더 섹션 - 그림자와 패딩 추가 */}
+            {/* 헤더 섹션 */}
             <div className="bg-white rounded-xl shadow-md p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 gap-3">
                     <div className="flex items-center gap-3">
@@ -90,8 +90,9 @@ const DocsInfo = ({
                     )}
                 </div>
 
-                {/* 메타데이터 섹션 - 더 시각적으로 개선 */}
+                {/* 메타데이터 섹션 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-6">
+                    {/** 생성일 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Calendar size={20} className="text-indigo-600 mt-1" />
                         <div>
@@ -100,6 +101,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 마지막 업데이트 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Clock size={20} className="text-emerald-600 mt-1" />
                         <div>
@@ -108,6 +110,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 단어 개수 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <FileText size={20} className="text-amber-600 mt-1" />
                         <div>
@@ -116,6 +119,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 즐겨찾기 수 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Star size={20} className="text-yellow-600 mt-1" />
                         <div>
@@ -124,6 +128,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 문서 ID */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Tag size={20} className="text-rose-600 mt-1" />
                         <div>
@@ -132,6 +137,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 조회수 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <Eye size={20} className="text-blue-600 mt-1" />
                         <div>
@@ -140,6 +146,7 @@ const DocsInfo = ({
                         </div>
                     </div>
 
+                    {/** 조회수 랭킹 */}
                     <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
                         <TrendingUp size={20} className="text-purple-600 mt-1" />
                         <div>

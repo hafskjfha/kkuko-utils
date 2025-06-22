@@ -1,15 +1,15 @@
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
-import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+import type { PostgrestError, PostgrestSingleResponse } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types'
 
-type docs_words = Database['public']['Tables']['docs_words']['Row']
-type wait_words = Database['public']['Tables']['wait_words']['Row']
-type themes = Database['public']['Tables']['themes']['Row']
-type wait_word_themes = Database['public']['Tables']['wait_word_themes']['Row'] & { themes: themes; }
-type words = Database['public']['Tables']['words']['Row']
-type word_themes = {words: words, themes: themes }
+type docs_word = Database['public']['Tables']['docs_words']['Row']
+type wait_word = Database['public']['Tables']['wait_words']['Row']
+type theme = Database['public']['Tables']['themes']['Row']
+type wait_word_theme = Database['public']['Tables']['wait_word_themes']['Row'] & { themes: theme; }
+type word = Database['public']['Tables']['words']['Row']
+type word_theme = {words: word, themes: theme }
 type docs = Database['public']['Tables']['docs']['Row']
-type users = Database['public']['Tables']['users']['Row'];
+type user = Database['public']['Tables']['users']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -17,27 +17,34 @@ type delete_word_themes_bulk = Database['public']['Functions']['delete_word_them
 export interface IAddManager {
     docsLog(logsData: DocsLogData[]): Promise<PostgrestSingleResponse<null>>;
     wordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
-    wordToDocs(AddData: { word_id: number; docs_id: number }[]): Promise<PostgrestSingleResponse<docs_words[]>>;
-    word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<words[]>>;
-    wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_themes[]>>;
+    wordToDocs(AddData: { word_id: number; docs_id: number }[]): Promise<PostgrestSingleResponse<docs_word[]>>;
+    word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
+    wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
     waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
 }
 
 // get 관련 타입
 export interface IGetManager{
-    waitWordInfo(word: string): Promise<PostgrestSingleResponse<wait_words | null>>;
-    waitWordThemes(wordId: number): Promise<PostgrestSingleResponse<wait_word_themes[]>>;
-    wordNomalInfo(word: string): Promise<PostgrestSingleResponse<words | null>>;
-    allDocs(): Promise<PostgrestSingleResponse<(docs & { users: users | null })[]>>;
-    wordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_themes[]>>;
+    waitWordInfo(word: string): Promise<PostgrestSingleResponse<wait_word | null>>;
+    waitWordThemes(wordId: number): Promise<PostgrestSingleResponse<wait_word_theme[]>>;
+    wordNomalInfo(word: string): Promise<PostgrestSingleResponse<word | null>>;
+    allDocs(): Promise<PostgrestSingleResponse<(docs & { users: user | null })[]>>;
+    wordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_theme[]>>;
+    docs(id: number): Promise<PostgrestSingleResponse<(docs & { users: user | null }) | null>>
+    docsWordCount({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{count: number | null; error: PostgrestError | null;}>
+    docsOkWords(id: number): Promise<{ words: null; error: PostgrestError; } | { words: string[]; error: null; }>
+    docsRank(id: number): Promise<PostgrestSingleResponse<number>>;
+    allTheme(): Promise<PostgrestSingleResponse<theme[]>>
+    theme(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
+    docsStarCount(id: number): Promise<{ data: number; error: PostgrestError | null;}>
 }
 
 // delete 관련 타입
 export interface IDeleteManager{
     waitWord(wordId: number): Promise<PostgrestSingleResponse<null>>;
-    wordcWord(word: string): Promise<PostgrestSingleResponse<words[]>>;
-    wordcId(wordId: number): Promise<PostgrestSingleResponse<words[]>>;
-    wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<words[]>>;
+    wordcWord(word: string): Promise<PostgrestSingleResponse<word[]>>;
+    wordcId(wordId: number): Promise<PostgrestSingleResponse<word[]>>;
+    wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
     wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
 }

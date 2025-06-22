@@ -2,6 +2,8 @@ import { ISupabaseClientManager, IAddManager, IGetManager, IDeleteManager, IUpda
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
+import { reverDuemLaw } from '../DuemLaw';
+import { sum } from 'es-toolkit';
 
 class AddManager implements IAddManager {
     constructor(private readonly supabase: SupabaseClient<Database>) { }
@@ -43,6 +45,47 @@ class GetManager implements IGetManager {
     }
     public async wordThemes(wordIds: number[]) {
         return await this.supabase.from('word_themes').select('words(*),themes(*)').in('word_id', wordIds);
+    }
+    public async docs(id: number){
+        return await this.supabase.from('docs').select('*,users(*)').eq('id', id).maybeSingle();
+    }
+    public async docsWordCount({name, duem, typez}:{name: string, duem: boolean, typez: "letter" | "theme"}){
+        if (typez==="letter"){
+            if (duem){
+                const {data, error} = await this.supabase.from('word_last_letter_counts').select('count').in('last_letter',reverDuemLaw(name[0]));
+                return {count: sum(data?.map(({count})=>count) ?? []) ?? 0, error}
+            }else{
+                const {data, error} = await this.supabase.from('word_last_letter_counts').select('count').eq('last_letter',name[0]).maybeSingle();
+                return {count: data?.count ?? 0, error}
+            }
+        }
+        else{
+            const {data: themeData, error: themeDataError} = await this.theme(name)
+            if (themeDataError || !themeData) return {count:0, error: themeDataError}
+            const{ count, error } = await this.supabase.from('word_themes').select('*',{ count: 'exact', head: true }).eq('theme_id',themeData.id);
+            return {count, error}
+        }
+    }
+    public async docsOkWords(id: number){
+        const { data: dataA, error } = await this.supabase.from('docs_words').select('words(word)').eq('docs_id', id);
+        if (error) return { words: null, error }
+
+        const words = dataA.map((wordk) => wordk.words.word);
+        return { words, error: null };
+    }
+    public async docsRank(id: number){
+        return await this.supabase.rpc('get_doc_rank',{doc_id: id})
+    }
+    public async allTheme(){
+        return await this.supabase.from('themes').select('*');
+    }
+    public async theme(name: string){
+        const {data, error} = await this.supabase.from('themes').select('*').eq('name',name).maybeSingle();
+        return {data, error}
+    }
+    public async docsStarCount(id: number){
+        const { data, error } = await this.supabase.from('user_star_docs').select('*').eq('docs_id',id);
+        return {data: data?.length ?? 0, error};
     }
 }
 
