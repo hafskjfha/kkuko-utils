@@ -13,25 +13,45 @@ type users = Database['public']['Tables']['users']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
+// add 관련 타입
+export interface IAddManager {
+    docsLog(logsData: DocsLogData[]): Promise<PostgrestSingleResponse<null>>;
+    wordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
+    wordToDocs(AddData: { word_id: number; docs_id: number }[]): Promise<PostgrestSingleResponse<docs_words[]>>;
+    word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<words[]>>;
+    wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_themes[]>>;
+    waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
+}
 
+// get 관련 타입
+export interface IGetManager{
+    waitWordInfo(word: string): Promise<PostgrestSingleResponse<wait_words | null>>;
+    waitWordThemes(wordId: number): Promise<PostgrestSingleResponse<wait_word_themes[]>>;
+    wordNomalInfo(word: string): Promise<PostgrestSingleResponse<words | null>>;
+    allDocs(): Promise<PostgrestSingleResponse<(docs & { users: users | null })[]>>;
+    wordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_themes[]>>;
+}
+
+// delete 관련 타입
+export interface IDeleteManager{
+    waitWord(wordId: number): Promise<PostgrestSingleResponse<null>>;
+    wordcWord(word: string): Promise<PostgrestSingleResponse<words[]>>;
+    wordcId(wordId: number): Promise<PostgrestSingleResponse<words[]>>;
+    wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<words[]>>;
+    wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
+    waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
+}
+
+// update 관련 타입
+export interface IUpdateManager{
+    userContribution({ userId, amount }: { userId: string, amount?: number }): Promise<PostgrestSingleResponse<undefined>>;
+    docsLastUpdate(docs_ids: number[]): Promise<void>;
+}
+
+// 전체 supabaseManager 타입 
 export interface ISupabaseClientManager {
-    addDocsLog(logsData: DocsLogData[]): Promise<PostgrestSingleResponse<null>>;
-    addWordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
-    addWordToDocs(AddData: { word_id: number; docs_id: number }[]): Promise<PostgrestSingleResponse<docs_words[]>>;
-    getWaitWordInfo(word: string): Promise<PostgrestSingleResponse<wait_words | null>>;
-    getWaitWordThemes(wordId: number): Promise<PostgrestSingleResponse<wait_word_themes[]>>;
-    addWord(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<words[]>>;
-    addWordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_themes[]>>;
-    updateUserContribution({ userId, amount }: { userId: string, amount?: number }): Promise<PostgrestSingleResponse<undefined>>;
-    deleteWaitWord(wordId: number): Promise<PostgrestSingleResponse<null>>;
-    deleteWordcWord(word: string): Promise<PostgrestSingleResponse<words[]>>;
-    deleteWordcId(wordId: number): Promise<PostgrestSingleResponse<words[]>>;
-    deleteWordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<words[]>>;
-    getWordNomalInfo(word: string): Promise<PostgrestSingleResponse<words | null>>;
-    addWaitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
-    deleteWordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
-    getAllDocs(): Promise<PostgrestSingleResponse<(docs & { users: users | null })[]>>;
-    updateDocsLastUpdate(docs_ids: number[]): Promise<void>;
-    getWordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_themes[]>>;
-    deleteWaitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
+    add(): IAddManager;
+    get(): IGetManager;
+    delete(): IDeleteManager;
+    update(): IUpdateManager;
 }
