@@ -472,9 +472,9 @@ const DocsDataPage = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                                     title={item.title} 
                                                     initialData={item.data || []} 
                                                     id={`${id}`} 
-                                                    aoK={metaData.typez === "ect"}
-                                                    isMa={activeTab === "mission"}
-                                                    isL={activeTab==="long"}
+                                                    isEct={metaData.typez === "ect"}
+                                                    isMission={activeTab === "mission"}
+                                                    isLong={activeTab==="long"}
                                                 />
                                             </div>
                                         </div>

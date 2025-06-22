@@ -11,7 +11,7 @@ interface TocItem {
 interface TocProps {
     items: TocItem[];
     onItemClick: (index: number) => void;
-    isSp?: boolean;
+    isSp?: boolean; // 특수 ToC처리 용도
 }
 
 const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {

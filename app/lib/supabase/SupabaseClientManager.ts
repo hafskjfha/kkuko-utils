@@ -26,6 +26,14 @@ class AddManager implements IAddManager {
     public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
     }
+    public async docsWait({word_id, docs_id, requested_by}: {word_id: number, docs_id: number, requested_by: string | null}){
+        return await this.supabase.from('docs_words_wait').insert({
+            word_id,
+            docs_id,
+            typez: "add",
+            requested_by
+        })
+    }
 }
 
 class GetManager implements IGetManager {
@@ -89,6 +97,27 @@ class GetManager implements IGetManager {
     }
     public async docsLogs(id: number){
         return await this.supabase.from("docs_logs").select("*, users(*)").eq("docs_id", id).order("date", { ascending: false });
+    }
+    public async searchWord(query: string, onlyWords: boolean = false, addReqOnly: boolean = false){
+        if (query.length < 5) {
+            const {data: wordsData, error: wordsError} = await this.supabase.from('words').select('id,word').eq('word',query);
+            if (wordsError) return {data: null, error: wordsError};
+            if (onlyWords) return {data: wordsData, error: null}
+            else {
+                const {data: waitWordsData, error: waitWordsError} = await this.supabase.from('wait_words').select('id,word,request_type').eq('word',query);
+                if (waitWordsError) return {data: null, error: waitWordsError}
+                return {data: wordsData.concat(waitWordsData.filter(({request_type})=>addReqOnly ? request_type === "add" : true)), error: null}
+            }
+        }else {
+            const {data: wordsData, error: wordsError} = await this.supabase.from('words').select('id,word').ilike('word', `%${query}%`);
+            if (wordsError) return {data: null, error: wordsError};
+            if (onlyWords) return {data: wordsData, error: null}
+            else {
+                const {data: waitWordsData, error: waitWordsError} = await this.supabase.from('wait_words').select('id,word,request_type').ilike('word', `%${query}%`);
+                if (waitWordsError) return {data: null, error: waitWordsError}
+                return {data: wordsData.concat(waitWordsData.filter(({request_type})=>addReqOnly ? request_type === "add" : true)), error: null}
+            }
+        }
     }
 }
 

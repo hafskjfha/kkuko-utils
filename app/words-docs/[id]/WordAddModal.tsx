@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import Spinner from "@/app/components/Spinner";
 import { PostgrestError } from "@supabase/supabase-js";
 import CompleteModal from "@/app/components/CompleteModal";
@@ -33,50 +33,6 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
     const [WorkWord, setWorkWord] = useState<{ word: string, id: number } | null>(null);
     const user = useSelector((state: RootState) => state.user);
 
-    const handleSearchA = async (querys: string) => {
-        setQuery((prev)=>prev.replace(/[^가-힣a-zA-Z0-9]/g, ''));
-        if (querys.trim() === "") {
-            setSearchResults(null);
-            return [];
-        }
-        if (querys.length < 5) {
-            const { data: words, error: err } = await supabase.from('words').select('word,id').eq('word', querys);
-            if (err) {
-                throw err;
-            }
-            return words;
-        }
-        else {
-            const { data: words, error: err } = await supabase.from('words').select('word,id').ilike('word', `%${querys}%`);
-            if (err) {
-                throw err;
-            }
-            return words;
-        }
-
-    }
-
-    const handleSearchB = async (querys: string) => {
-        if (querys.trim() === "") {
-            setSearchResults(null);
-            return [];
-        }
-        if (querys.length < 5) {
-            const { data: words, error: err } = await supabase.from('wait_words').select('word,id,request_type').eq('word', querys);
-            if (err) {
-                throw err;
-            }
-            return words.filter((word) => word.request_type === "add");
-        }
-        else {
-            const { data: words, error: err } = await supabase.from('wait_words').select('word,id,request_type').ilike('word', `%${querys}%`);
-            if (err) {
-                throw err;
-            }
-            return words.filter((word) => word.request_type === "add");
-        }
-    }
-
     const handleSearch = async () => {
         if (query.trim() === "") {
             setSearchResults(null);
@@ -84,8 +40,9 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
         }
         try {
             setIsLoading(true);
-            const [A, B] = await Promise.all([handleSearchA(query), handleSearchB(query)]);
-            setSearchResults([...A.map(({ word, id }) => ({ word, id })), ...B.map(({ word, id }) => ({ word, id }))]);
+            const {data, error} = await SCM.get().searchWord(query, false, true);
+            if (error) throw error;
+            setSearchResults(data);
             setIsLoading(false);
         }
         catch (error) {
@@ -100,11 +57,10 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
         if (WorkWord === null) return;
         try {
             setIsLoading(true);
-            const { error } = await supabase.from('docs_words_wait').insert({
+            const { error } = await SCM.add().docsWait({
                 word_id: WorkWord.id,
                 docs_id: id,
-                typez: "add",
-                requested_by: user.uuid
+                requested_by: user.uuid ?? null
             });
             if (error) throw error;
             alreadyAddedWords.add(WorkWord.word);
@@ -138,6 +94,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
                     <DialogTitle>{!showAddWord ? "문서에" : ""} 단어 추가</DialogTitle>
                 </DialogHeader>
 
+                {/** 단어 추가 요청 확인 모달 */}
                 {showConfirmModal && (
                     <ConfirmModal
                         title={`문서에 추가 요청`}
@@ -150,6 +107,7 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
                     />
                 )}
 
+                {/* 단어 추가 요청 완료 모달 */}
                 {showCompleteModal && (
                     <CompleteModal
                         title="단어 추가 요청 완료"
@@ -158,6 +116,8 @@ const WordAddModal = ({ isOpen, onClose, alreadyAddedWords, id, isAddok }: WordA
                         open={showCompleteModal}
                     />
                 )}
+
+                {/** 단어 추가 요청 폼 (기존 DB에서 문서 연결) */}
                 {(!showAddWord && isAddok) ? (
                     <div className="flex flex-col gap-3 flex-grow">
                         {/* 검색 입력 필드 */}
@@ -223,7 +183,8 @@ const AddWordForm = ({ onClose, docsID }: { onClose: () => void, docsID: number 
     const onMoveToAddPage = () => {
         router.push('/word/add?docsID=' + docsID);
     };
-    
+
+    // 동적 ui모달창 만들기 귀찮아서 그냥 단어 추가 페이지로 이동시키기
     return (
         <div className="space-y-3 overflow-y-auto w-full max-w-[600px] mx-auto p-4 text-center">
             <div className="text-lg font-semibold">단어 추가는 별도 페이지에서 진행됩니다.</div>

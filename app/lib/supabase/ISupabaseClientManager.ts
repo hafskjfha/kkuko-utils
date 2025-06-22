@@ -22,6 +22,7 @@ export interface IAddManager {
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
     waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
+    docsWait({ word_id, docs_id, requested_by }: { word_id: number; docs_id: number; requested_by: string; }): Promise<PostgrestSingleResponse<null>>
 }
 
 // get 관련 타입
@@ -39,6 +40,7 @@ export interface IGetManager{
     theme(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
     docsStarCount(id: number): Promise<{ data: number; error: PostgrestError | null;}>
     docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
+    searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
 }
 
 // delete 관련 타입
