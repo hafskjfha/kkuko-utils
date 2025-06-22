@@ -1,6 +1,6 @@
 "use client";
 import DocsDataPage from "./DocsDataPage";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM, supabase } from "@/app/lib/supabaseClient";
 import NotFound from "@/app/not-found-client";
 import ErrorPage from "@/app/components/ErrorPage";
 import { useState, useCallback, useEffect } from "react";
@@ -52,11 +52,6 @@ export default function DocsDataHome({id}:{id:number}){
         return {words, error:null};
     },[]);
 
-    const getDocsInfo = useCallback(async () => {
-        const {data, error} = await supabase.from('docs').select('*').eq("id",id).maybeSingle();
-        return {data, error}
-    },[]);
-
     const getDataWaitWordsA = useCallback(async () => {
         const {data, error} = await supabase.from('docs_words_wait').select('words(word), typez, users(id)').eq('docs_id',id);
         if (error)return {words:null,error};
@@ -78,33 +73,27 @@ export default function DocsDataHome({id}:{id:number}){
     useEffect(()=>{
         const getDatas = async () => {
             updateLoadingState(10,"문서 정보 가져오는 중...")
-            const {data: docsData, error: docsDataError} = await getDocsInfo();
+            const {data: docsData, error: docsDataError} = await SCM.get().docs(id);
             if (docsDataError) return MakeError(docsDataError);
             if (docsData===null) return setIsNotFound(true);
-            const {data: docsStarData, error: docsStarError} = await supabase.from('user_star_docs').select('user_id').eq('docs_id',docsData.id)
+            const {data: docsStarData, error: docsStarError} = await SCM.get().docsStar(docsData.id);
             if (docsStarError) return MakeError(docsStarError);
 
             if (docsData.typez === "letter"){
                 updateLoadingState(40, "문서에 들어간 단어 정보 가져오는 중...");
-                let q= supabase.from('words').select('*').eq('k_canuse',true).neq('length',1);
-                 
-                if (docsData.duem){
-                    q = q.in('last_letter',reverDuemLaw(docsData.name.trim()[0]));
-                } else {
-                    q = q.eq('last_letter',docsData.name.trim())
-                }
-                const {data:LetterDatas1, error:error1} = await q;
-                if (error1) return MakeError(error1);
-                const {data:LetterDatas2, error:error2} = await supabase.from('wait_words').select('*').ilike('word',`%${docsData.name.trim()}`);
-                if (error2) return MakeError(error2);
-                
+                const {data, error: LetterDatasError} = await SCM.get().docsWords({name: docsData.name, duem: docsData.duem, typez: "letter"});
+                if (LetterDatasError) return MakeError(LetterDatasError);
+                const {words: LetterDatas1, waitWords: LetterDatas2} = data;
+
                 await new Promise(resolve => setTimeout(resolve, 1))
                 updateLoadingState(70, "데이터를 가공중...")
+                
+                // 삭제 요청인 단어는 제외
                 const wordsNotInB = LetterDatas1.filter(a => !LetterDatas2.some(b => b.word === a.word)).map((p)=>({word: p.word, status: "ok" as const, maker: undefined}));
                 const wordsData = [...wordsNotInB, ...LetterDatas2.filter(({word})=>word.length > 1).map(({word,requested_by,request_type})=>({word, status: request_type, maker:requested_by}))]
                 const p = {title: docsData.name, lastUpdate: docsData.last_update, typez:docsData.typez}
                 setWordsData({words: wordsData, metadata: p, starCount:docsStarData.map(({user_id})=>user_id)});
-                await supabase.rpc('increment_doc_views',{doc_id:docsData.id})
+                await SCM.update().docView(docsData.id);
                 updateLoadingState(100, "완료!");
                 return;
             }
@@ -113,18 +102,30 @@ export default function DocsDataHome({id}:{id:number}){
                 const {data: themeData, error: themeDataError} = await supabase.from('themes').select('*').eq('name',docsData.name).maybeSingle();
                 if (themeDataError) return MakeError(themeDataError);
                 if (!themeData) return setIsNotFound(true)
+
+                const {data, error} = await SCM.get().docsWords({name: docsData.name, duem: docsData.duem, typez: "theme"})
+                if (error) return MakeError(error);
+
+                // 생각을 해보자
+                
+                // words태이블에서 가져오기
                 const {data: themeWordsData1, error: themeWordsError1} = await supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
                 if (themeWordsError1) return MakeError(themeWordsError1);
+                
+                // words테이블에 있는 단어지만 해당주제에 추가/삭제 요청인 단어 가져오기
                 const {data: themeWordsData2, error: themeWordsError2} = await supabase.from('word_themes_wait').select('words(*),typez').eq('theme_id', themeData.id)
                 if (themeWordsError2) return MakeError(themeWordsError2);
+                
+                // wait_words테이블에서 가져오기
                 const {data: themeWordsData3, error: themeWordsError3} = await supabase.from('wait_word_themes').select('wait_words(*)').eq('theme_id', themeData.id)
                 if (themeWordsError3) return MakeError(themeWordsError3);
-                const {data: themeWordsData4, error: themeWordError4} = await supabase.from('wait_words').select('*').eq('request_type',"delete");
-                if (themeWordError4) return MakeError(themeWordError4);
-                const {data: wprdsA, error} = await supabase.from('words').select('word,id').in('word',themeWordsData4.map(({word})=>word))
-                if (error) return MakeError(error);
-                const themeWordsData5 = wprdsA.filter(({word})=>!themeWordsData3.some(b=>b.wait_words.word === word)).map(({id})=>id);
-                const {data: themeWordsData6, error: themeWordError6} = await supabase.from('word_themes').select('*,words(word)').in('word_id',themeWordsData5);
+                
+                // ???? 일단 삭제요청인 목록를 가져온다.
+                const {data: wordsDelReq, error: wordsDelError} = await SCM.get().allWaitWords();
+                if (wordsDelError) return MakeError(wordsDelError);
+
+                const themeWordsData5 = wordsDelReq.filter(({request_type})=>request_type === "delete").filter(({word})=>!themeWordsData3.some(b=>b.wait_words.word === word)).map(({words})=>words?.id ?? 0);
+                const {data: themeWordsData6, error: themeWordError6} = await SCM.get().wordsThemes(themeWordsData5)
                 if (themeWordError6) return MakeError(themeWordError6);
 
                 await new Promise(resolve => setTimeout(resolve, 1))

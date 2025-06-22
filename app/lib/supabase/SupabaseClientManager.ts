@@ -119,6 +119,57 @@ class GetManager implements IGetManager {
             }
         }
     }
+    public async docsStar(id: number){
+        return await this.supabase.from('user_star_docs').select('user_id').eq('docs_id',id);
+    }
+    public async docsWords({name, duem, typez}:{name: string, duem: boolean, typez: "letter" | "theme"}){
+        if (typez==="letter"){
+            if (duem){
+                const{data:wordsData, error: wordsError} = await this.supabase.from('words').select('*').in('last_letter',reverDuemLaw(name[0])).eq('k_canuse',true).neq('length',1);
+                if (wordsError) return {data: null, error: wordsError}
+                let q = this.supabase.from('wait_words').select('word,requested_by,request_type');
+                for (const l of reverDuemLaw(name[0])){
+                    q=q.ilike('word',`%${l}`)
+                }
+                const {data: waitWordsData, error: waitWordsError} = await q;
+                if (waitWordsError) return {data: null, error: waitWordsError}
+                return {data:{words: wordsData, waitWords: waitWordsData}, error: null}
+            }else{
+                const{data:wordsData, error: wordsError} = await this.supabase.from('words').select('*').eq('last_letter',name[0]).eq('k_canuse',true).neq('length',1);
+                if (wordsError) return {data: null, error: wordsError}
+                const {data: waitWordsData, error: waitWordsError} = await this.supabase.from('wait_words').select('word,requested_by,request_type').ilike('word',`${name.trim()[0]}`)
+                if (waitWordsError) return {data: null, error: waitWordsError}
+                return {data: {words: wordsData, waitWords: waitWordsData}, error: null}
+            }
+        }
+        else{
+            const {data: themeData, error: themeDataError} = await this.theme(name)
+            if (themeDataError) return {data: null, error: themeDataError};
+            if (!themeData) return {data: {words: [], waitWords: []}, error: null}
+            const {data: wordsData, error: wordsError} = await this.supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
+            const {data: waitWordsData1, error: waitWordsError1} = await this.supabase.from('word_themes_wait').select('words(*),typez,req_by').eq('theme_id', themeData.id);
+            const {data: waitWordsData2, error: waitWordsError2} = await this.supabase.from('wait_word_themes').select('wait_words(word,requested_by,request_type)').eq('theme_id', themeData.id);
+            
+            if (wordsError) return {data: null, error: wordsError}
+            if (waitWordsError1) return {data: null, error: waitWordsError1}
+            if (waitWordsError2) return {data: null, error: waitWordsError2}
+            const Data1Set = new Set(waitWordsData1.map(({words})=>words.word))
+            const waitWords = waitWordsData2.map(({wait_words})=>wait_words);
+            waitWordsData1.forEach(({words:{word},typez, req_by})=>{
+                if (!Data1Set.has(word)){
+                    waitWords.push({word, requested_by: req_by, request_type: typez})
+                }
+            })
+
+            return {data: {words: wordsData.map(({words})=>words), waitWords}, error: null}
+        }
+    }
+    public async allWaitWords(){
+        return await this.supabase.from('wait_words').select('*,words(*)');
+    }
+    public async wordsThemes(words_id: number[]){
+        return await this.supabase.from('word_themes').select('*,words(*)').in('word_id',words_id);
+    }
 }
 
 class DeleteManager implements IDeleteManager {
@@ -170,6 +221,9 @@ class UpdateManager implements IUpdateManager {
     }
     public async docsLastUpdate(docs_ids: number[]) {
         await this.supabase.rpc('update_last_updates', { docs_ids });
+    }
+    public async docView(id: number): Promise<void> {
+        await this.supabase.rpc('increment_doc_views',{doc_id:id})
     }
 }
 

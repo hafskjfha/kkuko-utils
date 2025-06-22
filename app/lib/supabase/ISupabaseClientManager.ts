@@ -22,7 +22,7 @@ export interface IAddManager {
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
     waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
-    docsWait({ word_id, docs_id, requested_by }: { word_id: number; docs_id: number; requested_by: string; }): Promise<PostgrestSingleResponse<null>>
+    docsWait({ word_id, docs_id, requested_by }: { word_id: number; docs_id: number; requested_by: string | null; }): Promise<PostgrestSingleResponse<null>>
 }
 
 // get 관련 타입
@@ -41,6 +41,10 @@ export interface IGetManager{
     docsStarCount(id: number): Promise<{ data: number; error: PostgrestError | null;}>
     docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
     searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
+    docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
+    docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: { word: string; requested_by: string | null; request_type: "add" | "delete"; }[]}, error: null}>
+    allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null;})[]>>;
+    wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
 }
 
 // delete 관련 타입
@@ -57,6 +61,7 @@ export interface IDeleteManager{
 export interface IUpdateManager{
     userContribution({ userId, amount }: { userId: string, amount?: number }): Promise<PostgrestSingleResponse<undefined>>;
     docsLastUpdate(docs_ids: number[]): Promise<void>;
+    docView(id: number): Promise<void>;
 }
 
 // 전체 supabaseManager 타입 
