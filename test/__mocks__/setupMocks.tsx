@@ -68,3 +68,10 @@ jest.mock('@/app/components/HelpModal', () => {
   )
 })
 
+jest.mock('@/app/components/ui/scroll-area', () => ({
+  ScrollArea: ({ children, onScrollCapture, className }: any) => (
+    <div className={className} onScroll={onScrollCapture} data-testid="scroll-area">
+      {children}
+    </div>
+  ),
+}));

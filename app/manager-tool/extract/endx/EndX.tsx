@@ -52,7 +52,7 @@ const WordExtractorApp = () => {
         try {
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1))
-            console.log(fileContent?.length, wordEnd)
+
             if (fileContent && wordEnd) {
                 const words = fileContent.split(/\s+/).filter((word) => word.endsWith(wordEnd));
                 // 중복 제거
@@ -66,7 +66,7 @@ const WordExtractorApp = () => {
                     }
                 });
                 setExtractedWords(sortChecked ? result.sort((a, b) => a.localeCompare(b, "ko")) : result);
-                console.log(result.length)
+
             }
         } catch (err) {
             handleError(err);
