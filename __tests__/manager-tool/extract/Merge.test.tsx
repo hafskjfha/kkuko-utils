@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import WordExtractorApp from "@/app/manager-tool/extract/merge/Merge";
-import { getOutsideHelpModal } from "../test/utils/dom";
+import { getOutsideHelpModal } from "@/test/utils/dom";
 import { act } from "react";
 
 describe("Merge", () => {
