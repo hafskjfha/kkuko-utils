@@ -1,5 +1,5 @@
 import { ISupabaseClientManager, IAddManager, IGetManager, IDeleteManager, IUpdateManager } from './ISupabaseClientManager';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
 import { reverDuemLaw } from '../DuemLaw';
@@ -122,7 +122,7 @@ class GetManager implements IGetManager {
     public async docsStar(id: number){
         return await this.supabase.from('user_star_docs').select('user_id').eq('docs_id',id);
     }
-    public async docsWords({name, duem, typez}:{name: string, duem: boolean, typez: "letter" | "theme"}){
+    public async docsWords({name, duem, typez}:{name: string, duem: boolean, typez: "letter" | "theme"} | {name: number, duem: boolean,typez: "ect"}){
         if (typez==="letter"){
             if (duem){
                 const{data:wordsData, error: wordsError} = await this.supabase.from('words').select('*').in('last_letter',reverDuemLaw(name[0])).eq('k_canuse',true).neq('length',1);
@@ -142,26 +142,51 @@ class GetManager implements IGetManager {
                 return {data: {words: wordsData, waitWords: waitWordsData}, error: null}
             }
         }
-        else{
+        else if (typez==="theme"){
             const {data: themeData, error: themeDataError} = await this.theme(name)
             if (themeDataError) return {data: null, error: themeDataError};
             if (!themeData) return {data: {words: [], waitWords: []}, error: null}
             const {data: wordsData, error: wordsError} = await this.supabase.from('word_themes').select('words(*)').eq('theme_id',themeData.id);
             const {data: waitWordsData1, error: waitWordsError1} = await this.supabase.from('word_themes_wait').select('words(*),typez,req_by').eq('theme_id', themeData.id);
-            const {data: waitWordsData2, error: waitWordsError2} = await this.supabase.from('wait_word_themes').select('wait_words(word,requested_by,request_type)').eq('theme_id', themeData.id);
-            
+            const {data: waitAddWordsData2, error: waitAddWordsError2} = await this.supabase.from('wait_word_themes').select('wait_words(word,requested_by,request_type)').eq('theme_id', themeData.id);
+            const {data: waitDelWordsData, error: waitDelWordsError} = await this.supabase.rpc('get_delete_requests_by_themeid',{input_theme_id: themeData.id })
+
             if (wordsError) return {data: null, error: wordsError}
             if (waitWordsError1) return {data: null, error: waitWordsError1}
-            if (waitWordsError2) return {data: null, error: waitWordsError2}
+            if (waitAddWordsError2) return {data: null, error: waitAddWordsError2}
+            if (waitDelWordsError) return {data: null, error: waitDelWordsError}
             const Data1Set = new Set(waitWordsData1.map(({words})=>words.word))
-            const waitWords = waitWordsData2.map(({wait_words})=>wait_words);
+            const waitWords: {
+                word: string;
+                requested_by: string | null;
+                request_type: "add" | "delete";
+            }[] = waitAddWordsData2
+                .filter(({wait_words:{request_type}})=>request_type==="add")
+                .map(({wait_words})=>wait_words);
             waitWordsData1.forEach(({words:{word},typez, req_by})=>{
                 if (!Data1Set.has(word)){
                     waitWords.push({word, requested_by: req_by, request_type: typez})
                 }
             })
+            waitWords.push(...waitDelWordsData)
 
-            return {data: {words: wordsData.map(({words})=>words), waitWords}, error: null}
+            return {data: {words: wordsData.filter(({words:{word}})=>!waitWords.some(w=>word===w.word)).map(({words})=>words), waitWords}, error: null}
+        } else if (typez === "ect") {
+            const {data: wordsData, error: wordsError} = await this.supabase.from('docs_words').select('words(*)').eq('docs_id',name);
+            const {data: waitWordsData1, error: waitWordsError1} = await this.supabase.from('docs_wait_words').select('wait_words(word, request_type, requested_by)').eq('docs_id',name);
+            const {data: waitWordsData2, error: waitWordsError2} = await this.supabase.from('docs_words_wait').select('words(word), typez, requested_by').eq('docs_id',name);
+        
+            if (wordsError) return {data:null, error: wordsError}
+            if (waitWordsError1) return {data: null, error: waitWordsError1}
+            if (waitWordsError2) return {data: null, error: waitWordsError2}
+
+            return {data: {words: wordsData.filter(({words:{word}})=>!waitWordsData1.some(({wait_words})=>word===wait_words.word) && !waitWordsData2.some(({words})=>word===words.word)).map(({words})=>words), 
+            waitWords: [
+                ...waitWordsData1.map(({wait_words:{word, request_type, requested_by}})=>({word, request_type, requested_by})),
+                ...waitWordsData2.map(({words:{word}, typez, requested_by})=>({word, request_type: typez === "add" ? "eadd" as const : "edelete" as const, requested_by}))
+            ]}, error: null}
+        } else {
+            return {data: null, error: {name: "unexcept", details: "", code : "", message: "", hint: ""} as PostgrestError}
         }
     }
     public async allWaitWords(){

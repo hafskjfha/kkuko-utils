@@ -629,6 +629,14 @@ export type Database = {
         Args: { pairs: Json }
         Returns: undefined
       }
+      get_delete_requests_by_themeid: {
+        Args: { input_theme_id: number }
+        Returns: {
+          word: string
+          requested_by: string
+          request_type: Database["public"]["Enums"]["request_type_enum"]
+        }[]
+      }
       get_doc_rank: {
         Args: { doc_id: number }
         Returns: number

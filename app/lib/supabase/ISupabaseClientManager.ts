@@ -42,7 +42,7 @@ export interface IGetManager{
     docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
     searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
     docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
-    docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: { word: string; requested_by: string | null; request_type: "add" | "delete"; }[]}, error: null}>
+    docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; } | { word: string; request_type: "eadd" | "edelete"; requested_by: string | null; })[]}, error: null}>
     allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null;})[]>>;
     wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
 }
