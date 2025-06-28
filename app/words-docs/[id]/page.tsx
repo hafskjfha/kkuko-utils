@@ -1,5 +1,5 @@
 import NotFound from "@/app/not-found-client";
-import DocsDataHome from "./DocsDataHome";
+import DocsDataPage from "./DocsDataPage";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const {id} = await params;
@@ -14,7 +14,7 @@ const DocsDataHomePage = async ({ params }: { params: Promise<{ id: string }> })
     const nid = Number(id)
 
     if (isNaN(nid)) return <NotFound />
-    return <DocsDataHome id={nid} />
+    return <DocsDataPage id={nid} />
     
 }
 
