@@ -36,7 +36,7 @@ class AddManager implements IAddManager {
 class GetManager implements IGetManager {
     constructor(private readonly supabase: SupabaseClient<Database>) { }
 
-    private wordsCache: Record<string,{data: {word: string, noin_canuse: boolean, k_canuse: boolean, staus: "ok" | "add" | "delete"}[], time: number}> = {};
+    private wordsCache: Record<string,{data: {word: string, noin_canuse: boolean, k_canuse: boolean, status: "ok" | "add" | "delete"}[], time: number}> = {};
 
     public async waitWordInfo(word: string) {
         return await this.supabase.from('wait_words').select('*').eq('word', word).maybeSingle();
@@ -190,18 +190,21 @@ class GetManager implements IGetManager {
         const cacheKey = () => `iar-${includeAddReq}/idr-${includeDeleteReq}/iin-${includeInjung}/ini-${includeNoInjung}/ow-${onlyWordChain}/len-${lenf}`;
 
         const key = cacheKey();
-        if (this.wordsCache[key] && this.wordsCache[key].time < CACHE_DURATION){
+        const know = Date.now();
+        if (this.wordsCache[key] && know - this.wordsCache[key].time < CACHE_DURATION){
             return {data: this.wordsCache[key].data, error: null}
         }
 
-        // 단어조합기용
+        console.log(Object.entries(this.wordsCache).map(([k,v])=>[k,v.time]))
+
+        // 단어조합기 전용
         if (lenf){
             const {data:wordsData, error: wordsError} = await this.supabase.from('words').select('word, noin_canuse, k_canuse').in('length', [5, 6]);
             if (wordsError) return {data: null, error: wordsError}
             
             const now = Date.now();
             const data = [
-                ...wordsData.map(({word,noin_canuse,k_canuse})=>({word,noin_canuse,k_canuse,staus: "ok" as const}))
+                ...wordsData.map(({word,noin_canuse,k_canuse})=>({word,noin_canuse,k_canuse,status: "ok" as const}))
             ]
             this.wordsCache[key] = {
                 data,
@@ -227,8 +230,8 @@ class GetManager implements IGetManager {
 
         const now = Date.now();
         const data = [
-            ...wordsData.map(({word,noin_canuse,k_canuse})=>({word,noin_canuse,k_canuse,staus: "ok" as const})),
-            ...waitWordsData.map(({word,request_type})=>({word,noin_canuse:false, k_canuse:true, staus: request_type}))
+            ...wordsData.map(({word,noin_canuse,k_canuse})=>({word,noin_canuse,k_canuse,status: "ok" as const})),
+            ...waitWordsData.map(({word,request_type})=>({word,noin_canuse:false, k_canuse:true, status: request_type}))
         ]
         this.wordsCache[key] = {
             data,

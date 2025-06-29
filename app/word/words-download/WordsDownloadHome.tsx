@@ -14,7 +14,7 @@ import { Button } from '@/app/components/ui/button';
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { Download, Filter, AlertCircle, Loader2, BarChart3, Database } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/app/components/ui/alert';
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 
 
 type ChartItem = {
@@ -46,52 +46,29 @@ const fetchWordStats = async (params: {
         let wordChainCount = 0;
         let wordNotChainCount = 0;
 
-        let query = supabase.from('words').select('noin_canuse, k_canuse');
-        if (includeAcknowledged && includeNotAcknowledged) { }
-        else if (includeAcknowledged || !includeNotAcknowledged) {
-            query = query.eq('noin_canuse', false);
-        }
-        else if (includeNotAcknowledged && !includeAcknowledged) {
-            query = query.eq('noin_canuse', true);
-        }
-
-        if (onlyWordChain) query = query.eq('k_canuse', true)
-
-        // 끝말잇기 필터는 여기서 적용하지 않고 모든 단어를 가져온 후 분류
-        const { data: wordsData, error: wordsError } = await query;
+        const {data:wordsData, error: wordsError} = await SCM.get().allWords({
+            includeAddReq: includeAdded,
+            includeDeleteReq: includeDeleted,
+            includeInjung: includeAcknowledged,
+            includeNoInjung: includeNotAcknowledged,
+            onlyWordChain: onlyWordChain
+        });
 
         if (wordsError) throw wordsError;
 
-        acknowledgedCount = wordsData.filter(word => !word.noin_canuse).length;
-        notAcknowledgedCount = wordsData.filter(word => word.noin_canuse).length;
-        wordChainCount = wordsData.filter(word => word.k_canuse).length;
-        wordNotChainCount = wordsData.filter(word => !word.k_canuse).length;
+        const delR = wordsData.filter(word => word.status === 'delete');
 
-        console.log(acknowledgedCount, notAcknowledgedCount, includeAcknowledged, includeNotAcknowledged)
+        acknowledgedCount = wordsData.filter(word => !word.noin_canuse && word.status === "ok" && !delR.some(delWord => delWord.word === word.word)).length;
+        notAcknowledgedCount = wordsData.filter(word => word.noin_canuse && word.status === "ok" && !delR.some(delWord => delWord.word === word.word)).length;
+        wordChainCount = wordsData.filter(word => word.k_canuse && word.status === "ok" && !delR.some(delWord => delWord.word === word.word)).length;
+        wordNotChainCount = wordsData.filter(word => !word.k_canuse && word.status === "ok" && !delR.some(delWord => delWord.word === word.word)).length;
 
         // 추가/삭제 요청 단어 수 조회
-        let addedCount = 0;
-        let deletedCount = 0;
-
-        if (includeAdded || includeDeleted) {
-
-            const { data: requestData, error: requestError } = await supabase.from('wait_words').select('request_type');;
-
-            if (requestError) throw requestError;
-
-            if (requestData) {
-                if (includeAdded) {
-                    addedCount = requestData.filter(item => item.request_type === 'add').length;
-                }
-
-                if (includeDeleted) {
-                    deletedCount = requestData.filter(item => item.request_type === 'delete').length;
-                }
-            }
-        }
+        let addedCount = wordsData.filter(word => word.status === 'add').length;
+        let deletedCount = delR.length;
 
         // 전체 단어 수
-        const totalCount = acknowledgedCount + notAcknowledgedCount + addedCount + deletedCount;
+        const totalCount = acknowledgedCount + notAcknowledgedCount + addedCount;
 
         // 차트 데이터 생성
         const chartData = [
@@ -143,37 +120,24 @@ const fetchWordData = async (params: {
         } = params;
 
         // words테이블에서 단어 가져오기
-        let query = supabase.from('words').select('word')
-        if (includeAcknowledged && includeNotAcknowledged) { }
-        else if (includeAcknowledged && !includeNotAcknowledged) query = query.eq('noin_canuse', false);
-        else if (!includeAcknowledged && includeNotAcknowledged) query = query.eq('noin_canuse', true);
+        const {data:wordsData, error: wordsError} = await SCM.get().allWords({
+            includeAddReq: includeAdded,
+            includeDeleteReq: includeDeleted,
+            includeInjung: includeAcknowledged,
+            includeNoInjung: includeNotAcknowledged,
+            onlyWordChain: onlyWordChain
+        });
 
-        if (onlyWordChain) query = query.eq('k_canuse', true)
+        if (wordsError) throw wordsError;
 
-        const { data: okWords, error: okWordsError } = await query;
-        if (okWordsError) throw okWordsError;
+        const delR = wordsData.filter(word => word.status === 'delete');
 
-        okWords.forEach(({ word }) => resultWords.push(word));
+        resultWords.push(...wordsData.filter(word => {
+            return word.status === 'ok' && !delR.some(delWord => delWord.word === word.word);
+        }).map(word => word.word));
+        resultWords.push(...wordsData.filter(word => word.status === 'add').map(word => word.word));
 
-
-        // 추가/삭제 요청 단어 가져오기
-        if (includeAdded || includeDeleted) {
-            let waitQuery = supabase.from('wait_words').select('word');
-
-            if (includeAdded && !includeDeleted) {
-                waitQuery = waitQuery.eq('request_type', 'add');
-            } else if (!includeAdded && includeDeleted) {
-                waitQuery = waitQuery.eq('request_type', 'delete');
-            }
-
-            const { data: waitWords, error: waitWordsError } = await waitQuery;
-
-            if (waitWordsError) throw waitWordsError;
-
-            waitWords.forEach(({ word }) => resultWords.push(word));
-        }
-
-        return resultWords.sort((a, b) => a.localeCompare(b, 'ko'));
+        return [...new Set(resultWords)].sort((a, b) => a.localeCompare(b, 'ko'));
     } catch (error) {
         throw error;
     }
@@ -405,7 +369,7 @@ export default function KoreanWordStats() {
                                             setIncludeDeleted(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="includeDeleted">삭제요청 단어 포함</Label>
+                                    <Label htmlFor="includeDeleted">삭제요청 단어 제거</Label>
                                 </div>
 
                                 <div className="flex items-center space-x-2">
