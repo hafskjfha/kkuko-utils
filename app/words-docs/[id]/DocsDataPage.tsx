@@ -84,24 +84,9 @@ export default function DocsDataPage({id}:{id:number}){
 
             }
             else{
-                updateLoadingState(30, "문서에 들어간 단어 정보 가져오는 중...");
-                const {data, error} = await SCM.get().docsWords({name: id, duem: false, typez: "ect"})
-                if (error) return makeError(error);
-
-                await new Promise(resolve => setTimeout(resolve, 1))
-                updateLoadingState(70, "데이터를 가공중...");
-                
-                const {words, waitWords} = data;
-                const wordsData = [
-                    ...words.map(({word})=>({word, maker: undefined, status: "ok" as const})),
-                    ...waitWords.map(({word, request_type, requested_by})=>({word, maker: requested_by ?? undefined, status: request_type}))
-                ];
-                const p = {title: docsData.name, lastUpdate: docsData.last_update, typez: docsData.typez}
-                
-                setWordsData({words: wordsData, metadata: p, starCount:docsStarData.map(({user_id})=>user_id)});
-                await SCM.update().docView(docsData.id)
-
-                updateLoadingState(100, "완료!");
+                setIsNotFound(true);
+                // 나중에 특수 문서로 바꿀예정 - 기타문서 딱히 필요없어서
+                // todo - https://github.com/hafskjfha/kkuko-utils/issues/76
                 return;
             }
         }

@@ -54,6 +54,9 @@ class GetManager implements IGetManager {
     public async wordThemes(wordIds: number[]) {
         return await this.supabase.from('word_themes').select('words(*),themes(*)').in('word_id', wordIds);
     }
+    public async wordTheme(wordId: number) {
+        return await this.supabase.from('word_themes').select('words(*),themes(*)').eq('word_id', wordId);
+    }
     public async docs(id: number){
         return await this.supabase.from('docs').select('*,users(*)').eq('id', id).maybeSingle();
     }
@@ -172,19 +175,8 @@ class GetManager implements IGetManager {
 
             return {data: {words: wordsData.filter(({words:{word}})=>!waitWords.some(w=>word===w.word)).map(({words})=>words), waitWords}, error: null}
         } else if (typez === "ect") {
-            const {data: wordsData, error: wordsError} = await this.supabase.from('docs_words').select('words(*)').eq('docs_id',name);
-            const {data: waitWordsData1, error: waitWordsError1} = await this.supabase.from('docs_wait_words').select('wait_words(word, request_type, requested_by)').eq('docs_id',name);
-            const {data: waitWordsData2, error: waitWordsError2} = await this.supabase.from('docs_words_wait').select('words(word), typez, requested_by').eq('docs_id',name);
-        
-            if (wordsError) return {data:null, error: wordsError}
-            if (waitWordsError1) return {data: null, error: waitWordsError1}
-            if (waitWordsError2) return {data: null, error: waitWordsError2}
-
-            return {data: {words: wordsData.filter(({words:{word}})=>!waitWordsData1.some(({wait_words})=>word===wait_words.word) && !waitWordsData2.some(({words})=>word===words.word)).map(({words})=>words), 
-            waitWords: [
-                ...waitWordsData1.map(({wait_words:{word, request_type, requested_by}})=>({word, request_type, requested_by})),
-                ...waitWordsData2.map(({words:{word}, typez, requested_by})=>({word, request_type: typez === "add" ? "eadd" as const : "edelete" as const, requested_by}))
-            ]}, error: null}
+            // docsDataPage확인
+            return {data: null, error: {name: "unexcept", details: "", code : "", message: "", hint: ""} as PostgrestError}
         } else {
             return {data: null, error: {name: "unexcept", details: "", code : "", message: "", hint: ""} as PostgrestError}
         }
@@ -235,6 +227,9 @@ class DeleteManager implements IDeleteManager {
             };
         }
         return await this.supabase.rpc('delete_word_themes_wait_bulk', { pairs: query });
+    }
+    public async wordsFromWaitcId(ids: number[]){
+        return await this.supabase.from('wait_words').delete().in('id',ids);
     }
 }
 

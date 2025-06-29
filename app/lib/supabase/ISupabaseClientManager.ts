@@ -32,6 +32,7 @@ export interface IGetManager{
     wordNomalInfo(word: string): Promise<PostgrestSingleResponse<word | null>>;
     allDocs(): Promise<PostgrestSingleResponse<(docs & { users: user | null })[]>>;
     wordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_theme[]>>;
+    wordTheme(wordId: number): Promise<PostgrestSingleResponse<word_theme[]>>;
     docs(id: number): Promise<PostgrestSingleResponse<(docs & { users: user | null }) | null>>
     docsWordCount({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{count: number | null; error: PostgrestError | null;}>
     docsOkWords(id: number): Promise<{ words: null; error: PostgrestError; } | { words: string[]; error: null; }>
@@ -42,7 +43,7 @@ export interface IGetManager{
     docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
     searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
     docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
-    docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; } | { word: string; request_type: "eadd" | "edelete"; requested_by: string | null; })[]}, error: null}>
+    docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; })[]}, error: null}>
     allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null;})[]>>;
     wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
 }
@@ -55,6 +56,7 @@ export interface IDeleteManager{
     wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
     wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
+    wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>
 }
 
 // update 관련 타입
