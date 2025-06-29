@@ -14,10 +14,9 @@ const WordsTableBody = ({
     title,
     initialData,
     id,
-    aoK,
-    isMa,
-    isL
-}: { initialData: WordData[]; title: string, id: string, aoK: boolean, isMa: boolean, isL: boolean }) => {
+    isMission,
+    isLong
+}: { initialData: WordData[]; title: string, id: string, isMission: boolean, isLong: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 
@@ -36,6 +35,7 @@ const WordsTableBody = ({
                     {isTableVisible ? "접기" : "펼치기"}
                 </button>
 
+                {/* 단어 추가 버튼 (로그인 필요) */}
                 {user.uuid && (
                     <button
                         className="px-3 py-1 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
@@ -46,25 +46,24 @@ const WordsTableBody = ({
                 )}
             </div>
 
-            {/* 단어 테이블 (애니메이션 적용) */}
+            {/* 단어 테이블 */}
             <motion.div
                 initial={false}
                 animate={{ height: isTableVisible ? "auto" : 0, opacity: isTableVisible ? 1 : 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} id={id} isEct={aoK} isM={!isMa ? {m: false, t: null} : {m: true, t: title}} isL={isL}/>
+                <Table initialData={initialData} isMission={!isMission ? {m: false, t: null} : {m: true, t: title}} isLong={isLong}/>
             </motion.div>
 
+            {/* 단어 추가 모달 */}
             {wordAddModalOpen && (
                 <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg"><Spinner /></div>}>
                     <WordAddModal
                         isOpen={wordAddModalOpen}
                         onClose={() => setWordAddModalOpen(false)}
-                        alreadyAddedWords={new Set(initialData.map((d) => d.word))}
-                        id = {Number(id)}
-                        isAddok={aoK}
-                    /> 
+                        id={Number(id)}
+                    />
                 </Suspense>
             )}
 

@@ -210,15 +210,15 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }
 
         const deleteWordIds = wordDeleteQuery.map(({ word_id }) => word_id);
-        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.getWordThemes(deleteWordIds);
+        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.get().wordThemes(deleteWordIds);
 
         // db에 올리기
-        const { data: AddedWords, error: AddedWordsError } = await SCM.addWord(wordAddQuery);
+        const { data: AddedWords, error: AddedWordsError } = await SCM.add().word(wordAddQuery);
         if (AddedWordsError) { return makeError(AddedWordsError) }
 
-        const { data: AddWordThemes, error: AddWordThemesError } = await SCM.addWordThemes(wordAddThemesQuery);
-        const { data: DeleteWordThemes, error: DeleteWordThemesError } = await SCM.deleteWordTheme(wordDeleteThemesQuery);
-        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.deleteWordcIds(deleteWordIds)
+        const { data: AddWordThemes, error: AddWordThemesError } = await SCM.add().wordThemes(wordAddThemesQuery);
+        const { data: DeleteWordThemes, error: DeleteWordThemesError } = await SCM.delete().wordTheme(wordDeleteThemesQuery);
+        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.delete().wordcIds(deleteWordIds)
 
 
         if (DeleteWordThemesError) { return makeError(DeleteWordThemesError) }
@@ -238,7 +238,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
             }
         });
 
-        const { data: AddWordThemeData, error: AddWordThemesError2 } = await SCM.addWordThemes(wordAddThemesQuery2);
+        const { data: AddWordThemeData, error: AddWordThemesError2 } = await SCM.add().wordThemes(wordAddThemesQuery2);
         if (AddWordThemesError2) return makeError(AddWordThemesError2);
 
         const AddedWordThemeRecord: Record<string, string[]> = {}
@@ -253,7 +253,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         // 로그 등록을 위한 문서 정보 가져오기
         const docsIdInfo: Record<string, number> = {};
         const docsThemeIdInfo: Record<string, number> = {};
-        const { data: docsDatas, error: docsDataError } = await SCM.getAllDocs();
+        const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) { return makeError(docsDataError) }
         docsDatas.filter(({ typez }) => typez === "letter").forEach(({ id, name }) => docsIdInfo[name] = id);
         docsDatas.filter(({ typez }) => typez === "theme").forEach(({ id, name }) => docsThemeIdInfo[name] = id)
@@ -355,10 +355,10 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
             }
         });
 
-        const { error: insertDocsLogError } = await SCM.addDocsLog(docsLogQuery);
+        const { error: insertDocsLogError } = await SCM.add().docsLog(docsLogQuery);
         if (insertDocsLogError) return makeError(insertDocsLogError);
 
-        const { error: insertWordLogError } = await SCM.addWordLog(wordsLogQuery);
+        const { error: insertWordLogError } = await SCM.add().wordLog(wordsLogQuery);
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
@@ -369,15 +369,15 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
             const k:{word_id:number, theme_id: number}[] = [];
             wordDeleteThemesQuery.concat(wordAddThemesQuery)
                 .forEach(p=>k.push({word_id: p.word_id, theme_id: p.theme_id}))
-            const { error: deleteWaitQueueError2 } = await SCM.deleteWaitWordThemes(k);
+            const { error: deleteWaitQueueError2 } = await SCM.delete().waitWordThemes(k);
             if (deleteWaitQueueError2) return makeError(deleteWaitQueueError2);
         }
 
         const upDocosId: Set<number> = new Set();
         docsLogQuery.forEach(({ docs_id })=>upDocosId.add(docs_id))
-        await SCM.updateDocsLastUpdate([...upDocosId])
+        await SCM.update().docsLastUpdate([...upDocosId])
 
-        for (const [key, value] of Object.entries(cont)) { await SCM.updateUserContribution({userId: key, amount: value}) }
+        for (const [key, value] of Object.entries(cont)) { await SCM.update().userContribution({userId: key, amount: value}) }
 
         // 선택 상태 초기화
         setSelectedRequests(new Set());
@@ -458,11 +458,11 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }
 
         // 로그 등록
-        const {error: logError} = await SCM.addWordLog(wordsLogQuery);
+        const {error: logError} = await SCM.add().wordLog(wordsLogQuery);
 
         // 대기큐에서 삭제
         const {error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('id',[...new Set(deleteWaitQuery)]);
-        const { error: deleteWaitQueueError2 } = await SCM.deleteWaitWordThemes(waitThemeQuery);
+        const { error: deleteWaitQueueError2 } = await SCM.delete().waitWordThemes(waitThemeQuery);
         if (deleteWaitQueueError) { return makeError(deleteWaitQueueError); }
         if (deleteWaitQueueError2) { return makeError(deleteWaitQueueError2); }
         if (logError) { return makeError(logError) };

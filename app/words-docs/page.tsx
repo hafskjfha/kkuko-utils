@@ -8,7 +8,6 @@ export async function generateMetadata() {
 }
 
 const WordsDocsHomeServerPage = async () => {
-    
     return <WordsDocsHomePage />
 }
 

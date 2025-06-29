@@ -1,5 +1,5 @@
 "use client";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import ErrorPage from "../components/ErrorPage";
 import LoadingPage, { useLoadingState } from '@/app/components/LoadingPage';
 import { useEffect, useState } from "react";
@@ -13,31 +13,26 @@ export default function WordCombinerPage() {
     useEffect(() => {
         const getWords = async () => {
             updateLoadingState(10, "단어 데이터 가져 오는중...");
-            const { data, error } = await supabase.from('words').select('word').in('length', [5, 6]);
+            const { data, error } = await SCM.get().allWords({lenf: true});
             if (error) {
                 return setErrorMessage(`단어 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
             }
+
+            await new Promise(resolve => setTimeout(resolve, 1));
             updateLoadingState(60, "데이터 가공중...")
             const len6 = data.filter(({ word }) => word.length === 6).map(({ word }) => word);
             const len5 = data.filter(({ word }) => word.length === 5).map(({ word }) => word);
 
             setWordsList({ len5, len6 });
             updateLoadingState(100, '완료!');
+            await new Promise(resolve => setTimeout(resolve, 1));
         }
         getWords()
     }, []);
 
-    if (loadingState.isLoading) {
-        return (
-            <LoadingPage title={"단어 데이터"} />
-        );
-    }
+    if (loadingState.isLoading) return <LoadingPage title={"단어 데이터"} />
 
-    if (errorMessage) {
-        return <ErrorPage message={errorMessage} />
-    }
+    if (errorMessage) return <ErrorPage message={errorMessage} />
 
-    if (wordsList) {
-        return <WordCombinerClient prop={wordsList} />
-    }
+    if (wordsList) return <WordCombinerClient prop={wordsList} />
 }

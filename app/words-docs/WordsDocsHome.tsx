@@ -26,7 +26,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
     const typeNames = {
         'letter': '글자',
         'theme': '주제',
-        'ect': '기타'
+        'ect': '특수'
     };
 
     const [expandedTypes, setExpandedTypes] = useState<{ [key: string]: boolean }>(

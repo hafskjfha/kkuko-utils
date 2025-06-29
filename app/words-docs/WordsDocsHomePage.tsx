@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import WordsDocsHome from "./WordsDocsHome";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import ErrorPage from "../components/ErrorPage";
-import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
+import LoadingPage, { useLoadingState } from '@/app/components/LoadingPage';
 
 type DocsType = {
     id: string;
@@ -20,17 +20,11 @@ export default function WordsDocsHomePage(){
     const [errorMessage,setErrorMessage] = useState<string|null>(null);
     const [docsDatas, setDocsDatas] = useState<DocsType[] | null>(null);
 
-
-    const setDataFunc = (docs: DocsType[]) => {
-        setDocsDatas(docs);
-    }
-    
-
     useEffect(()=>{
         const getData = async () => {
 
             updateLoadingState(60, "문서 정보 가져오는 중...");
-            const { data: docsData, error: docsError} = await supabase.from('docs').select('*, users(nickname)').eq('is_hidden',false)
+            const { data: docsData, error: docsError} = await SCM.get().allDocs();
 
             if (docsError){
                 setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${docsError.name ?? "알수없음"}\nError Message: ${docsError.message ?? "없음"}\nError code: ${docsError.code}`)
@@ -42,25 +36,17 @@ export default function WordsDocsHomePage(){
                 id: `${id}`, name, maker: users?.nickname ?? "알수없음", last_update, is_manager: false, typez, created_at
             }));
             
-            setDataFunc(docs);
+            setDocsDatas(docs);
             updateLoadingState(100, "완료");
         }
         getData();
     },[])
     
-    if (loadingState.isLoading) {
-        return (
-            <LoadingPage title={"문서 목록"} />
-        );
-    }
+    if (loadingState.isLoading) return <LoadingPage title={"문서 목록"} />
 
-    if (errorMessage){
-        return <ErrorPage message={errorMessage}/>
-    }
+    if (errorMessage) return <ErrorPage message={errorMessage}/>
 
-    if (docsDatas){
-        return <WordsDocsHome docs={docsDatas} />
-    }
+    if (docsDatas) return <WordsDocsHome docs={docsDatas} />
 
     return null
 }

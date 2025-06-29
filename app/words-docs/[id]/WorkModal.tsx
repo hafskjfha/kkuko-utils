@@ -10,11 +10,10 @@ import {
 import Spinner from "@/app/components/Spinner";
 
 type ModalProps = {
-	isEct: boolean;
 	isSaving: boolean;
 	onClose: () => void;
 	word: string;
-	status: "add" | "delete" | "ok" | "eadd" | "edelete";
+	status: "add" | "delete" | "ok";
 	isAdmin: boolean;
 	isRequester: boolean;
 	onAddAccept?: () => void;
@@ -25,18 +24,9 @@ type ModalProps = {
 	onCancelDeleteRequest?: () => void;
 	onDelete?: () => void;
 	onRequestDelete?: () => void;
-	onRequestDeleteFromDoc?: () => void;
-	onDeleteFromDoc?: () => void;
-	onCancelDeleteFromDocsRequest?: () => void;
-	onDeleteFromDocsAccept?: () => void;
-	onDeleteFromDocsReject?: () => void;
-	onCancelAddFromDocsRequest?: () => void;
-	onAddFromDocsAccept?: () => void;
-	onAddFromDocsReject?: () => void;
 };
 
 const WorkModal = ({
-	isEct,
 	isSaving,
 	onClose,
 	word,
@@ -51,14 +41,6 @@ const WorkModal = ({
 	onCancelDeleteRequest,
 	onDelete,
 	onRequestDelete,
-	onRequestDeleteFromDoc,
-	onDeleteFromDoc,
-	onCancelDeleteFromDocsRequest,
-	onDeleteFromDocsAccept,
-	onDeleteFromDocsReject,
-	onCancelAddFromDocsRequest,
-	onAddFromDocsAccept,
-	onAddFromDocsReject,
 }: ModalProps) => {
 	return (
 		<Dialog open onOpenChange={onClose}>
@@ -80,8 +62,6 @@ const WorkModal = ({
 							{status === "add" && "현재 이 단어는 추가 요청 상태입니다."}
 							{status === "delete" && "현재 이 단어는 삭제 요청 상태입니다."}
 							{status === "ok" && "현재 등록된 단어입니다."}
-							{status === "eadd" && "현재 문서에 추가 요청인 상태입니다."}
-							{status === "edelete" && "현재 문서에서만 삭제 요청 상태입니다."}
 						</span>
 					</div>
 
@@ -147,14 +127,6 @@ const WorkModal = ({
 										color="red"
 										onClick={onDelete}
 									/>
-									{isEct && 
-										<ActionBlock
-											text="단어를 문서에서만 삭제합니다."
-											color="red"
-											bg="bg-red-100"
-											onClick={onDeleteFromDoc}
-										/>
-									}
 								</>
 							)}
 							<ActionBlock
@@ -162,67 +134,8 @@ const WorkModal = ({
 								color="yellow"
 								onClick={onRequestDelete}
 							/>
-							{isEct &&
-								<ActionBlock
-									text="문서에서만 삭제 요청을 보냅니다."
-									color="yellow"
-									bg="bg-yellow-100"
-									onClick={onRequestDeleteFromDoc}
-								/>
-							}
 						</>
 					)}
-
-					{status === "edelete" && (
-						<>
-							{isAdmin && (
-								<>
-									<ActionBlock
-										text="삭제 요청을 수락합니다."
-										color="green"
-										onClick={onDeleteFromDocsAccept}
-									/>
-									<ActionBlock
-										text="삭제 요청을 거절합니다."
-										color="red"
-										onClick={onDeleteFromDocsReject}
-									/>
-								</>
-							)}
-							{isRequester && (
-								<ActionBlock
-									text="삭제 요청을 취소합니다."
-									color="gray"
-									onClick={onCancelDeleteFromDocsRequest}
-								/>
-							)}
-						</>
-						)}
-						{status === "eadd" && (
-							<>
-								{isAdmin && (
-									<>
-										<ActionBlock
-											text="추가 요청을 수락합니다."
-											color="green"
-											onClick={onAddFromDocsAccept}
-										/>
-										<ActionBlock
-											text="추가 요청을 거절합니다."
-											color="red"
-											onClick={onAddFromDocsReject}
-										/>
-									</>
-								)}
-								{isRequester && (
-									<ActionBlock
-										text="추가 요청을 취소합니다."
-										color="gray"
-										onClick={onCancelAddFromDocsRequest}
-									/>
-								)}
-							</>
-						)}
 				</div>
 
 				<DialogFooter className="mt-4">
@@ -233,8 +146,6 @@ const WorkModal = ({
 						닫기
 					</button>
 				</DialogFooter>
-
-
 			</DialogContent>
 		</Dialog>
 	);

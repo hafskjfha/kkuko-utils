@@ -11,10 +11,10 @@ interface TocItem {
 interface TocProps {
     items: TocItem[];
     onItemClick: (index: number) => void;
-    isSp?: boolean;
+    isSp?: boolean; // 특수 ToC처리 용도
 }
 
-const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {
+const TableOfContents = ({ items, onItemClick, isSp = false }: TocProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     // 초성 리스트 (ㄱ과 ㄲ, ㄷ과 ㄸ 등은 같은 그룹으로 묶기 위함)
@@ -57,38 +57,38 @@ const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {
 
     // 그룹화 및 정렬된 데이터 생성
     const groupedItems = useMemo(() => {
-    if (isSp) {
-        return [{
-            group: "",
-            items
-        }];
-    }
+        if (isSp) {
+            return [{
+                group: "",
+                items
+            }];
+        }
 
-    const grouped = items.reduce((acc, item) => {
-        const group = getChoseongGroup(item.title[0]);
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(item);
-        return acc;
-    }, {} as Record<string, TocItem[]>);
+        const grouped = items.reduce((acc, item) => {
+            const group = getChoseongGroup(item.title[0]);
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(item);
+            return acc;
+        }, {} as Record<string, TocItem[]>);
 
-    for (const group in grouped) {
-        grouped[group].sort((a, b) =>
-            a.title.localeCompare(b.title, 'ko')
-        );
-    }
+        for (const group in grouped) {
+            grouped[group].sort((a, b) =>
+                a.title.localeCompare(b.title, 'ko')
+            );
+        }
 
-    const orderedGroups = CHOSEONG_ORDER.filter(group => grouped[group]);
+        const orderedGroups = CHOSEONG_ORDER.filter(group => grouped[group]);
 
-    return orderedGroups.map(group => ({
-        group,
-        items: grouped[group]
-    }));
-}, [items, isSp]);
+        return orderedGroups.map(group => ({
+            group,
+            items: grouped[group]
+        }));
+    }, [items, isSp]);
 
-    
+
 
     const displayItems = groupedItems;
-        
+
 
     const handleItemClick = (index: number) => {
         onItemClick(index);
@@ -109,9 +109,9 @@ const TableOfContents = ({ items, onItemClick, isSp=false }: TocProps) => {
 
             <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ 
-                    height: isOpen ? "auto" : 0, 
-                    opacity: isOpen ? 1 : 0 
+                animate={{
+                    height: isOpen ? "auto" : 0,
+                    opacity: isOpen ? 1 : 0
                 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
