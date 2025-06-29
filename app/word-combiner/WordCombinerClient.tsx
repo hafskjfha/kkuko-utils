@@ -1,5 +1,4 @@
 "use client"
-import Image from 'next/image';
 import React, { useState } from 'react';
 import type { SixCharString, FiveCharString, ErrorMessage } from '../types/type';
 import CombinationManager from '../lib/CombinationsManger';
@@ -13,7 +12,6 @@ interface WordCombinerWithData {
 }
 
 export default function WordCombinerClient({ prop }: { prop: WordCombinerWithData }) {
-    const [showHelpModal, setShowHelpModal] = useState(false);
     const [nomalJOKAK, setNomalJOKAK] = useState<string>("");
     const [highJOKAK, setHighJOKAK] = useState<string>("");
     const [rareJOKAK, setRareJOKAK] = useState<string>("");
@@ -25,7 +23,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
     const [len5WordsData] = useState<FiveCharString[]>(prop.len5);
     const [loading, setLoading] = useState(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
-    const [HtmlHelpModalView, setHtmlHelpModalView] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'normal' | 'high' | 'rare' | 'html'>('normal');
 
     const handleHtmlSubmit = () => {
@@ -235,19 +232,7 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
             {/* Header with help button */}
             <header className="bg-white dark:bg-gray-800 shadow-sm p-4 flex justify-between items-center">
                 <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">글자조각 조합기</h1>
-                <button
-                    onClick={() => setShowHelpModal(true)}
-                    className="flex items-center space-x-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 transition-colors"
-                >
-                    <Image
-                        src="/info-logo.svg"
-                        alt="도움말"
-                        width={28}
-                        height={28}
-                        className="inline-block"
-                    />
-                    <span className="hidden sm:inline">도움말</span>
-                </button>
+                <HelpModal viewTxt />
             </header>
 
             {/* Main container */}
@@ -291,18 +276,9 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
                                 />
                                 
                                 {activeTab === 'html' && (
-                                    <button
-                                        onClick={() => setHtmlHelpModalView(true)}
-                                        className="absolute top-2 right-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200"
-                                    >
-                                        <Image
-                                            src="/help1-log.svg"
-                                            alt="도움말"
-                                            width={24}
-                                            height={24}
-                                            className="inline-block"
-                                        />
-                                    </button>
+                                    <div className="absolute top-2 right-2 text-blue-500 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200">
+                                        <HelpModal wantGo={3} />
+                                    </div>
                                 )}
                             </div>
                             
@@ -390,10 +366,6 @@ export default function WordCombinerClient({ prop }: { prop: WordCombinerWithDat
                     ))}
                 </div>
             </div>
-
-            {/* Help modals */}
-            {showHelpModal && <HelpModal onClose={() => setShowHelpModal(false)} />}
-            {HtmlHelpModalView && <HelpModal onClose={() => setHtmlHelpModalView(false)} wantGo={3} />}
 
             {/* Loading overlay */}
             {loading && (
