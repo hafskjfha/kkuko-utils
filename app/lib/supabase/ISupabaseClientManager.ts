@@ -20,7 +20,7 @@ export interface IAddManager {
     wordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
-    waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
+    waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete"; word_id: number; } | {word: string, requested_by: string | null, request_type: "add"}): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
 }
 

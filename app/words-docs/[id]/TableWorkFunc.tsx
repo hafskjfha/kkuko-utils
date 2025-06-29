@@ -393,7 +393,8 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         const insertWaitWordData = {
             word: word,
             requested_by: user.uuid || null,
-            request_type: "delete"
+            request_type: "delete",
+            word_id: getWordData.id
         } as const;
         const { data: insertWaitWordDataA, error: insertWaitWordDataError } = await SCM.add().waitWordTable(insertWaitWordData);
         if (insertWaitWordDataError) {

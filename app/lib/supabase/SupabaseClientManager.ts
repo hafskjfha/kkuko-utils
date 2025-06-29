@@ -20,7 +20,7 @@ class AddManager implements IAddManager {
     public async wordThemes(insertWordThemesData: addWordThemeQueryType[]) {
         return await this.supabase.from('word_themes').insert(insertWordThemesData).select('words(*),themes(*)');
     }
-    public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }) {
+    public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete", word_id: number } | {word: string, requested_by: string | null, request_type: "add"}) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
     }
     public async startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
