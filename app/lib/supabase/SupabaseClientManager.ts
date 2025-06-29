@@ -41,7 +41,7 @@ class GetManager implements IGetManager {
         return await this.supabase.from('words').select('*').eq('word', word).maybeSingle();
     }
     public async allDocs() {
-        return await this.supabase.from('docs').select('*, users(*)');
+        return await this.supabase.from('docs').select('*, users(*)').eq('is_hidden',false)
     }
     public async wordThemes(wordIds: number[]) {
         return await this.supabase.from('word_themes').select('words(*),themes(*)').in('word_id', wordIds);
@@ -68,13 +68,6 @@ class GetManager implements IGetManager {
             const{ count, error } = await this.supabase.from('word_themes').select('*',{ count: 'exact', head: true }).eq('theme_id',themeData.id);
             return {count, error}
         }
-    }
-    public async docsOkWords(id: number){
-        const { data: dataA, error } = await this.supabase.from('docs_words').select('words(word)').eq('docs_id', id);
-        if (error) return { words: null, error }
-
-        const words = dataA.map((wordk) => wordk.words.word);
-        return { words, error: null };
     }
     public async docsRank(id: number){
         return await this.supabase.rpc('get_doc_rank',{doc_id: id})

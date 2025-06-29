@@ -77,22 +77,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
                 return;
             }
             else{
-                const {words, error} = await SCM.get().docsOkWords(docsData.id);
-                if (error){
-                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${error.name ?? "알수없음"}\nError Message: ${error.message ?? "없음"}\nError code: ${error.code}`)
-                    updateLoadingState(100,"ERR");
-                    return;
-                }
-                const {data, error:errorl} = await SCM.get().docsRank(docsData.id);
-                if (errorl){
-                    setErrorMessage(`문서 정보 데이터 로드중 오류.\nErrorName: ${errorl.name ?? "알수없음"}\nError Message: ${errorl.message ?? "없음"}\nError code: ${errorl.code}`)
-                    updateLoadingState(100,"ERR");
-                    return;
-                }
-                updateLoadingState(90,"데이터 가공중...");
-                setDocsInfoData({metadata:docsData, wordsCount: words.length, rank: data, starCount:docsStarData});
-                updateLoadingState(100,"완료!");
-                return;
+                return setIsNotFound(true);
             }
         };
         getData();

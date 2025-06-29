@@ -34,7 +34,6 @@ export interface IGetManager{
     wordTheme(wordId: number): Promise<PostgrestSingleResponse<word_theme[]>>;
     docs(id: number): Promise<PostgrestSingleResponse<(docs & { users: user | null }) | null>>
     docsWordCount({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{count: number | null; error: PostgrestError | null;}>
-    docsOkWords(id: number): Promise<{ words: null; error: PostgrestError; } | { words: string[]; error: null; }>
     docsRank(id: number): Promise<PostgrestSingleResponse<number>>;
     allTheme(): Promise<PostgrestSingleResponse<theme[]>>
     theme(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
