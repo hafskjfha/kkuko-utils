@@ -309,7 +309,7 @@ export default function WordsAddHome() {
 
         setProgress(60);
         setCurrentTask('로그 등록중...')
-        const { error: logError } = await SCM.addWordLog(logsQuery);
+        const { error: logError } = await SCM.add().wordLog(logsQuery);
         if (logError) {
             return makeError(logError);
         }
