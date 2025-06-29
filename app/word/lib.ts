@@ -1,9 +1,9 @@
 "use client";
 
-import { supabase } from "../lib/supabaseClient";
+import { SCM } from "../lib/supabaseClient";
 
 export const fetcher = async () => {
-    const { data, error } = await supabase.from("themes").select("*");
+    const { data, error } = await SCM.get().allTheme();
     if (error) throw error;
     return data;
 }

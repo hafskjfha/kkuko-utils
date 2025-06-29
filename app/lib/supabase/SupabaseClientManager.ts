@@ -26,6 +26,9 @@ class AddManager implements IAddManager {
     public async startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
         return await this.supabase.from('user_star_docs').insert({ docs_id: docsId, user_id: userId })
     }
+    public async waitWordThemes(insertWaitWordThemeData: { wait_word_id: number, theme_id: number}[]){
+        return await this.supabase.from('wait_word_themes').insert(insertWaitWordThemeData);
+    }
 }
 
 class GetManager implements IGetManager {

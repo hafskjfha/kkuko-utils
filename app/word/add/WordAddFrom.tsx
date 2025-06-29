@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronDown, Save, Search, Info, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/app/components/ui/card";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import useSWR from "swr";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
@@ -25,6 +25,7 @@ import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { PostgrestError } from "@supabase/supabase-js";
+import HelpModal from "@/app/components/HelpModal";
 
 
 // Utility function to calculate Korean initials
@@ -60,18 +61,18 @@ type TopicItemProps = {
 };
 
 // Topic selection component with better visual feedback
-const TopicItem = React.memo(({ 
-    label, 
-    code, 
-    isSelected, 
-    onChange 
-}:TopicItemProps) => {
+const TopicItem = React.memo(({
+    label,
+    code,
+    isSelected,
+    onChange
+}: TopicItemProps) => {
     return (
         <label
             className={`flex items-center p-2 rounded cursor-pointer transition-colors 
-                        ${isSelected 
-                            ? "bg-primary/20 hover:bg-primary/30" 
-                            : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                        ${isSelected
+                    ? "bg-primary/20 hover:bg-primary/30"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
         >
             <input
                 type="checkbox"
@@ -95,13 +96,13 @@ type TopicsListProps = {
 };
 
 // Topic list component with search functionality
-const TopicsList = React.memo(({ 
-    topics, 
-    selectedTopics, 
-    onChange, 
-    searchTerm, 
-    onSearchChange 
-}:TopicsListProps) => {
+const TopicsList = React.memo(({
+    topics,
+    selectedTopics,
+    onChange,
+    searchTerm,
+    onSearchChange
+}: TopicsListProps) => {
     return (
         <div className="space-y-3 w-full">
             <div className="relative">
@@ -113,7 +114,7 @@ const TopicsList = React.memo(({
                     className="pl-8"
                 />
             </div>
-            
+
             <ScrollArea className="h-48 border rounded-md p-1 w-full">
                 <div className="grid grid-cols-2 gap-1">
                     {topics.length > 0 ? topics.map(([label, code]) => (
@@ -149,21 +150,21 @@ type TopicSectionProps = {
 };
 
 // Topic section with collapsible UI
-const TopicSection = ({ 
-    title, 
-    isOpen, 
-    onToggle, 
-    topics, 
-    selectedTopics, 
-    onChange, 
-    searchTerm, 
-    onSearchChange 
-}:TopicSectionProps) => {
+const TopicSection = ({
+    title,
+    isOpen,
+    onToggle,
+    topics,
+    selectedTopics,
+    onChange,
+    searchTerm,
+    onSearchChange
+}: TopicSectionProps) => {
     return (
         <Collapsible open={isOpen} onOpenChange={onToggle} className="border rounded-md">
             <CollapsibleTrigger asChild>
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     className="flex items-center justify-between w-full p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                     <span className="font-medium">{title}</span>
@@ -189,7 +190,7 @@ type SelectedTopic = {
     code: string;
     label: string;
 };
-  
+
 type SelectedTopicsProps = {
     topics: SelectedTopic[];
     onRemove: (code: string) => void;
@@ -204,17 +205,17 @@ const SelectedTopics = ({ topics, onRemove }: SelectedTopicsProps) => {
             </div>
         );
     }
-    
+
     return (
         <div className="flex flex-wrap gap-2">
             {topics.map((topic) => (
-                <Badge 
-                    key={topic.code} 
+                <Badge
+                    key={topic.code}
                     variant="secondary"
                     className="flex items-center gap-1 py-1"
                 >
                     {topic.label}
-                    <button 
+                    <button
                         onClick={() => onRemove(topic.code)}
                         className="hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full p-0.5"
                     >
@@ -232,7 +233,7 @@ type InfoItemProps = {
 };
 
 // Info item for word details
-const InfoItem = ({ label, value }:InfoItemProps) => (
+const InfoItem = ({ label, value }: InfoItemProps) => (
     <div className="flex justify-between items-center py-1.5 border-b last:border-b-0">
         <span className="w-12 text-sm font-medium text-gray-600 whitespace-nowrap">{label}</span>
         <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{value}</span>
@@ -246,11 +247,11 @@ interface TopicInfo {
 }
 
 type WordAddFormProps = {
-    compleSave?:  () => () => void
+    compleSave?: () => () => void
 };
 
 // Main component
-const WordAddForm = ({ compleSave }:WordAddFormProps) => {
+const WordAddForm = ({ compleSave }: WordAddFormProps) => {
     const [word, setWord] = useState<string>("");
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
     const [groupVisibility, setGroupVisibility] = useState<{ noInjung: boolean; other: boolean }>({
@@ -267,9 +268,9 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
         topicsKo: {},
         topicsID: {}
     });
-    const [errorModalView, setErrorModalView] = useState<ErrorMessage|null>(null);
-    const [completeState, setCompleteState] = useState<{word:string, selectedTheme:string,onClose:()=> void}|null>(null);
-    const [workFail, setWorkFail] = useState<string|null>(null);
+    const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
+    const [completeState, setCompleteState] = useState<{ word: string, selectedTheme: string, onClose: () => void } | null>(null);
+    const [workFail, setWorkFail] = useState<string | null>(null);
     const user = useSelector((state: RootState) => state.user);
     const [isLogin, setIsLogin] = useState(!!user.uuid);
 
@@ -294,17 +295,17 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
         const newTopicsCode: Record<string, string> = {};
         const newTopicsKo: Record<string, string> = {};
         const newTopicID: Record<string, number> = {};
-        
-        data.forEach((d: {code: string, name: string, id: number}) => {
+
+        data.forEach((d: { code: string, name: string, id: number }) => {
             newTopicsCode[d.code] = d.name;
             newTopicsKo[d.name] = d.code;
             newTopicID[d.code] = d.id;
         });
-        
-        setTopicInfo({ 
-            topicsCode: newTopicsCode, 
-            topicsKo: newTopicsKo, 
-            topicsID: newTopicID 
+
+        setTopicInfo({
+            topicsCode: newTopicsCode,
+            topicsKo: newTopicsKo,
+            topicsID: newTopicID
         });
     }, [data]);
 
@@ -318,12 +319,12 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
             .filter(([label]) => noInjungTopic.includes(label))
             .sort((a, b) => a[0].localeCompare(b[0]))
             .filter(([label]) => filterKoreanText(label, searchTermNoInjung));
-            
+
         const other = Object.entries(topicInfo.topicsKo)
             .filter(([label]) => !noInjungTopic.includes(label))
             .sort((a, b) => a[0].localeCompare(b[0]))
             .filter(([label]) => filterKoreanText(label, searchTermOther));
-            
+
         return { noInjung, other };
     }, [topicInfo, searchTermNoInjung, searchTermOther]);
 
@@ -339,10 +340,10 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
     const handleWordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newWord = e.target.value;
         setWord(newWord);
-        
+
         const regex = /^[0-9ㄱ-힣]*$/;
         let hasInvalidChar = false;
-        
+
         if (newWord) {
             const regex1 = /[0-9ㄱ-ㅎ]+/;
             for (const c of newWord) {
@@ -352,7 +353,7 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                 }
             }
         }
-        
+
         setInvalidWord(!regex.test(newWord) || hasInvalidChar);
     };
 
@@ -387,21 +388,18 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
     const onSave = async () => {
         if (isSaving) return;
         if (!user.uuid) return;
-        
+
         setIsSaving(true);
-        
+
         try {
             // Check if word already exists
-            const { data: existingWord, error: exstedCheckError } = await supabase
-                .from('words')
-                .select('id')
-                .eq('word', word);
-                
+            const { data: existingWord, error: exstedCheckError } = await SCM.get().wordNomalInfo(word);
+
             if (exstedCheckError) {
                 throw exstedCheckError;
             }
 
-            if (existingWord && existingWord.length > 0) {
+            if (existingWord) {
                 setWorkFail("이미 존재하는 단어입니다.");
                 setIsSaving(false);
                 return;
@@ -413,12 +411,9 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                 requested_by: user.uuid,
                 request_type: "add" as const
             };
-            
-            const { data: insertedWaitWord, error: insertedWaitWordError } = await supabase
-                .from('wait_words')
-                .insert(insertWaitWordData)
-                .select('*');
-                
+
+            const { data: insertedWaitWord, error: insertedWaitWordError } = await SCM.add().waitWordTable(insertWaitWordData);
+
             if (insertedWaitWordError) {
                 if (insertedWaitWordError.code === '23505') {
                     setWorkFail("이미 요청이 들어온 단어입니다.");
@@ -429,25 +424,23 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
             }
 
             // Insert selected topics
-            if (insertedWaitWord && insertedWaitWord.length > 0) {
+            if (insertedWaitWord) {
                 const insertWaitWordTopicsData = selectedTopics
                     .filter(tc => topicInfo.topicsID[tc])
                     .map(tc => ({
-                        wait_word_id: insertedWaitWord[0].id,
+                        wait_word_id: insertedWaitWord.id,
                         theme_id: topicInfo.topicsID[tc]
                     }));
-                    
-                const { error: insertWaitWordTopicsDataError } = await supabase
-                    .from('wait_word_themes')
-                    .insert(insertWaitWordTopicsData);
-                    
+
+                const { error: insertWaitWordTopicsDataError } = await SCM.add().waitWordThemes(insertWaitWordTopicsData);
+
                 if (insertWaitWordTopicsDataError) {
                     throw insertWaitWordTopicsDataError;
                 }
 
                 // Call completion callback if provided
                 if (compleSave) {
-                    
+
                     // Show completion state
                     setCompleteState({
                         word: word,
@@ -466,12 +459,12 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                         }
                     });
                 }
-                
+
                 // Reset form
                 setWord("");
                 setSelectedTopics([]);
             }
-            
+
         } catch (error) {
             if (error instanceof PostgrestError)
                 setErrorModalView({
@@ -502,19 +495,123 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-2xl flex items-center gap-2">
                         <span>단어 정보 입력</span>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Info className="h-4 w-4 text-gray-400" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="w-64">한글 단어와 관련 주제를 입력하세요</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+
+                        {/* Help Modal */}
+                        <HelpModal
+                            title="단어 추가하기 사용법"
+                            triggerText="도움말"
+                            triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                        >
+                            <div className="space-y-6">
+                                {/* Step 0 */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                        <h3 className="font-semibold">단어를 입력합니다.</h3>
+                                    </div>
+                                    <div className="ml-6 space-y-2">
+                                        <p>한글 또는 숫자로만 입력할 수 있습니다.</p>
+                                        <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <Input value="사과" disabled className="w-40" />
+                                            <div className="flex items-center gap-1 mt-2 text-red-500 text-xs">
+                                                <AlertTriangle className="h-3.5 w-3.5" />
+                                                한글과 숫자만 입력할 수 있습니다.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Step 1 */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                        <h3 className="font-semibold">주제를 선택합니다.</h3>
+                                    </div>
+                                    <div className="ml-6 space-y-2">
+                                        <p>주제는 여러 개 선택할 수 있습니다. 검색창을 활용해 빠르게 찾을 수 있습니다.</p>
+                                        <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <div className="flex flex-col gap-2">
+                                                <Input value="과일" disabled className="w-40" placeholder="주제 검색" />
+                                                <div className="flex gap-2">
+                                                    <Badge variant="secondary">과일</Badge>
+                                                    <Badge variant="secondary">음식</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Step 2 */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                        <h3 className="font-semibold">단어 저장</h3>
+                                    </div>
+                                    <div className="ml-6 space-y-2">
+                                        <p>단어와 주제를 모두 입력/선택해야 저장할 수 있습니다.</p>
+                                        <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <Button className="w-full" disabled>
+                                                <Save className="mr-2 h-4 w-4" />
+                                                단어 저장
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Step 3 */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">3</span>
+                                        <h3 className="font-semibold">결과 확인</h3>
+                                    </div>
+                                    <div className="ml-6 space-y-2">
+                                        <p>저장이 완료되면 완료 안내창이 나타납니다.</p>
+                                        <div className="bg-green-50 p-3 rounded border border-green-200">
+                                            <div className="text-sm">
+                                                <span className="font-bold">사과</span> (주제: 과일, 음식) 추가 요청 완료!
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* 예시 */}
+                                <div className="space-y-3">
+                                    <h3 className="font-semibold">사용 예시</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-2">입력 예시:</p>
+                                            <div className="bg-gray-100 p-3 rounded text-xs">
+                                                <div>단어: <span className="font-bold">사과</span></div>
+                                                <div>주제: <span className="font-bold">과일, 음식</span></div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-center">
+                                            <div className="text-center">
+                                                <div className="text-2xl">↓</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-2">저장 결과:</p>
+                                            <div className="bg-green-50 p-3 rounded border border-green-200">
+                                                <div className="text-sm">
+                                                    <span className="font-bold">사과</span> (주제: 과일, 음식) 추가 요청 완료!
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Tip */}
+                                <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-blue-800 text-sm">
+                                        <strong>💡 팁:</strong> 주제는 언제든 검색해서 빠르게 찾을 수 있습니다.
+                                    </p>
+                                </div>
+                                <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-blue-800 text-sm">
+                                        <strong>💡 참고:</strong> 단어는 관리자의 승인후 등록됩니다. 주로 2~3일 내에 처리되지만 빠르게 처리할 수 있도록 하겠습니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </HelpModal>
                     </CardTitle>
                 </CardHeader>
-                
+
                 <CardContent className="flex flex-col gap-4 overflow-y-auto">
                     {/* Word input section */}
                     <div className="space-y-2">
@@ -540,9 +637,9 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                     <div className="space-y-2">
                         <label className="font-medium text-sm">선택된 주제</label>
                         <div className="min-h-10 bg-gray-50 dark:bg-gray-800 rounded-md p-2">
-                            <SelectedTopics 
-                                topics={selectedTopicsWithLabels} 
-                                onRemove={handleRemoveTopic} 
+                            <SelectedTopics
+                                topics={selectedTopicsWithLabels}
+                                onRemove={handleRemoveTopic}
                             />
                         </div>
                     </div>
@@ -555,7 +652,7 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                                 {selectedTopics.length} 개 선택됨
                             </span>
                         </div>
-                        
+
                         <div className="space-y-3">
                             {/* 노인정 Topics */}
                             <TopicSection
@@ -568,7 +665,7 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                                 searchTerm={searchTermNoInjung}
                                 onSearchChange={setSearchTermNoInjung}
                             />
-                            
+
                             {/* 어인정 Topics */}
                             <TopicSection
                                 title="어인정"
@@ -601,7 +698,7 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-2xl">단어 정보</CardTitle>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-6 overflow-y-auto">
                     {/* Word details */}
                     <div className="space-y-1">
@@ -614,55 +711,55 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                             <InfoItem label="한글 초성" value={wordInfo.initials} />
                         </div>
                     </div>
-                    
+
                     {/* Topics details */}
                     <div className="space-y-1">
                         <h4 className="font-medium text-sm text-gray-500">주제 정보</h4>
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3">
-                            <InfoItem 
-                                label="주제" 
-                                value={selectedTopics.length > 0 
+                            <InfoItem
+                                label="주제"
+                                value={selectedTopics.length > 0
                                     ? selectedTopics.map(code => topicInfo.topicsCode[code]).join(", ")
-                                    : "-"} 
+                                    : "-"}
                             />
-                            <InfoItem 
-                                label="코드" 
-                                value={selectedTopics.join(", ") || "-"} 
+                            <InfoItem
+                                label="코드"
+                                value={selectedTopics.join(", ") || "-"}
                             />
                         </div>
                     </div>
-                    
+
                 </CardContent>
             </Card>
 
             {/* Modals */}
-            {errorModalView && 
-                <ErrorModal 
-                    error={errorModalView} 
-                    onClose={() => setErrorModalView(null)} 
+            {errorModalView &&
+                <ErrorModal
+                    error={errorModalView}
+                    onClose={() => setErrorModalView(null)}
                 />
             }
-            
-            {completeState && 
-                <CompleteModal 
-                    open={!!completeState} 
-                    onClose={completeState.onClose} 
-                    title="단어 추가 요청이 완료되었습니다." 
+
+            {completeState &&
+                <CompleteModal
+                    open={!!completeState}
+                    onClose={completeState.onClose}
+                    title="단어 추가 요청이 완료되었습니다."
                     description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 추가요청이 완료되었습니다.`}
                 />
             }
-            
-            {workFail && 
-                <FailModal 
-                    open={!!workFail} 
-                    onClose={() => setWorkFail(null)} 
+
+            {workFail &&
+                <FailModal
+                    open={!!workFail}
+                    onClose={() => setWorkFail(null)}
                     description={workFail}
                 />
             }
-            
-            {!isLogin && 
-                <LoginRequiredModal 
-                    open={!isLogin} 
+
+            {!isLogin &&
+                <LoginRequiredModal
+                    open={!isLogin}
                     onClose={() => setIsLogin(true)}
                 />
             }
