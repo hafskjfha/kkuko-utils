@@ -510,6 +510,33 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
         }
     };
 
+    // 길이 긴순 정렬
+    const handleSortByLength = () => {
+        try {
+            const updatedContent = fileContent.split("\n").sort((a, b) => b.length - a.length);
+            if (updatedContent.join('\n') === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent.join('\n'));
+            setLineCount(updatedContent.length);
+        } catch (err) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `SortByLength | ${fileContent}`
+                });
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `SortByLength | ${fileContent}`
+                });
+            }
+        }
+    };
+
     return (
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
             {/* 헤더 */}
@@ -539,6 +566,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                                     <ul className="space-y-1 text-sm">
                                         <li>• <strong>ㄱㄴㄷ순 정렬 v1:</strong> 한글 가나다순으로 정렬합니다.</li>
                                         <li>• <strong>ㄱㄴㄷ순 정렬 v2:</strong> 한글 가나다순으로 정렬하고 알파벳별로 그룹화합니다.</li>
+                                        <li>• <strong>길이 긴순 정렬:</strong> 단어의 길이가 긴 순서로 정렬합니다.</li>
                                     </ul>
                                 </div>
 
@@ -678,6 +706,19 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                             <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
                                 <HelpModal wantGo={3} />
                             </div>
+                        </div>
+
+                        {/* 길이 긴순 정렬 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50
+                            dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">길이 긴 순 정렬:</span>
+                            <button
+                                className="flex-1 bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleSortByLength}  // handleSortByLength 함수 연결 필요
+                            >
+                                정렬하기
+                            </button>
                         </div>
                     </div>
                 </div>
