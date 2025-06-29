@@ -246,7 +246,7 @@ interface TopicInfo {
 }
 
 type WordAddFormProps = {
-    compleSave?: (wordID: number, setErrorModalView: (value: React.SetStateAction<ErrorMessage | null>) => void) => Promise<(() => void) | undefined>
+    compleSave?:  () => () => void
 };
 
 // Main component
@@ -454,7 +454,7 @@ const WordAddForm = ({ compleSave }:WordAddFormProps) => {
                         selectedTheme: selectedTopics.map(code => topicInfo.topicsCode[code]).join(', '),
                         onClose: async () => {
                             setCompleteState(null);
-                            await compleSave?.(insertedWaitWord[0].id, setErrorModalView);
+                            compleSave?.();
                         }
                     });
                 } else {
