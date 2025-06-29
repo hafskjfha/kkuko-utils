@@ -15,10 +15,6 @@ type wordsDataType = ({
     word: string;
     status: "ok";
     maker: undefined;
-} | {
-    word: string;
-    status: "eadd" | "edelete";
-    maker: string | null | undefined;
 })
 
 export default function DocsDataPage({id}:{id:number}){

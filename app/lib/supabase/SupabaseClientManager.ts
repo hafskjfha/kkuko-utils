@@ -14,9 +14,6 @@ class AddManager implements IAddManager {
     public async wordLog(logsData: WordLogData[]) {
         return await this.supabase.from('logs').insert(logsData);
     }
-    public async wordToDocs(AddData: { word_id: number; docs_id: number }[]) {
-        return await this.supabase.from('docs_words').insert(AddData).select('*');
-    }
     public async word(insertWordData: addWordQueryType[]) {
         return await this.supabase.from('words').insert(insertWordData).select('*');
     }
@@ -25,14 +22,6 @@ class AddManager implements IAddManager {
     }
     public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
-    }
-    public async docsWait({word_id, docs_id, requested_by}: {word_id: number, docs_id: number, requested_by: string | null}){
-        return await this.supabase.from('docs_words_wait').insert({
-            word_id,
-            docs_id,
-            typez: "add",
-            requested_by
-        })
     }
 }
 

@@ -18,11 +18,9 @@ type delete_word_themes_bulk = Database['public']['Functions']['delete_word_them
 export interface IAddManager {
     docsLog(logsData: DocsLogData[]): Promise<PostgrestSingleResponse<null>>;
     wordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
-    wordToDocs(AddData: { word_id: number; docs_id: number }[]): Promise<PostgrestSingleResponse<docs_word[]>>;
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
     waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
-    docsWait({ word_id, docs_id, requested_by }: { word_id: number; docs_id: number; requested_by: string | null; }): Promise<PostgrestSingleResponse<null>>
 }
 
 // get 관련 타입

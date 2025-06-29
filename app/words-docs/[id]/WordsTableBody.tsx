@@ -14,10 +14,9 @@ const WordsTableBody = ({
     title,
     initialData,
     id,
-    isEct,
     isMission,
     isLong
-}: { initialData: WordData[]; title: string, id: string, isEct: boolean, isMission: boolean, isLong: boolean }) => {
+}: { initialData: WordData[]; title: string, id: string, isMission: boolean, isLong: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 
@@ -54,7 +53,7 @@ const WordsTableBody = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
             >
-                <Table initialData={initialData} id={id} isEct={isEct} isMission={!isMission ? {m: false, t: null} : {m: true, t: title}} isLong={isLong}/>
+                <Table initialData={initialData} isMission={!isMission ? {m: false, t: null} : {m: true, t: title}} isLong={isLong}/>
             </motion.div>
 
             {/* 단어 추가 모달 */}
@@ -63,10 +62,8 @@ const WordsTableBody = ({
                     <WordAddModal
                         isOpen={wordAddModalOpen}
                         onClose={() => setWordAddModalOpen(false)}
-                        alreadyAddedWords={new Set(initialData.map((d) => d.word))}
-                        id = {Number(id)}
-                        isAddok={isEct}
-                    /> 
+                        id={Number(id)}
+                    />
                 </Suspense>
             )}
 
