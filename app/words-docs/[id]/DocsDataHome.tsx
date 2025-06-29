@@ -18,11 +18,11 @@ import {
     Loader2,
     Calendar,
 } from "lucide-react";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
-import { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError } from "@supabase/supabase-js";
 import ErrorModal from "@/app/components/ErrModal";
 import ToC from "./TableOfContents";
 
@@ -58,12 +58,14 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
     const [loginNeedModalOpen, setLoginNeedModalOpen] = useState<boolean>(false);
     const [errorModalView, seterrorModalView] = useState<ErrorMessage | null>(null);
 
+    // 유저 즐겨찾기 상태 업데이트
     useEffect(() => {
         if (user.uuid) {
             setIsUserStarreda(starCount.includes(user.uuid))
         }
     }, [user, starCount])
 
+    // 미션 단어 미리 구하기
     const mission = useMemo(()=>{
         const m2gr= new DefaultDict<string, WordData[]>(() => []);
         const m1gr = new DefaultDict<string, WordData[]>(() => []);
@@ -106,7 +108,6 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
 
     const groupWordsBySyllable = (data: WordData[]) => {
         const grouped = new DefaultDict<string, WordData[]>(() => []);
-        
         
         if (activeTab === "mission") {
             MISSION_CHARS.split('').forEach(char => {
@@ -222,10 +223,10 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
             return setLoginNeedModalOpen(true);
         }
         if (isUserStarreda) {
-            const { error } = await supabase.from('user_star_docs').delete().eq('docs_id', id).eq('user_id', user.uuid);
+            const { error } = await SCM.delete().startDocs({ docsId: id, userId: user.uuid });
             if (error) return makeError(error)
         } else {
-            const { error } = await supabase.from('user_star_docs').insert({ docs_id: id, user_id: user.uuid })
+            const { error } = await SCM.add().startDocs({ docsId: id, userId: user.uuid });
             if (error) return makeError(error);
         }
 
@@ -346,37 +347,39 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                     </div>
 
                     {/* 탭 네비게이션 */}
-                    <div className="px-8 pt-6 pb-2">
-                        <nav className="flex space-x-1" aria-label="Tabs">
-                            {(["all", "mission", "long"] as TabType[]).map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => handleTabChange(tab)}
-                                    disabled={isTabSwitching}
-                                    className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-3 ${
-                                        activeTab === tab
-                                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
-                                            : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-                                    } ${
-                                        isTabSwitching ? "opacity-50 cursor-not-allowed" : "hover:shadow-md transform hover:-translate-y-0.5"
-                                    }`}
-                                >
-                                    {getTabIcon(tab)}
-                                    <span>{getTabLabel(tab)}</span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                        activeTab === tab 
-                                            ? "bg-white/20 text-white" 
-                                            : "bg-gray-200 text-gray-600"
-                                    }`}>
-                                        {getTabCount(tab).toLocaleString()}
-                                    </span>
-                                    {activeTab === tab && (
-                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-500"></div>
-                                    )}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
+                    {metaData.typez !== "ect" && (
+                        <div className="px-8 pt-6 pb-2">
+                            <nav className="flex space-x-1" aria-label="Tabs">
+                                {(["all", "mission", "long"] as TabType[]).map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => handleTabChange(tab)}
+                                        disabled={isTabSwitching}
+                                        className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-3 ${
+                                            activeTab === tab
+                                                ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                                                : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                                        } ${
+                                            isTabSwitching ? "opacity-50 cursor-not-allowed" : "hover:shadow-md transform hover:-translate-y-0.5"
+                                        }`}
+                                    >
+                                        {getTabIcon(tab)}
+                                        <span>{getTabLabel(tab)}</span>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                            activeTab === tab 
+                                                ? "bg-white/20 text-white" 
+                                                : "bg-gray-200 text-gray-600"
+                                        }`}>
+                                            {getTabCount(tab).toLocaleString()}
+                                        </span>
+                                        {activeTab === tab && (
+                                            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-500"></div>
+                                        )}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    )}
                 </div>
 
                 {/* 목차 섹션 */}
@@ -472,7 +475,6 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                                     title={item.title} 
                                                     initialData={item.data || []} 
                                                     id={`${id}`} 
-                                                    isEct={metaData.typez === "ect"}
                                                     isMission={activeTab === "mission"}
                                                     isLong={activeTab==="long"}
                                                 />

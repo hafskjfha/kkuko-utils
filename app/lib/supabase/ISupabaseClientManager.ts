@@ -21,6 +21,7 @@ export interface IAddManager {
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
     waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }): Promise<PostgrestSingleResponse<{ id: number; } | null>>;
+    startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
 }
 
 // get 관련 타입
@@ -54,7 +55,8 @@ export interface IDeleteManager{
     wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
     wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
-    wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>
+    wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>;
+    startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
 }
 
 // update 관련 타입

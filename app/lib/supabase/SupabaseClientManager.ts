@@ -1,5 +1,5 @@
 import { ISupabaseClientManager, IAddManager, IGetManager, IDeleteManager, IUpdateManager } from './ISupabaseClientManager';
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError, PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
 import { reverDuemLaw } from '../DuemLaw';
@@ -22,6 +22,9 @@ class AddManager implements IAddManager {
     }
     public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete" }) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
+    }
+    public async startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
+        return await this.supabase.from('user_star_docs').insert({ docs_id: docsId, user_id: userId })
     }
 }
 
@@ -219,6 +222,9 @@ class DeleteManager implements IDeleteManager {
     }
     public async wordsFromWaitcId(ids: number[]){
         return await this.supabase.from('wait_words').delete().in('id',ids);
+    }
+    public async startDocs({docsId,userId}:{docsId: number, userId: string}){
+        return await this.supabase.from('user_star_docs').delete().eq('docs_id', docsId).eq('user_id', userId);
     }
 }
 
