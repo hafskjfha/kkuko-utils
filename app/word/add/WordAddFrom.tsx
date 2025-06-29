@@ -12,7 +12,7 @@ import {
     CollapsibleTrigger,
 } from "@/app/components/ui/collapsible";
 import { Badge } from "@/app/components/ui/badge";
-import { ChevronDown, Save, Search, Info, AlertTriangle, X, Loader2 } from "lucide-react";
+import { ChevronDown, Save, Search, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/app/components/ui/card";
 import { SCM } from "@/app/lib/supabaseClient";
 import useSWR from "swr";
@@ -23,7 +23,6 @@ import CompleteModal from "@/app/components/CompleteModal";
 import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import { PostgrestError } from "@supabase/supabase-js";
 import HelpModal from "@/app/components/HelpModal";
 

@@ -64,8 +64,8 @@ const fetchWordStats = async (params: {
         wordNotChainCount = wordsData.filter(word => !word.k_canuse && word.status === "ok" && !delR.some(delWord => delWord.word === word.word)).length;
 
         // 추가/삭제 요청 단어 수 조회
-        let addedCount = wordsData.filter(word => word.status === 'add').length;
-        let deletedCount = delR.length;
+        const addedCount = wordsData.filter(word => word.status === 'add').length;
+        const deletedCount = delR.length;
 
         // 전체 단어 수
         const totalCount = acknowledgedCount + notAcknowledgedCount + addedCount;
