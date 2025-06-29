@@ -9,11 +9,11 @@ export async function generateMetadata() {
 
 const features = [
     { title: "단어 검색", description: "DB에 저장된 단어를 검색합니다.", link: "/word/search" },
+    { title: "DB 다운로드", description: "오픈DB의 단어들을 필터링해 다운로드합니다.", link: "/word/words-download" },
     { title: "단어 추가", description: "새로운 단어를 오픈DB에 등록합니다.", link: "/word/add" },
+    { title: "단어 대량 추가", description: "새로운 단어를 오픈DB에 등록합니다. (tsv,txt,json)", link: "/word/adds" },
     { title: "단어 로그", description: "단어의 최근 로그를 확인합니다.", link: "/word/logs" },
     { title: "요청 대기 현황", description: "추가/삭제 요청 대기 목록을 확인합니다.", link: "/word/requests" },
-    { title: "DB 다운로드", description: "오픈DB의 단어들을 필터링해 다운로드합니다.", link: "/word/words-download" },
-    { title: "API", description: "개발자들이 사용할수  있는 오픈 API문서 입니다.", link: "/word/open-api" }
 ];
 
 export default function OpenDBHomePage() {

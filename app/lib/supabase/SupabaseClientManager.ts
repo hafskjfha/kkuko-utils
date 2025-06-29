@@ -195,8 +195,6 @@ class GetManager implements IGetManager {
             return {data: this.wordsCache[key].data, error: null}
         }
 
-        console.log(Object.entries(this.wordsCache).map(([k,v])=>[k,v.time]))
-
         // 단어조합기 전용
         if (lenf){
             const {data:wordsData, error: wordsError} = await this.supabase.from('words').select('word, noin_canuse, k_canuse').in('length', [5, 6]);
