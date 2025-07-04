@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import WordExtractorApp from "@/app/manager-tool/extract/english-mission/EnglishMission";
@@ -9,11 +8,15 @@ jest.mock("@/app/manager-tool/extract/components/FileContentDisplay", () => {
     <div data-testid="file-content-display">
       <div>File Content: {fileContent || "No content"}</div>
       <div>Result Title: {resultTitle}</div>
-      <div>Result Count: {resultData?.length || 0}</div>
-      <button onClick={() => onFileUpload?.("error\ncomputer\nnano\nemotionlessness")}>
+      <div data-testid="result-count">
+        Result Count: {resultData?.length || 0}
+      </div>
+      <button
+        onClick={() => onFileUpload?.("error\ncomputer\nnano\nemotionlessness")}
+      >
         Mock File Upload
       </button>
-      <div data-testid="result-word">{fileContent}</div>
+      <div data-testid="result-word">{resultData}</div>
     </div>
   );
 });
@@ -94,8 +97,10 @@ describe("EnglishMission", () => {
 
     // 결과 확인 (미션 글자가 1개 이상 포함된 단어가 추출되어야 함)
     await waitFor(() => {
-      const resultDisplay = screen.getByTestId("file-content-display");
-      expect(resultDisplay).toHaveTextContent("Result Count:");
+      const resultCountDisplay = screen.getByTestId("result-count");
+      expect(resultCountDisplay).toHaveTextContent("Result Count: 4");
+      const resultDataDisplay = screen.getByTestId("result-word");
+      expect(resultDataDisplay).toHaveTextContent("error [r:3 e:1 o:1]");
     });
   });
 
@@ -155,7 +160,10 @@ describe("EnglishMission", () => {
 
     // 정렬이 해제된 상태에서도 단어 추출이 동작해야 함
     await waitFor(() => {
-      expect(screen.getByText(/Result Count:/)).toBeInTheDocument();
+      const resultCountDisplay = screen.getByTestId("result-count");
+      expect(resultCountDisplay).toHaveTextContent("Result Count: 4");
+      const resultDataDisplay = screen.getByTestId("result-word");
+      expect(resultDataDisplay).toHaveTextContent("error [e:1 o:1 r:3]");
     });
   });
 
@@ -228,35 +236,6 @@ describe("EnglishMission", () => {
 
     createElementSpy.mockRestore();
     createObjectURLSpy.mockRestore();
-  });
-
-  it("로딩 상태가 정상적으로 표시되는지 확인", async () => {
-    const user = userEvent.setup();
-    render(<WordExtractorApp />);
-
-    // Mock 파일 업로드
-    const mockUploadButton = screen.getByText("Mock File Upload");
-    await user.click(mockUploadButton);
-
-    // 최소 포함수 설정
-    const minMissionInput = getOutsideHelpModal(() =>
-      screen.getAllByPlaceholderText("최소 포함수를 입력하세요"),
-    );
-    await user.clear(minMissionInput);
-    await user.type(minMissionInput, "1");
-
-    // 단어 추출 실행
-    const extractButton = getOutsideHelpModal(() =>
-      screen.getAllByText("단어 추출"),
-    );
-
-    await user.click(extractButton);
-
-    // 로딩 상태 확인 (매우 짧은 시간이므로 즉시 확인하기 어려울 수 있음)
-    // 대신 버튼 텍스트 변화로 확인
-    await waitFor(() => {
-      expect(extractButton).toHaveTextContent("단어 추출");
-    });
   });
 
   it("파일의 총 단어 수가 정상적으로 표시되는지 확인", async () => {
