@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from 'react-redux';
-import { Menu, X, User, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { Menu, X, User, ChevronDown, LayoutDashboard, Sun, Moon } from 'lucide-react';
 import type { RootState, AppDispatch } from "./store/store";
 import { supabase } from "./lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { userAction } from "./store/slice";
+import { userAction, setTheme } from "./store/slice";
 
 const Header = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -20,6 +20,7 @@ const Header = () => {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const username=user.username;
+    const theme = useSelector((state: RootState) => state.theme.theme)
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -57,6 +58,10 @@ const Header = () => {
         setIsOpen(false);
         setIsProfileOpen(false);
     }, [pathname]);
+
+    const toggleTheme = () => {
+        dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))
+    }
 
     const navItems = [
         { href: "/word-combiner", label: "단어조합기", isActive: pathname === "/word-combiner" },
@@ -112,65 +117,81 @@ const Header = () => {
                         ))}
                     </div>
 
-                    {/* 데스크톱 프로필 드롭다운 */}
-                    <div className="hidden md:block relative">
+                    {/* 데스크톱 테마 토글 & 프로필 영역 */}
+                    <div className="hidden md:flex items-center space-x-4">
+                        {/* 테마 토글 버튼 */}
                         <button
-                            onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            onClick={toggleTheme}
+                            className="p-2 rounded-lg hover:bg-gray-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            aria-label="테마 변경"
                         >
-                            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
-                                <User size={18} className="text-white" />
-                            </div>
-                            <ChevronDown 
-                                size={16} 
-                                className={`text-gray-400 transition-transform duration-200 ${
-                                    isProfileOpen ? 'rotate-180' : ''
-                                }`} 
-                            />
+                            {theme === 'dark' ? (
+                                <Sun size={20} className="text-yellow-400" />
+                            ) : (
+                                <Moon size={20} className="text-blue-400" />
+                            )}
                         </button>
 
-                        {isProfileOpen && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white text-gray-900 rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
-                                <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-100">
-                                    {isLoggedIn ? (
-                                        <>
-                                            <p className="text-sm text-gray-600">안녕하세요,</p>
-                                            <p className="font-semibold text-gray-800">{username}님</p>
-                                        </>
-                                    ) : (
-                                        <p className="text-sm text-gray-600">로그인하세요</p>
-                                    )}
+                        {/* 프로필 드롭다운 */}
+                        <div className="relative" ref={profileDropdownRef}>
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            >
+                                <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+                                    <User size={18} className="text-white" />
                                 </div>
-                                <div className="py-2">
-                                    <Link href={isLoggedIn ? `/profile/${username}` : "/auth"}>
-                                        <div className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
-                                            <User size={16} className="mr-3 text-gray-500" />
-                                            {isLoggedIn ? "프로필 페이지" : "로그인"}
-                                        </div>
-                                    </Link>
-                                    {isLoggedIn && (
-                                        <button
-                                            onClick={handleLogout}
-                                            className="w-full flex items-center px-4 py-3 hover:bg-red-50 hover:text-red-600 cursor-pointer transition-colors text-left"
-                                        >
-                                            <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                            </svg>
-                                            로그아웃
-                                        </button>
-                                    )}
-                                    {['r4','admin'].includes(user.role) && (
-                                        <Link 
-                                        href={`/admin`}
-                                        className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                                        >
-                                            <LayoutDashboard size={16} className="mr-3 text-gray-500" />
-                                            관리자 페이지
+                                <ChevronDown 
+                                    size={16} 
+                                    className={`text-gray-400 transition-transform duration-200 ${
+                                        isProfileOpen ? 'rotate-180' : ''
+                                    }`} 
+                                />
+                            </button>
+
+                            {isProfileOpen && (
+                                <div className="absolute right-0 mt-2 w-56 bg-white text-gray-900 rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-100">
+                                        {isLoggedIn ? (
+                                            <>
+                                                <p className="text-sm text-gray-600">안녕하세요,</p>
+                                                <p className="font-semibold text-gray-800">{username}님</p>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm text-gray-600">로그인하세요</p>
+                                        )}
+                                    </div>
+                                    <div className="py-2">
+                                        <Link href={isLoggedIn ? `/profile/${username}` : "/auth"}>
+                                            <div className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                <User size={16} className="mr-3 text-gray-500" />
+                                                {isLoggedIn ? "프로필 페이지" : "로그인"}
+                                            </div>
                                         </Link>
-                                    )}
+                                        {isLoggedIn && (
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full flex items-center px-4 py-3 hover:bg-red-50 hover:text-red-600 cursor-pointer transition-colors text-left"
+                                            >
+                                                <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                </svg>
+                                                로그아웃
+                                            </button>
+                                        )}
+                                        {['r4','admin'].includes(user.role) && (
+                                            <Link 
+                                            href={`/admin`}
+                                            className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            >
+                                                <LayoutDashboard size={16} className="mr-3 text-gray-500" />
+                                                관리자 페이지
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -178,7 +199,7 @@ const Header = () => {
                 <div 
                     ref={mobileMenuRef}
                     className={`md:hidden transition-all duration-300 ease-in-out ${
-                        isOpen ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0 overflow-hidden"
+                        isOpen ? "max-h-96 opacity-100 mt-4 overflow-y-auto" : "max-h-0 opacity-0 overflow-hidden"
                     }`}
                 >
                     <div className="space-y-2 py-4 border-t border-gray-700">
@@ -198,6 +219,27 @@ const Header = () => {
                         
                         {/* 모바일 프로필 섹션 */}
                         <div className="pt-4 mt-4 border-t border-gray-700">
+                            {/* 모바일 테마 토글 버튼 */}
+                            <div className="px-4 py-2 mb-2">
+                                <button
+                                    onClick={toggleTheme}
+                                    className="flex items-center space-x-3 w-full px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-all duration-300 text-gray-300 hover:text-blue-400"
+                                    aria-label="테마 변경"
+                                >
+                                    {theme === 'dark' ? (
+                                        <>
+                                            <Sun size={18} className="text-yellow-400" />
+                                            <span className="text-sm">라이트 모드</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Moon size={18} className="text-blue-400" />
+                                            <span className="text-sm">다크 모드</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
                             {isLoggedIn ? (
                                 <>
                                     <div className="px-4 py-2 text-sm text-gray-400">
