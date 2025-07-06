@@ -74,7 +74,7 @@ export default function RequestsPage() {
     const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="p-6 max-w-6xl mx-auto min-h-full text-gray-800 dark:text-gray-100">
             {errorModalView && (
                 <ErrorModal
                     error={errorModalView}
@@ -86,10 +86,10 @@ export default function RequestsPage() {
 
             <div className="flex gap-4 mb-4">
                 <Select value={filterStatus} onValueChange={(v) => { setPage(1); setFilterStatus(v); }}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
                         <SelectValue placeholder="상태 선택" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                         <SelectItem value="all">전체 상태</SelectItem>
                         <SelectItem value="pending">대기중</SelectItem>
                         <SelectItem value="approved">승인됨</SelectItem>
@@ -128,33 +128,43 @@ export default function RequestsPage() {
                             const localTime = new Date(req.requested_at).toLocaleString(undefined, { timeZone: userTimeZone });
 
                             return (
-                                <TableRow key={req.id} className={isMyRequest ? "bg-gray-50" : ""}>
+                                <TableRow key={req.id} className={isMyRequest ? "bg-gray-50 dark:bg-gray-800/50" : ""}>
                                     <TableCell>{req.id}</TableCell>
-                                    <TableCell className="text-blue-600 underline hover:cursor-pointer" onClick={() => router.push(`/word/search/${req.word}`)}>
+                                    <TableCell
+                                        className="text-blue-600 dark:text-blue-400 underline hover:cursor-pointer"
+                                        onClick={() => router.push(`/word/search/${req.word}`)}
+                                    >
                                         {req.word}
                                     </TableCell>
                                     <TableCell>
                                         {req.request_type === "add" ? (
-                                            <span className="text-blue-600">추가</span>
+                                            <span className="text-blue-600 dark:text-blue-400">추가</span>
                                         ) : (
-                                            <span className="text-orange-600">삭제</span>
+                                            <span className="text-orange-600 dark:text-orange-400">삭제</span>
                                         )}
                                     </TableCell>
-                                    <TableCell className={req.requested_by ? "text-blue-600 underline hover:cursor-pointer" : ""} onClick={() => { if(req.requested_by) { router.push(`/profile/${req.requested_by.nickname}`) } }}>
+                                    <TableCell
+                                        className={req.requested_by ? "text-blue-600 dark:text-blue-400 underline hover:cursor-pointer" : ""}
+                                        onClick={() => {
+                                            if (req.requested_by) {
+                                                router.push(`/profile/${req.requested_by.nickname}`)
+                                            }
+                                        }}
+                                    >
                                         {req.requested_by?.nickname || "-"}
                                     </TableCell>
                                     <TableCell>{localTime}</TableCell>
                                     <TableCell>
                                         {req.status === "approved" ? (
-                                            <span className="text-green-600 font-semibold">승인</span>
+                                            <span className="text-green-600 dark:text-green-400 font-semibold">승인</span>
                                         ) : req.status === "rejected" ? (
-                                            <span className="text-red-600 font-semibold">거절</span>
+                                            <span className="text-red-600 dark:text-red-400 font-semibold">거절</span>
                                         ) : (
-                                            <span className="text-gray-500">대기중</span>
+                                            <span className="text-gray-500 dark:text-gray-400">대기중</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            )
+                            );
                         })
                     )}
                 </TableBody>
@@ -170,7 +180,7 @@ export default function RequestsPage() {
                     이전
                 </Button>
 
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-300">
                     {page} / {totalPages} 페이지
                 </span>
 
@@ -184,4 +194,5 @@ export default function RequestsPage() {
             </div>
         </div>
     );
+
 }

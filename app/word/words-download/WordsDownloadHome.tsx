@@ -21,6 +21,7 @@ type ChartItem = {
     type: string;
     count: number;
     color: string;
+    darkColor: string;
 };
 
 // 단어 통계를 가져오는 함수
@@ -72,12 +73,12 @@ const fetchWordStats = async (params: {
 
         // 차트 데이터 생성
         const chartData = [
-            { type: '어인정', count: acknowledgedCount, color: 'bg-blue-500' },
-            { type: '노인정', count: notAcknowledgedCount, color: 'bg-yellow-500' },
-            { type: '추가요청', count: addedCount, color: 'bg-green-500' },
-            { type: '삭제요청', count: deletedCount, color: 'bg-red-500' },
-            { type: '끝말잇기 가능', count: wordChainCount, color: 'bg-indigo-500' },
-            { type: '끝말잇기 불가', count: wordNotChainCount, color: 'bg-purple-500' },
+            { type: '어인정', count: acknowledgedCount, color: 'bg-blue-500', darkColor: 'dark:bg-blue-400' },
+            { type: '노인정', count: notAcknowledgedCount, color: 'bg-yellow-500', darkColor: 'dark:bg-yellow-400' },
+            { type: '추가요청', count: addedCount, color: 'bg-green-500', darkColor: 'dark:bg-green-400' },
+            { type: '삭제요청', count: deletedCount, color: 'bg-red-500', darkColor: 'dark:bg-red-400' },
+            { type: '끝말잇기 가능', count: wordChainCount, color: 'bg-indigo-500', darkColor: 'dark:bg-indigo-400' },
+            { type: '끝말잇기 불가', count: wordNotChainCount, color: 'bg-purple-500', darkColor: 'dark:bg-purple-400' },
         ].filter(item => (item.type === '추가요청' && includeAdded) ||
             (item.type === '삭제요청' && includeDeleted) ||
             (item.type === '어인정' && includeAcknowledged) ||
@@ -259,8 +260,8 @@ export default function KoreanWordStats() {
 
         return (
             <div className="mt-6 space-y-3">
-                <h3 className="font-medium text-gray-700 flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5 text-blue-500" />
+                <h3 className="font-medium text-gray-700 dark:text-gray-200 flex items-center">
+                    <BarChart3 className="mr-2 h-5 w-5 text-blue-500 dark:text-blue-400" />
                     단어 분포
                 </h3>
 
@@ -268,12 +269,12 @@ export default function KoreanWordStats() {
                     {chartData.map((item, index) => (
                         <div key={index} className="space-y-1">
                             <div className="flex justify-between text-sm">
-                                <span className="font-medium">{item.type}</span>
-                                <span className="text-gray-500">{item.count.toLocaleString()}개</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">{item.type}</span>
+                                <span className="text-gray-500 dark:text-gray-400">{item.count.toLocaleString()}개</span>
                             </div>
-                            <div className="w-full bg-gray-100 rounded-full h-2.5">
+                            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
                                 <div
-                                    className={`${item.color} h-2.5 rounded-full transition-all duration-500`}
+                                    className={`${item.color} ${item.darkColor} h-2.5 rounded-full transition-all duration-500`}
                                     style={{ width: `${(item.count / maxValue) * 100}%` }}
                                 ></div>
                             </div>
@@ -288,13 +289,13 @@ export default function KoreanWordStats() {
     const renderStatCards = () => {
         // 모든 카테고리를 항상 표시하도록 수정
         const categories = [
-            { id: 'all', name: '전체', count: stats.totalCount, icon: <Database className="h-5 w-5" />, color: 'bg-blue-500' },
-            { id: 'acknowledged', name: '어인정', count: stats.acknowledgedCount, icon: <Database className="h-5 w-5" />, color: 'bg-green-500' },
-            { id: 'notAcknowledged', name: '노인정', count: stats.notAcknowledgedCount, icon: <Database className="h-5 w-5" />, color: 'bg-yellow-500' },
-            { id: 'added', name: '추가요청', count: stats.addedCount, icon: <Database className="h-5 w-5" />, color: 'bg-purple-500' },
-            { id: 'deleted', name: '삭제요청', count: stats.deletedCount, icon: <Database className="h-5 w-5" />, color: 'bg-red-500' },
-            { id: 'wordChain', name: '끝말잇기 가능', count: stats.wordChainCount, icon: <Database className="h-5 w-5" />, color: 'bg-indigo-500' },
-            { id: 'wordNotChain', name: '끝말잇기 불가', count: stats.wordNotChainCount, icon: <Database className="h-5 w-5" />, color: 'bg-orange-500' }
+            { id: 'all', name: '전체', count: stats.totalCount, icon: <Database className="h-5 w-5" />, color: 'bg-blue-500', darkColor: 'dark:bg-blue-600' },
+            { id: 'acknowledged', name: '어인정', count: stats.acknowledgedCount, icon: <Database className="h-5 w-5" />, color: 'bg-green-500', darkColor: 'dark:bg-green-600' },
+            { id: 'notAcknowledged', name: '노인정', count: stats.notAcknowledgedCount, icon: <Database className="h-5 w-5" />, color: 'bg-yellow-500', darkColor: 'dark:bg-yellow-600' },
+            { id: 'added', name: '추가요청', count: stats.addedCount, icon: <Database className="h-5 w-5" />, color: 'bg-purple-500', darkColor: 'dark:bg-purple-600' },
+            { id: 'deleted', name: '삭제요청', count: stats.deletedCount, icon: <Database className="h-5 w-5" />, color: 'bg-red-500', darkColor: 'dark:bg-red-600' },
+            { id: 'wordChain', name: '끝말잇기 가능', count: stats.wordChainCount, icon: <Database className="h-5 w-5" />, color: 'bg-indigo-500', darkColor: 'dark:bg-indigo-600' },
+            { id: 'wordNotChain', name: '끝말잇기 불가', count: stats.wordNotChainCount, icon: <Database className="h-5 w-5" />, color: 'bg-orange-500', darkColor: 'dark:bg-orange-600' }
         ];
 
         // 현재 필터에 따라 적절한 카테고리만 표시
@@ -313,16 +314,16 @@ export default function KoreanWordStats() {
                 {filteredCategories.map(category => (
                     <Card
                         key={category.id}
-                        className={`cursor-pointer transition-all duration-300 ${selectedCategory === category.id ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
+                        className={`cursor-pointer transition-all duration-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 ${selectedCategory === category.id ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg' : 'hover:shadow-md'
                             }`}
                         onClick={() => setSelectedCategory(category.id)}
                     >
                         <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                            <div className={`${category.color} p-2 rounded-full text-white mb-2`}>
+                            <div className={`${category.color} ${category.darkColor} p-2 rounded-full text-white mb-2`}>
                                 {category.icon}
                             </div>
-                            <div className="text-2xl font-bold">{category.count.toLocaleString()}</div>
-                            <div className="text-sm text-gray-500">{category.name}</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{category.count.toLocaleString()}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{category.name}</div>
                         </CardContent>
                     </Card>
                 ))}
@@ -332,20 +333,20 @@ export default function KoreanWordStats() {
 
     return (
         <div className="container mx-auto py-8 max-w-4xl">
-            <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+            <Card className="shadow-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 text-white">
                     <CardTitle className="text-2xl font-bold">한국어 오픈 DB 단어 통계</CardTitle>
-                    <CardDescription className="text-blue-100">
+                    <CardDescription className="text-blue-100 dark:text-blue-50">
                         필터링 조건에 맞는 단어 수를 확인하고 필요한 단어를 다운로드하세요
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent className="pt-6 space-y-6">
                     {/* 필터 영역 */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                         <div className="flex items-center mb-3">
-                            <Filter className="mr-2 h-5 w-5 text-gray-600" />
-                            <h3 className="font-medium text-gray-800">필터 설정</h3>
+                            <Filter className="mr-2 h-5 w-5 text-gray-600 dark:text-gray-300" />
+                            <h3 className="font-medium text-gray-800 dark:text-gray-200">필터 설정</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -358,7 +359,7 @@ export default function KoreanWordStats() {
                                             setIncludeAdded(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="includeAdded">추가요청 단어 포함</Label>
+                                    <Label htmlFor="includeAdded" className="text-gray-700 dark:text-gray-200">추가요청 단어 포함</Label>
                                 </div>
 
                                 <div className="flex items-center space-x-2">
@@ -369,7 +370,7 @@ export default function KoreanWordStats() {
                                             setIncludeDeleted(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="includeDeleted">삭제요청 단어 제거</Label>
+                                    <Label htmlFor="includeDeleted" className="text-gray-700 dark:text-gray-200">삭제요청 단어 제거</Label>
                                 </div>
 
                                 <div className="flex items-center space-x-2">
@@ -380,7 +381,7 @@ export default function KoreanWordStats() {
                                             setOnlyWordChain(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="onlyWordChain">끝말잇기 사용가능 단어만</Label>
+                                    <Label htmlFor="onlyWordChain" className="text-gray-700 dark:text-gray-200">끝말잇기 사용가능 단어만</Label>
                                 </div>
                             </div>
 
@@ -393,7 +394,7 @@ export default function KoreanWordStats() {
                                             setIncludeAcknowledged(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="includeAcknowledged">어인정 단어 허용</Label>
+                                    <Label htmlFor="includeAcknowledged" className="text-gray-700 dark:text-gray-200">어인정 단어 허용</Label>
                                 </div>
 
                                 <div className="flex items-center space-x-2">
@@ -404,7 +405,7 @@ export default function KoreanWordStats() {
                                             setIncludeNotAcknowledged(checked === true)
                                         }
                                     />
-                                    <Label htmlFor="includeNotAcknowledged">노인정 단어 허용</Label>
+                                    <Label htmlFor="includeNotAcknowledged" className="text-gray-700 dark:text-gray-200">노인정 단어 허용</Label>
                                 </div>
                             </div>
                         </div>
@@ -413,6 +414,7 @@ export default function KoreanWordStats() {
                             <Button
                                 onClick={() => fetchStats()}
                                 disabled={loading}
+                                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
                             >
                                 {loading ? (
                                     <>
@@ -426,18 +428,18 @@ export default function KoreanWordStats() {
                     </div>
 
                     {error && (
-                        <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>오류</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
+                        <Alert variant="destructive" className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+                            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            <AlertTitle className="text-red-800 dark:text-red-200">오류</AlertTitle>
+                            <AlertDescription className="text-red-700 dark:text-red-300">{error}</AlertDescription>
                         </Alert>
                     )}
 
                     {/* 통계 표시 영역 */}
                     {loading ? (
                         <div className="text-center py-16">
-                            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
-                            <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500 dark:text-blue-400" />
+                            <p className="text-gray-500 dark:text-gray-400">통계 데이터를 불러오는 중...</p>
                         </div>
                     ) : (
                         <>
@@ -449,8 +451,8 @@ export default function KoreanWordStats() {
 
                             {/* 선택된 카테고리에 대한 추가 정보 */}
                             {selectedCategory !== 'all' && (
-                                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                                    <h3 className="font-medium text-gray-700 mb-2">
+                                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
                                         {selectedCategory === 'acknowledged' && '어인정 단어란?'}
                                         {selectedCategory === 'notAcknowledged' && '노인정 단어란?'}
                                         {selectedCategory === 'added' && '추가요청 단어란?'}
@@ -458,7 +460,7 @@ export default function KoreanWordStats() {
                                         {selectedCategory === 'wordChain' && '끝말잇기 사용가능 단어란?'}
                                         {selectedCategory === 'wordNotChain' && '끝말잇기 사용불가 단어란?'}
                                     </h3>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">
                                         {selectedCategory === 'acknowledged' && '끄코 특수규칙인 "아인정"을 켜야지 사용할 수 있는 단어입니다. 단어부에 의해 삭제/추가가 일어납니다.'}
                                         {selectedCategory === 'notAcknowledged' && '끄코에서 "어인정"여부에 상관없이 사용 가능한 단어입니다. 단어 추가/삭제가 잘 일어 나지 않습니다.'}
                                         {selectedCategory === 'added' && '사용자들이 DB에 추가를 요청한 단어들입니다. 검토 후 DB에 추가될 수 있습니다.'}
@@ -472,14 +474,15 @@ export default function KoreanWordStats() {
                     )}
                 </CardContent>
 
-                <CardFooter className="bg-gray-50 border-t flex justify-between">
-                    <div className="text-sm text-gray-500">
+                <CardFooter className="bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex justify-between">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                         필터링된 단어: {stats.totalCount.toLocaleString()}개
                     </div>
                     <Button
                         onClick={downloadWords}
                         variant="outline"
                         disabled={downloadLoading || stats.totalCount === 0}
+                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200"
                     >
                         {downloadLoading ? (
                             <>

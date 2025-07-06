@@ -174,7 +174,7 @@ export default function LogPage() {
     const totalPages = Math.ceil(totalCount / itemsPerPage);
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
+        <div className="p-6 max-w-6xl mx-auto text-gray-800 dark:text-gray-100">
             {/* Error Modal */}
             {errorModalView && (
                 <ErrorModal
@@ -200,10 +200,10 @@ export default function LogPage() {
                     value={filterState} 
                     onValueChange={(v) => handleFilterChange(v, filterType)}
                 >
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
                         <SelectValue placeholder="상태 선택" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                         <SelectItem value="all">전체 상태</SelectItem>
                         <SelectItem value="approved">승인됨</SelectItem>
                         <SelectItem value="rejected">거절됨</SelectItem>
@@ -215,18 +215,17 @@ export default function LogPage() {
                     value={filterType} 
                     onValueChange={(v) => handleFilterChange(filterState, v)}
                 >
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
                         <SelectValue placeholder="요청 타입 선택" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                         <SelectItem value="all">전체 타입</SelectItem>
                         <SelectItem value="add">추가 요청</SelectItem>
                         <SelectItem value="delete">삭제 요청</SelectItem>
                     </SelectContent>
                 </Select>
 
-                {/* 현재 결과 수 표시 */}
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                     총 {totalCount}개 결과
                 </div>
             </div>
@@ -259,7 +258,7 @@ export default function LogPage() {
                         ))
                     ) : logs.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 조건에 맞는 로그가 없습니다.
                             </TableCell>
                         </TableRow>
@@ -270,11 +269,13 @@ export default function LogPage() {
                             const localTime = utcCreat_at.toLocaleString(undefined, { timeZone: userTimeZone });
 
                             return (
-                                <TableRow key={log.id} className={isMyRequest ? "bg-blue-50" : ""}>
+                                <TableRow key={log.id} className={isMyRequest ? "bg-blue-50 dark:bg-blue-900/20" : ""}>
                                     <TableCell>{log.id}</TableCell>
                                     <TableCell>{localTime}</TableCell>
                                     <TableCell 
-                                        className={log.r_type === "add" || (log.r_type === "delete" && log.state === "rejected") ? "text-blue-600 underline hover:cursor-pointer" : ""} 
+                                        className={(log.r_type === "add" || (log.r_type === "delete" && log.state === "rejected")) 
+                                            ? "text-blue-600 underline hover:cursor-pointer dark:text-blue-400" 
+                                            : ""}
                                         onClick={() => {
                                             if (log.r_type === "add" || (log.r_type === "delete" && log.state === "rejected")) {
                                                 router.push(`/word/search/${log.word}`);
@@ -284,7 +285,7 @@ export default function LogPage() {
                                         {log.word}
                                     </TableCell>
                                     <TableCell 
-                                        className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} 
+                                        className={log.make_by_user ? `text-blue-600 underline hover:cursor-pointer dark:text-blue-400` : ""} 
                                         onClick={() => { 
                                             if (log.make_by_user) { 
                                                 router.push(`/profile/${log.make_by_user?.nickname}`); 
@@ -294,7 +295,7 @@ export default function LogPage() {
                                         {log.make_by_user?.nickname || "-"}
                                     </TableCell>
                                     <TableCell 
-                                        className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer` : ""} 
+                                        className={log.processed_by_user ? `text-blue-600 underline hover:cursor-pointer dark:text-blue-400` : ""} 
                                         onClick={() => { 
                                             if (log.processed_by_user) { 
                                                 router.push(`/profile/${log.processed_by_user?.nickname}`); 
@@ -305,18 +306,18 @@ export default function LogPage() {
                                     </TableCell>
                                     <TableCell>
                                         {log.state === "approved" ? (
-                                            <span className="text-green-600 font-semibold">승인</span>
+                                            <span className="text-green-600 dark:text-green-400 font-semibold">승인</span>
                                         ) : log.state === "rejected" ? (
-                                            <span className="text-red-600 font-semibold">거절</span>
+                                            <span className="text-red-600 dark:text-red-400 font-semibold">거절</span>
                                         ) : (
-                                            <span className="text-yellow-600 font-semibold">대기중</span>
+                                            <span className="text-yellow-600 dark:text-yellow-400 font-semibold">대기중</span>
                                         )}
                                     </TableCell>
                                     <TableCell>
                                         {log.r_type === "add" ? (
-                                            <span className="text-blue-600">추가</span>
+                                            <span className="text-blue-600 dark:text-blue-400">추가</span>
                                         ) : (
-                                            <span className="text-orange-600">삭제</span>
+                                            <span className="text-orange-600 dark:text-orange-400">삭제</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -337,10 +338,10 @@ export default function LogPage() {
                 </Button>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-gray-300">
                         {page} / {totalPages} 페이지
                     </span>
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-gray-400 dark:text-gray-500">
                         ({((page - 1) * itemsPerPage) + 1}-{Math.min(page * itemsPerPage, totalCount)} / {totalCount})
                     </span>
                 </div>
@@ -354,5 +355,6 @@ export default function LogPage() {
                 </Button>
             </div>
         </div>
-    );
+    )
+
 }

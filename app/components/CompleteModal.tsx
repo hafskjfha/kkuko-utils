@@ -1,53 +1,46 @@
-'use client'
+"use client";
 
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle
-} from './ui/dialog'
-import { Button } from './ui/button'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Button } from "./ui/button";
+import { motion } from "framer-motion";
+import { CheckCircle } from "lucide-react";
 
-type ConfirmModalProps = {
-    title?: string
-    description?: string
-    open: boolean
-    onConfirm: () => void
-    onClose: () => void
-}
+type CompleteModalProps = {
+    open: boolean;
+    onClose: () => void;
+    title?: string;
+    description?: string;
+};
 
-export default function ConfirmModal({
-    title = '정말로 진행하시겠습니까?',
-    description = '',
+export default function CompleteModal({
     open,
-    onConfirm,
-    onClose
-}: ConfirmModalProps) {
+    onClose,
+    title = "작업이 완료되었습니다!",
+    description = "정상적으로 처리되었습니다.",
+}: CompleteModalProps) {
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-                <DialogHeader>
-                    <DialogTitle className="text-gray-900 dark:text-gray-100">{title}</DialogTitle>
-                    {description && (
-                        <p className="text-sm text-muted-foreground dark:text-gray-400">
-                            {description}
-                        </p>
-                    )}
-                </DialogHeader>
+            <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col items-center text-center gap-4"
+                >
+                    <CheckCircle className="w-12 h-12 text-green-500" />
 
-                <DialogFooter className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={onClose}>
-                        취소
-                    </Button>
-                    <Button
-                        className="bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600"
-                        onClick={onConfirm}
-                    >
+                    <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-muted-foreground dark:text-gray-400">
+                        {description}
+                    </DialogDescription>
+
+                    <Button className="mt-4 px-6" onClick={onClose}>
                         확인
                     </Button>
-                </DialogFooter>
+                </motion.div>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
