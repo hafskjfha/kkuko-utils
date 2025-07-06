@@ -100,7 +100,7 @@ const WordExtractorApp = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                             <Link href="/manager-tool/extract">
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" className="dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700">
                                     <Home size="sm" />
                                     도구홈
                                 </Button>
@@ -108,7 +108,7 @@ const WordExtractorApp = () => {
                             <HelpModal
                                 title="X로 끝나는 단어 추출 사용법"
                                 triggerText="도움말"
-                                triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                                triggerClassName="border border-gray-200 dark:border-gray-700 border-1 rounded-md p-2"
                             >
                                 <div className="space-y-6">
                                     {/* Step 0 */}
@@ -127,13 +127,13 @@ const WordExtractorApp = () => {
                                         </div>
                                         <div className="ml-6 space-y-2">
                                             <p>원하는 끝글자를 입력합니다. (예: &quot;다&quot;, &quot;션&quot;, &quot;시리즈&quot;)</p>
-                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border dark:border-gray-700">
                                                 <div className="space-y-2">
-                                                    <Label className="text-sm font-medium">끝글자</Label>
+                                                    <Label className="text-sm font-medium dark:text-gray-200">끝글자</Label>
                                                     <Input placeholder="끝글자를 입력하세요" className="h-8" disabled />
                                                     <div className="flex items-center space-x-2">
                                                         <Checkbox disabled checked />
-                                                        <Label className="text-sm">결과 정렬</Label>
+                                                        <Label className="text-sm dark:text-gray-200">결과 정렬</Label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -148,7 +148,7 @@ const WordExtractorApp = () => {
                                         </div>
                                         <div className="ml-6 space-y-2">
                                             <p>실행 버튼을 누르고 기다립니다.</p>
-                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border dark:border-gray-700">
                                                 <Button className="w-full h-8" disabled>
                                                     <Play className="w-3 h-3 mr-2" />
                                                     단어 추출
@@ -165,7 +165,7 @@ const WordExtractorApp = () => {
                                         </div>
                                         <div className="ml-6 space-y-2">
                                             <p>결과를 확인한 후 다운로드합니다.</p>
-                                            <div className="bg-gray-50 p-3 rounded-lg border">
+                                            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border dark:border-gray-700">
                                                 <Button variant="secondary" className="w-full h-8" disabled>
                                                     <Download className="w-3 h-3 mr-2" />
                                                     결과 다운로드
@@ -180,8 +180,8 @@ const WordExtractorApp = () => {
                                         <h3 className="font-semibold">사용 예시</h3>
                                         <div className="space-y-3">
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-2">입력:</p>
-                                                <pre className="bg-gray-100 p-3 rounded text-xs overflow-x-auto">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">입력:</p>
+                                                <pre className="bg-gray-100 dark:bg-gray-800 dark:text-gray-200 p-3 rounded text-xs overflow-x-auto">
                                                     이름
                                                     하품
                                                     늠름
@@ -191,27 +191,26 @@ const WordExtractorApp = () => {
                                             </div>
                                             <div className="flex items-center justify-center">
                                                 <div className="text-center">
-                                                    <div className="text-sm text-gray-500">끝글자: &quot;름&quot; 추출</div>
-                                                    <div className="text-2xl">↓</div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">끝글자: &quot;름&quot; 추출</div>
+                                                    <div className="text-2xl dark:text-gray-300">↓</div>
                                                 </div>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-2">추출 결과:</p>
-                                                <div className="bg-green-50 p-3 rounded border border-green-200">
-                                                    <div className="text-sm space-y-1">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">추출 결과:</p>
+                                                <div className="bg-green-50 dark:bg-green-950 p-3 rounded border border-green-200 dark:border-green-700">
+                                                    <div className="text-sm space-y-1 dark:text-green-200">
                                                         <div>• 이름</div>
                                                         <div>• 늠름</div>
                                                     </div>
-                                                    <div className="mt-2 text-xs text-green-600">
+                                                    <div className="mt-2 text-xs text-green-600 dark:text-green-400">
                                                         총 2개 단어 추출됨
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                        <p className="text-blue-800 text-sm">
+                                    <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-700">
+                                        <p className="text-blue-800 dark:text-blue-200 text-sm">
                                             <strong>💡 팁:</strong> 정렬 옵션을 체크하면 결과가 가나다순으로 정렬됩니다.
                                         </p>
                                     </div>
@@ -242,17 +241,16 @@ const WordExtractorApp = () => {
                     {/* Control Panel - 1/4 width */}
                     <div className="xl:col-span-1">
                         <div className="space-y-6">
-                            {/* Settings Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Settings className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Settings className="h-5 w-5 dark:text-gray-400" />
                                         설정
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="word-end">끝글자</Label>
+                                        <Label htmlFor="word-end" className="dark:text-gray-200">끝글자</Label>
                                         <Input
                                             id="word-end"
                                             value={wordEnd}
@@ -269,19 +267,17 @@ const WordExtractorApp = () => {
                                         />
                                         <Label
                                             htmlFor="sort-option"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                         >
                                             결과 정렬
                                         </Label>
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            {/* Actions Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Play className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Play className="h-5 w-5 dark:text-gray-400" />
                                         실행
                                     </CardTitle>
                                 </CardHeader>
@@ -314,7 +310,7 @@ const WordExtractorApp = () => {
 
                             {/* Status Card */}
                             {fileContent && (
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-green-600 dark:text-green-400">

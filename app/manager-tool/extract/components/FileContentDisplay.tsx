@@ -73,7 +73,7 @@ const VirtualizedTextViewer = React.memo(({
 
     if (!content) {
         return (
-            <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
+            <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground dark:text-muted-foreground">
                 {placeholder}
             </div>
         );
@@ -83,15 +83,15 @@ const VirtualizedTextViewer = React.memo(({
         <div className="space-y-3">
             {searchable && (
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                     <Input
                         placeholder="내용 검색..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 text-sm"
+                        className="pl-10 text-sm bg-background border-input dark:border-input text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground dark:bg-gray-800 dark:border-gray-700"
                     />
                     {searchTerm && (
-                        <Badge variant="secondary" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs">
+                        <Badge variant="secondary" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs bg-secondary dark:bg-secondary text-secondary-foreground dark:text-secondary-foreground">
                             {filteredLines.length}줄
                         </Badge>
                     )}
@@ -99,7 +99,7 @@ const VirtualizedTextViewer = React.memo(({
             )}
             
             <ScrollArea 
-                className="h-[250px] sm:h-[300px] lg:h-[400px] w-full border rounded-md"
+                className="h-[250px] sm:h-[300px] lg:h-[400px] w-full border rounded-md border-border bg-background dark:bg-gray-800 dark:border-gray-700"
                 onScrollCapture={isLargeContent ? handleScroll : undefined}
                 ref={scrollAreaRef}
             >
@@ -119,14 +119,14 @@ const VirtualizedTextViewer = React.memo(({
                                     width: '100%'
                                 }}
                             >
-                                <pre className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-5">
+                                <pre className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-5 text-foreground dark:text-foreground font-mono">
                                     {visibleLines.join('\n')}
                                 </pre>
                             </div>
                         </div>
                     ) : (
                         // 일반 크기 텍스트 - 전체 렌더링
-                        <pre className="text-xs sm:text-sm whitespace-pre-wrap break-words">
+                        <pre className="text-xs sm:text-sm whitespace-pre-wrap break-words text-foreground dark:text-foreground font-mono">
                             {filteredLines.join('\n')}
                         </pre>
                     )}
@@ -134,7 +134,7 @@ const VirtualizedTextViewer = React.memo(({
             </ScrollArea>
             
             {isLargeContent && (
-                <div className="text-xs text-muted-foreground text-center">
+                <div className="text-xs text-muted-foreground dark:text-muted-foreground text-center">
                     대용량 파일 - 가상화 모드 ({filteredLines.length.toLocaleString()}줄)
                 </div>
             )}
@@ -206,16 +206,16 @@ const FileContentDisplay = ({
     return (
         <div className={`space-y-4 sm:space-y-6 ${className}`}>
             {/* File Upload Section */}
-            <Card>
+            <Card className="bg-card dark:bg-gray-800 dark:border-gray-700 border-border">
                 <CardHeader className="pb-3 sm:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-card-foreground dark:text-card-foreground">
                         <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
                         파일 업로드
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
                     <div className="grid w-full items-center gap-1.5">
-                        <Label htmlFor="file-upload" className="text-sm">텍스트 파일 선택</Label>
+                        <Label htmlFor="file-upload" className="text-sm text-foreground dark:text-foreground ">텍스트 파일 선택</Label>
                         <Input
                             id="file-upload"
                             ref={fileInputRef}
@@ -223,20 +223,20 @@ const FileContentDisplay = ({
                             accept=".txt"
                             onChange={handleFileUpload}
                             disabled={loading}
-                            className="text-sm"
+                            className="text-sm bg-background dark:bg-background border-input dark:border-input text-foreground dark:text-foreground file:bg-muted dark:file:bg-muted file:text-muted-foreground dark:file:text-muted-foreground file:border-0 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:text-sm file:font-medium hover:file:bg-muted/80 dark:hover:file:bg-muted/80 dark:bg-gray-800 dark:border-gray-700"
                         />
                     </div>
 
                     {file && (
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-muted rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-muted dark:bg-gray-600 dark:border-gray-500 rounded-lg">
                             <div className="flex items-center gap-2 min-w-0">
-                                <FileText className="h-4 w-4 flex-shrink-0" />
-                                <span className="text-sm font-medium truncate">{file.name}</span>
-                                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground dark:text-muted-foreground" />
+                                <span className="text-sm font-medium truncate text-foreground dark:text-foreground">{file.name}</span>
+                                <Badge variant="secondary" className="text-xs flex-shrink-0 bg-secondary dark:bg-secondary text-secondary-foreground dark:text-secondary-foreground">
                                     {(file.size / 1024).toFixed(1)} KB
                                 </Badge>
                             </div>
-                            <Button variant="outline" size="sm" onClick={resetAll} className="w-full sm:w-auto">
+                            <Button variant="outline" size="sm" onClick={resetAll} className="w-full sm:w-auto border-border dark:border-border bg-background dark:bg-background text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent hover:text-accent-foreground dark:hover:text-accent-foreground">
                                 초기화
                             </Button>
                         </div>
@@ -247,13 +247,13 @@ const FileContentDisplay = ({
             {/* Content Display Section */}
             <div className="space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
                 {/* File Content */}
-                <Card className="w-full">
+                <Card className="w-full bg-card border-border dark:bg-gray-800 dark:border-gray-700">
                     <CardHeader className="pb-3 sm:pb-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-card-foreground dark:text-card-foreground">
                             <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
                             업로드된 파일 내용
                             {fileContent && (
-                                <Badge variant="outline" className="text-xs flex-shrink-0 ml-auto">
+                                <Badge variant="outline" className="text-xs flex-shrink-0 ml-auto border-border dark:border-border text-foreground dark:text-foreground">
                                     {fileContent.split('\n').length.toLocaleString()}줄
                                 </Badge>
                             )}
@@ -262,7 +262,7 @@ const FileContentDisplay = ({
                     <CardContent className="p-3 sm:p-6">
                         {loading ? (
                             <div className="flex items-center justify-center h-[250px] sm:h-[300px] lg:h-[400px]">
-                                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary dark:border-primary"></div>
                             </div>
                         ) : (
                             <VirtualizedTextViewer
@@ -275,13 +275,13 @@ const FileContentDisplay = ({
                 </Card>
 
                 {/* Results Display */}
-                <Card className="w-full">
+                <Card className="w-full bg-card border-border dark:bg-gray-800 dark:border-gray-700">
                     <CardHeader className="pb-3 sm:pb-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-card-foreground dark:text-card-foreground">
                             <List className="h-4 w-4 sm:h-5 sm:w-5" />
                             <span className="truncate">{resultTitle}</span>
                             {resultData.length > 0 && (
-                                <Badge variant="default" className="text-xs flex-shrink-0 ml-auto">
+                                <Badge variant="default" className="text-xs flex-shrink-0 ml-auto bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground">
                                     {resultData.length}개
                                 </Badge>
                             )}

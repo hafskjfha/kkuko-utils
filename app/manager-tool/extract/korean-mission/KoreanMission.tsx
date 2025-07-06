@@ -436,10 +436,10 @@ const WordExtractorApp = () => {
                     <div className="xl:col-span-1">
                         <div className="space-y-6">
                             {/* Settings Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Settings className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Settings className="h-5 w-5 dark:text-gray-400" />
                                         설정
                                     </CardTitle>
                                 </CardHeader>
@@ -452,7 +452,7 @@ const WordExtractorApp = () => {
                                         />
                                         <Label
                                             htmlFor="one-mission"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                         >
                                             1미 포함
                                         </Label>
@@ -465,7 +465,7 @@ const WordExtractorApp = () => {
                                         />
                                         <Label
                                             htmlFor="show-mletter"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                         >
                                             미션 글자 표시
                                         </Label>
@@ -473,7 +473,7 @@ const WordExtractorApp = () => {
 
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2">
-                                            <Label className="text-sm font-medium">정렬 모드</Label>
+                                            <Label className="text-sm font-medium dark:text-gray-200">정렬 모드</Label>
                                             <Badge variant="secondary" className="text-xs">
                                                 {selected.length}/3
                                             </Badge>
@@ -490,7 +490,7 @@ const WordExtractorApp = () => {
                                                         />
                                                         <Label
                                                             htmlFor={`sort-${option}`}
-                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                                         >
                                                             {option}
                                                         </Label>
@@ -508,10 +508,10 @@ const WordExtractorApp = () => {
                             </Card>
 
                             {/* Actions Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Play className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Play className="h-5 w-5 dark:text-gray-400" />
                                         실행
                                     </CardTitle>
                                 </CardHeader>
@@ -544,7 +544,7 @@ const WordExtractorApp = () => {
 
                             {/* Status Card */}
                             {fileContent && (
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
