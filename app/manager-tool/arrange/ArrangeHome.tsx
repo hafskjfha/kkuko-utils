@@ -9,6 +9,8 @@ import Spinner from "@/app/components/Spinner";
 import CodeMirror from '@uiw/react-codemirror';
 import { FileUp, Download, FilePlus, Trash2 } from 'lucide-react';
 import HelpModalA from '@/app/components/HelpModal';
+import type { RootState } from "@/app/store/store";
+import { useSelector } from "react-redux";
 
 const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount, setFileContent }: {
     fileContent: string;
@@ -22,6 +24,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
 }) => {
     // 에디터 내용
     const [editorContent, setEditorContent] = useState(fileContent);
+    const theme = useSelector((state: RootState) => state.theme.theme)
 
     // 파일 콘텐츠 변경되면 업데이트
     useEffect(() => {
@@ -111,7 +114,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
                     <CodeMirror
                         value={editorContent}
                         height="400px"
-                        theme={false ? 'dark' : 'light'}
+                        theme={theme}
                         extensions={[]}
                         onChange={(value) => {
                             setEditorContent(value);
@@ -537,6 +540,45 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
         }
     };
 
+    // 정렬 v3
+    const handleSortWordv3 = () => {
+        try {
+            const updatedContent = fileContent.split("\n").sort((a, b) => {
+                const aFirst = a[0];
+                const bFirst = b[0];
+                if (aFirst === bFirst) {
+                    if (a.length === b.length) {
+                        return a.localeCompare(b, "ko-KR");
+                    }
+                    return b.length - a.length;
+                }
+                return aFirst.localeCompare(bFirst, "ko-KR");
+            });
+            if (updatedContent.join('\n') === fileContent) return;
+            pushToUndoStack(fileContent);
+            setFileContent(updatedContent.join('\n'));
+            setLineCount(updatedContent.length);
+            console.log(updatedContent)
+        } catch (err) {
+            if (err instanceof Error) {
+                seterrorModalView({
+                    ErrName: err.name,
+                    ErrMessage: err.message,
+                    ErrStackRace: err.stack,
+                    inputValue: `SortWordv1 | ${fileContent}`
+                });
+
+            } else {
+                seterrorModalView({
+                    ErrName: null,
+                    ErrMessage: null,
+                    ErrStackRace: err as string,
+                    inputValue: `SortWordv1 | ${fileContent}`
+                });
+            }
+        }
+    };
+
     return (
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
             {/* 헤더 */}
@@ -566,6 +608,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                                     <ul className="space-y-1 text-sm">
                                         <li>• <strong>ㄱㄴㄷ순 정렬 v1:</strong> 한글 가나다순으로 정렬합니다.</li>
                                         <li>• <strong>ㄱㄴㄷ순 정렬 v2:</strong> 한글 가나다순으로 정렬하고 알파벳별로 그룹화합니다.</li>
+                                        <li>• <strong>ㄱㄴㄷ순 정렬 v3:</strong> 한글 앞글자순으로 정렬하고 길이별로 정렬합니다.</li>
                                         <li>• <strong>길이 긴순 정렬:</strong> 단어의 길이가 긴 순서로 정렬합니다.</li>
                                     </ul>
                                 </div>
@@ -705,6 +748,22 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
                             </button>
                             <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
                                 <HelpModal wantGo={3} />
+                            </div>
+                        </div>
+
+                        {/* ㄱㄴㄷ 순 정렬 v3 */}
+                        <div className="flex items-center gap-2 p-2 bg-gray-50
+                            dark:bg-gray-900 rounded-md">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20">ㄱㄴㄷ 순 정렬 v3:</span>
+                            <button
+                                className="flex-1 bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium transition-colors disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                disabled={!fileContent}
+                                onClick={handleSortWordv3}  // handleSortWordv3 함수 연결 필요
+                            >
+                                정렬하기
+                            </button>
+                            <div className="w-6 h-6 relative cursor-pointer hover:opacity-80 transition-opacity">
+                                <HelpModal wantGo={4} />
                             </div>
                         </div>
 
