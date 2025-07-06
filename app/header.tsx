@@ -7,7 +7,8 @@ import { Menu, X, User, ChevronDown, LayoutDashboard, Sun, Moon } from 'lucide-r
 import type { RootState, AppDispatch } from "./store/store";
 import { supabase } from "./lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import { userAction, setTheme } from "./store/slice";
+import { userAction } from "./store/slice";
+import { useTheme } from 'next-themes'
 
 const Header = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -20,7 +21,7 @@ const Header = () => {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const username=user.username;
-    const theme = useSelector((state: RootState) => state.theme.theme)
+    const { theme, setTheme } = useTheme();
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -60,7 +61,7 @@ const Header = () => {
     }, [pathname]);
 
     const toggleTheme = () => {
-        dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))
+        setTheme(theme === 'dark' ? 'light' : 'dark');
     }
 
     const navItems = [

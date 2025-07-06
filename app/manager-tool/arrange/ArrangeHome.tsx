@@ -9,8 +9,7 @@ import Spinner from "@/app/components/Spinner";
 import CodeMirror from '@uiw/react-codemirror';
 import { FileUp, Download, FilePlus, Trash2 } from 'lucide-react';
 import HelpModalA from '@/app/components/HelpModal';
-import type { RootState } from "@/app/store/store";
-import { useSelector } from "react-redux";
+import { useTheme } from 'next-themes'
 
 const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCount, setFile, setLineCount, setFileContent }: {
     fileContent: string;
@@ -24,7 +23,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
 }) => {
     // 에디터 내용
     const [editorContent, setEditorContent] = useState(fileContent);
-    const theme = useSelector((state: RootState) => state.theme.theme)
+    const { theme } = useTheme();
 
     // 파일 콘텐츠 변경되면 업데이트
     useEffect(() => {
@@ -114,7 +113,7 @@ const FileSector = ({ fileContent, fileInputRef, handleFileUpload, file, lineCou
                     <CodeMirror
                         value={editorContent}
                         height="400px"
-                        theme={theme}
+                        theme={theme === 'dark' ? 'dark' : 'light'}
                         extensions={[]}
                         onChange={(value) => {
                             setEditorContent(value);
