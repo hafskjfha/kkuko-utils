@@ -1,18 +1,23 @@
-name: PR Jest Test Report
+name: Jest Test with Sticky Comment (Internal)
 
 on:
   pull_request:
     branches: [main]
 
+permissions:
+  pull-requests: write
+  issues: write
+
 jobs:
   test:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout PR Code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -20,14 +25,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Jest with JSON output
-        run: |
-          npx jest --json --outputFile=jest-results.json
+      - name: Run Jest
+        run: npx jest --json --outputFile=jest-results.json
         continue-on-error: true
 
-      - name: Create PR comment from test results
-        run: node .github/scripts/jest-report-rest.js
+      - name: Generate Markdown Summary
+        run: node .github/scripts/gen-summary.js > summary.md
+
+      - name: Sticky PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: jest-summary
+          path: summary.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
