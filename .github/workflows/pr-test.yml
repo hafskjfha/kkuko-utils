@@ -1,4 +1,4 @@
-name: PR Test and Coverage
+name: PR Jest Test Report
 
 on:
   pull_request:
@@ -7,31 +7,27 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Use Node.js
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run jest test and coverage
+      - name: Run Jest with JSON output
         run: |
-          npx jest --ci --testLocationInResults --noStackTrace > jest_output.txt
-          npx jest --coverage --coverageReporters=text-summary > coverage_summary.txt
+          npx jest --json --outputFile=jest-results.json
+        continue-on-error: true
 
-      - name: Format output and comment
-        run: |
-          echo '✅ 테스트 결과' > pr_comment.txt
-          grep -E '^(PASS|FAIL)' jest_output.txt >> pr_comment.txt
-
-          echo -e '\n🧪 커버리지 요약' >> pr_comment.txt
-          cat coverage_summary.txt >> pr_comment.txt
-
-      - name: Post PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          path: pr_comment.txt
+      - name: Create PR comment from test results
+        run: node .github/scripts/jest-report-rest.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

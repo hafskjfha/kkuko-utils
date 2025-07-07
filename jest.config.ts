@@ -25,6 +25,9 @@ const customJestConfig = {
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "text-summary", "lcov"],
 }
 
 module.exports = createJestConfig(customJestConfig)
