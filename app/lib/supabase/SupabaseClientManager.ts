@@ -31,6 +31,12 @@ class AddManager implements IAddManager {
     public async waitWordThemes(insertWaitWordThemeData: { wait_word_id: number, theme_id: number }[]) {
         return await this.supabase.from('wait_word_themes').insert(insertWaitWordThemeData);
     }
+    public async waitDocs({docsName, userId}: {docsName: string, userId: string|undefined}) {
+        return await this.supabase.from('docs_wait').insert({
+            docs_name: docsName,
+            req_by: userId ?? null,
+        })
+    }
 }
 
 class GetManager implements IGetManager {
@@ -236,6 +242,9 @@ class GetManager implements IGetManager {
             time:now
         }
         return {data, error:null}
+    }
+    public async letterDocs(){
+        return await this.supabase.from('docs').select('*').eq('typez','letter');
     }
 }
 

@@ -348,7 +348,7 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
 
                     {/* 탭 네비게이션 */}
                     {metaData.typez !== "ect" && (
-                        <div className="px-8 pt-6 pb-2">
+                        <div className="px-8 pt-6 pb-2 overflow-x-auto">
                             <nav className="flex space-x-1" aria-label="Tabs">
                                 {(["all", "mission", "long"] as TabType[]).map((tab) => (
                                     <button
