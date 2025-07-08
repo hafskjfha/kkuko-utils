@@ -9,7 +9,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
 import { FileJson, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
-import { SCM, supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
@@ -182,18 +182,18 @@ export default function WordsAddHome() {
         setProgress(0);
         setCurrentTask('필요한 정보 가져오는 중...');
 
-        const { data: docsDatas, error: docsDataError } = await supabase.from('docs').select('*');
+        const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) return makeError(docsDataError);
-        const { data: themeData, error: themeError } = await supabase.from('themes').select('*');
+        const { data: themeData, error: themeError } = await SCM.get().allTheme();
         if (themeError) return makeError(themeError);
 
-        const { data: waitWords, error: waitWordsError } = await supabase.from('wait_words').select('*').eq('request_type', 'add')
-        const { data: waitThemeWord, error: waitThemeWordError } = await supabase.from('word_themes_wait').select('words(word),themes(*),*').eq('typez', 'add');
+        const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('add');
+        const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme('add');
 
         if (waitWordsError) { return makeError(waitWordsError); }
         if (waitThemeWordError) { return makeError(waitThemeWordError); }
 
-        const { data: waitWordTheme, error: waitWordThemeError } = await supabase.from('wait_word_themes').select('wait_words(word),themes(*)').in('wait_word_id', waitWords.map(({ id }) => id))
+        const { data: waitWordTheme, error: waitWordThemeError } = await SCM.get().waitWordsThemes(waitWords.map(({ id }) => id))
         if (waitWordThemeError) { return makeError(waitWordThemeError); }
 
         const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
@@ -244,7 +244,7 @@ export default function WordsAddHome() {
         for (let i = 0; i < chuckQuerysA.length; i++) {
             const chuckQuery = chuckQuerysA[i]
             setCurrentTask(`단어 추가중... ${i}/${chuckQuerysA.length}`);
-            const { data: insertedWordsData, error: insertWordError } = await supabase.from('words').upsert(chuckQuery, { ignoreDuplicates: true, onConflict: "word" }).select('*');
+            const { data: insertedWordsData, error: insertWordError } = await SCM.add().words(chuckQuery);
             if (insertWordError) {
                 return makeError(insertWordError)
             }
@@ -300,7 +300,7 @@ export default function WordsAddHome() {
         for (let i = 0; i < abab.length; i++) {
             const chuckChecks = abab[i];
             setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
-            const { data: needCheckedWordsData, error: ff } = await supabase.from('words').select('id,word').in('word', chuckChecks);
+            const { data: needCheckedWordsData, error: ff } = await SCM.get().wordsByWords(chuckChecks);
             if (ff) return makeError(ff)
             needCheckedWordsDatas.push(...needCheckedWordsData)
         }
@@ -333,7 +333,7 @@ export default function WordsAddHome() {
         for (let i = 0; i < chuckQuerysB.length; i++) {
             const chuckQuery = chuckQuerysB[i]
             setCurrentTask(`주제 정보 추가 중...${i}/${chuckQuerysB.length}`)
-            const { data: insertedThemesData, error: inseredThemeError } = await supabase.from('word_themes').upsert(chuckQuery, { ignoreDuplicates: true, onConflict: "word_id,theme_id" }).select('words(word),themes(name)')
+            const { data: insertedThemesData, error: inseredThemeError } = await SCM.add().wordsThemes(chuckQuery);
             if (inseredThemeError) return makeError(inseredThemeError)
             if (!insertedThemesData) continue
             for (const data of insertedThemesData) {
@@ -362,29 +362,25 @@ export default function WordsAddHome() {
         if (logError) {
             return makeError(logError);
         }
-        const { data: docsLogData, error: docsLogError } = await supabase.from('docs_logs').insert(docsLogsQuery).select('*,docs(typez)');
+        const { error: docsLogError } = await SCM.add().docsLog(docsLogsQuery);
         if (docsLogError) return makeError(docsLogError)
 
         const updateThemeDocsIds: Set<number> = new Set();
-        for (const data of docsLogData) {
-            if (data.docs.typez === "theme") {
-                updateThemeDocsIds.add(data.docs_id);
-            }
+        for (const data of docsLogsQuery) {
+            updateThemeDocsIds.add(data.docs_id);
         }
 
         setProgress(80);
         setCurrentTask('마지막 처리 중...')
         for (const [uuid, count] of Object.entries(com)) {
-            const { error: rpcError1 } = await supabase.rpc('increment_contribution', { target_id: uuid, inc_amount: count })
+            const { error: rpcError1 } = await SCM.update().userContribution({ userId: uuid, amount: count })
             if (rpcError1) return makeError(rpcError1)
         }
 
-
-        const { error: rpcError2 } = await supabase.rpc('update_last_updates', { docs_ids: [...updateThemeDocsIds] })
-        if (rpcError2) return makeError(rpcError2);
+        await SCM.update().docsLastUpdate([...updateThemeDocsIds]);
 
         for (const p of chunkArray(logsQuery.map(({word})=>word),100)){
-            const {error} = await supabase.from('wait_words').delete().eq('request_type','add').in('word',p);
+            const {error} = await SCM.delete().waitWords(p);
             if (error) { return makeError(error); }
         }
 

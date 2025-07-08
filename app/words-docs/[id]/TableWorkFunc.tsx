@@ -119,7 +119,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
             }
 
             // 7. 추가 요청 테이블에서 삭제
-            const { error: deleteWaitWordDataError } = await SCM.delete().wordsFromWaitcId([getWaitWordData.id])
+            const { error: deleteWaitWordDataError } = await SCM.delete().waitWordsByIds([getWaitWordData.id])
             if (deleteWaitWordDataError) return makeError(deleteWaitWordDataError);
 
             setIsProcessing(false);
@@ -141,7 +141,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         if (!getWaitWordData) return;
 
         // 2.1 추가 요청 거부
-        const { error: deleteWaitWordDataError } = await SCM.delete().wordsFromWaitcId([getWaitWordData.id]);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordsByIds([getWaitWordData.id]);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         // 2.2 로그 등록

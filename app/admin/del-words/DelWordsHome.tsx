@@ -14,7 +14,7 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { PostgrestError } from '@supabase/supabase-js';
 import ErrorModal from "@/app/components/ErrModal";
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { chunk as chunkArray } from "es-toolkit";
@@ -129,16 +129,16 @@ export default function WordsDelHome() {
 
         setCurrentTask("필요한 정보 가져오는 중...");
         setProgress(0);
-        const { data: docsDatas, error: docsDataError } = await supabase.from('docs').select('*');
+        const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) return makeError(docsDataError);
 
-        const { data: waitWords, error: waitWordsError } = await supabase.from('wait_words').select('*').eq('request_type', 'delete')
-        const { data: waitThemeWord, error: waitThemeWordError } = await supabase.from('word_themes_wait').select('words(word),themes(*),*').eq('typez', 'delete');
+        const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('delete');
+        const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme('delete');
 
         if (waitWordsError) { return makeError(waitWordsError); }
         if (waitThemeWordError) { return makeError(waitThemeWordError); }
 
-        const { data: waitWordTheme, error: waitWordThemeError } = await supabase.from('wait_word_themes').select('wait_words(word),themes(*)').in('wait_word_id', waitWords.map(({ id }) => id))
+        const { data: waitWordTheme, error: waitWordThemeError } = await SCM.get().waitWordsThemes(waitWords.map(({ id }) => id))
         if (waitWordThemeError) { return makeError(waitWordThemeError); }
 
         const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
@@ -173,7 +173,7 @@ export default function WordsDelHome() {
 
         const chuckWords = chunkArray(words, 100)
         for (const ww of chuckWords) {
-            const { data: wordsData, error: wordsError } = await supabase.from('words').select('*').in('word', ww);
+            const { data: wordsData, error: wordsError } = await SCM.get().wordsByWords(ww);
             if (wordsError) return makeError(wordsError);
 
             for (const data of wordsData) {
@@ -189,7 +189,7 @@ export default function WordsDelHome() {
         const nodel: Set<number> = new Set();
 
         for (const chuckchu of chunkArray(wordIds, 100)) {
-            const { data: wordThemeData, error: wordThemeError } = await supabase.from('word_themes').select('words(word,id),themes(name,code)').in('word_id', chuckchu)
+            const { data: wordThemeData, error: wordThemeError } = await SCM.get().wordsThemes(chuckchu)
             if (wordThemeError) return makeError(wordThemeError)
 
             for (const data of wordThemeData) {
@@ -237,11 +237,12 @@ export default function WordsDelHome() {
         setCurrentTask("로그 등록중...");
         setProgress(75);
 
-        const { error: logError } = await supabase.from('logs').insert(logsQuery);
+        const { error: logError } = await SCM.add().wordLog(logsQuery);
         if (logError) return makeError(logError)
 
-        const { data: docsLogData, error: docsLogError } = await supabase.from('docs_logs').insert(docsLogsQuery).select('docs(id)')
+        const { error: docsLogError } = await SCM.add().docsLog(docsLogsQuery);
         if (docsLogError) return makeError(docsLogError)
+        const docsLogData = docsLogsQuery.map(({docs_id})=>docs_id)
 
         
         const deleteWordIdChuck = chunkArray(wordIdsAA, 200);
@@ -250,19 +251,18 @@ export default function WordsDelHome() {
         for (let i = 0; i < deleteWordIdChuck.length; i++) {
             const wordIdsA = deleteWordIdChuck[i]
             setCurrentTask(`삭제 처리중... ${i}/${deleteWordIdChuck.length}`)
-            const { error: deleteWordError } = await supabase.from('words').delete().in('id', wordIdsA)
+            const { error: deleteWordError } = await SCM.delete().wordcIds(wordIdsA);
             if (deleteWordError) return makeError(deleteWordError)
         }
-        for (const { docs } of docsLogData) {
-            updateDocsId.add(docs.id)
+        for (const id of docsLogData) {
+            updateDocsId.add(id)
         }
 
         setCurrentTask("마지막 처리중...");
         setProgress(95);
-        for (const docsId of updateDocsId) {
-            await supabase.rpc('update_last_update', { docs_id: docsId })
-        }
-        await supabase.rpc('increment_contribution', { target_id: user.uuid, inc_amount: wordIds.length })
+        await SCM.update().docsLastUpdate([...updateDocsId])
+        await SCM.update().userContribution({ userId: user.uuid, amount: wordIds.length })
+        
 
         setProgress(100);
         setIsProcessing(false);

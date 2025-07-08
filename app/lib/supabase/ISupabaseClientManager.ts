@@ -30,6 +30,8 @@ export interface IAddManager {
     waitDocs({ docsName, userId }: { docsName: string; userId: string | undefined; }): Promise<PostgrestSingleResponse<null>>;
     docs(insertDocsData: { name: string; maker: string | null; duem: boolean; typez: "letter" | "theme"; }[]): Promise<PostgrestSingleResponse<null>>;
     nickname(userId: string, nick: string): Promise<PostgrestSingleResponse<user>>;
+    words(q:addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
+    wordsThemes(q: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<{words:{word: string}; themes: {name: string}}[]>>;
 }
 
 // get 관련 타입
@@ -50,8 +52,8 @@ export interface IGetManager{
     searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
     docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
     docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; })[]}, error: null}>
-    allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null; users: user | null})[]>>;
-    wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
+    allWaitWords(c?:"add" | "delete"): Promise<PostgrestSingleResponse<(wait_word & {words: word | null; users: user | null})[]>>;
+    wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; themes: theme}[]>>
     allWords({ includeAddReq, includeDeleteReq, includeInjung, includeNoInjung, onlyWordChain, lenf }: { includeAddReq?: boolean; includeDeleteReq?: boolean; includeInjung?: boolean; includeNoInjung?: boolean; onlyWordChain?: boolean; lenf?: boolean; }): Promise<{ data: { word: string; noin_canuse: boolean; k_canuse: boolean; status: "ok" | "add" | "delete"; }[]; error: null } | {data: null; error: PostgrestError; }>
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
     addWaitDocs(): Promise<PostgrestSingleResponse<docs_wait[]>>;
@@ -68,8 +70,9 @@ export interface IGetManager{
     logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
     wordsCount(): Promise<PostgrestSingleResponse<{word: string}[]>>;
     waitWordsCount(): Promise<PostgrestSingleResponse<{word: string}[]>>;
-    allWordWaitTheme(): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
-    waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme})[]>>;
+    allWordWaitTheme(c?: "add" | "delete"): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
+    waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme, wait_words:{word: string}})[]>>;
+    wordsByWords(words: string[]): Promise<PostgrestSingleResponse<word[]>>;
 }
 
 // delete 관련 타입
@@ -80,7 +83,6 @@ export interface IDeleteManager{
     wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
     wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
-    wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
     waitDocs(id: number[]): Promise<PostgrestSingleResponse<null>>;
     waitWords(words: string[]): Promise<PostgrestSingleResponse<null>>;

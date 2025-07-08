@@ -43,6 +43,12 @@ class AddManager implements IAddManager {
     public async nickname(userId: string, nick: string){
         return this.supabase.from("users").insert({ id: userId, nickname: nick.trim()}).select("*").single();
     }
+    public async words(q:addWordQueryType[]){
+        return this.supabase.from('words').upsert(q, { ignoreDuplicates: true, onConflict: "word" }).select('*');
+    }
+    public async wordsThemes(q: addWordThemeQueryType[]){
+       return await this.supabase.from('word_themes').upsert(q, { ignoreDuplicates: true, onConflict: "word_id,theme_id" }).select('words(word),themes(name)')
+    }
 }
 
 class GetManager implements IGetManager {
@@ -185,11 +191,17 @@ class GetManager implements IGetManager {
             return { data: null, error: { name: "unexcept", details: "", code: "", message: "", hint: "" } as PostgrestError }
         }
     }
-    public async allWaitWords() {
+    public async allWaitWords(c?:"add" | "delete") {
+        if (c=="add"){
+            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"add");
+        }
+        else if (c=="delete"){
+            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"delete");
+        }
         return await this.supabase.from('wait_words').select('*,words(*),users(*)');
     }
     public async wordsThemes(words_id: number[]) {
-        return await this.supabase.from('word_themes').select('*,words(*)').in('word_id', words_id);
+        return await this.supabase.from('word_themes').select('*,themes(*),words(*)').in('word_id', words_id);
     }
     public async allWords({ includeAddReq=false, includeDeleteReq=false, includeInjung=true, includeNoInjung=true, onlyWordChain=true, lenf=false }: {
         includeAddReq?: boolean;
@@ -294,11 +306,20 @@ class GetManager implements IGetManager {
     public async waitWordsCount() {
         return await this.supabase.from('wait_words').select('word',{ count: 'exact', head: true });
     }
-    public async allWordWaitTheme() {
+    public async allWordWaitTheme(c?: "add" | "delete") {
+        if (c=="add"){
+            return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)').eq('typez','add');
+        }
+        else if (c=="delete"){
+            return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)').eq('typez',"delete")    
+        }
         return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)');
     }
     public async waitWordsThemes(waitWordIds: number[]) {
-        return await this.supabase.from('wait_word_themes').select('*,themes(*)').in('wait_word_id', waitWordIds)
+        return await this.supabase.from('wait_word_themes').select('*,themes(*),wait_words(word)').in('wait_word_id', waitWordIds)
+    }
+    public async wordsByWords(words: string[]){
+        return await this.supabase.from('words').select('*').in('word',words);
     }
 }
 
@@ -340,9 +361,6 @@ class DeleteManager implements IDeleteManager {
             };
         }
         return await this.supabase.rpc('delete_word_themes_wait_bulk', { pairs: query });
-    }
-    public async wordsFromWaitcId(ids: number[]) {
-        return await this.supabase.from('wait_words').delete().in('id', ids);
     }
     public async startDocs({ docsId, userId }: { docsId: number, userId: string }) {
         return await this.supabase.from('user_star_docs').delete().eq('docs_id', docsId).eq('user_id', userId);
