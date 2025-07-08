@@ -277,10 +277,10 @@ export default function WordsDelHome() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 p-4 md:p-8">
+        <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">단어 대량 삭제 페이지</h1>
-                <p className="text-gray-600 mt-2">단어를 대량으로 삭제합니다.</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">단어 대량 삭제 페이지</h1>
+                <p className="text-gray-600 dark:text-gray-300 mt-2">단어를 대량으로 삭제합니다.</p>
             </header>
 
             <main className="flex-grow">
@@ -291,12 +291,12 @@ export default function WordsDelHome() {
                         관리자 대시보드로 이동
                     </Button>
                 </Link>
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h2 className="text-xl font-semibold mb-4">파일 업로드</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 border border-transparent dark:border-gray-700">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">파일 업로드</h2>
 
                     {/* 드래그 앤 드롭 영역 */}
                     <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors bg-white dark:bg-gray-900"
                         onClick={handleUploadClick}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
@@ -310,11 +310,11 @@ export default function WordsDelHome() {
                         />
 
                         <div className="flex flex-col items-center gap-3">
-                            <Upload className="h-12 w-12 text-gray-400" />
-                            <p className="text-lg font-medium">
+                            <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
                                 {fileName ? `${fileName} 선택됨` : '파일을 드래그하거나 클릭하여 업로드'}
                             </p>
-                            <p className="text-sm text-gray-500">지원 형식: TXT, CSV, MD, JSON</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">지원 형식: TXT, CSV, MD, JSON</p>
                         </div>
                     </div>
 
@@ -329,14 +329,14 @@ export default function WordsDelHome() {
                     {/* 파일 내용 미리보기 */}
                     {fileContent && (
                         <div className="mt-6">
-                            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                            <h3 className="text-lg font-medium mb-2 flex items-center gap-2 text-gray-900 dark:text-gray-100">
                                 <FileText className="h-5 w-5" />
                                 파일 미리보기
                             </h3>
                             <Textarea
                                 value={fileContent.length > 1000 ? `${fileContent.substring(0, 1000)}...` : fileContent}
                                 readOnly
-                                className="font-mono text-sm h-48"
+                                className="font-mono text-sm h-48 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                             />
                         </div>
                     )}
@@ -360,12 +360,12 @@ export default function WordsDelHome() {
 
                 {/* 추가 기능이나 결과를 보여주는 섹션 (필요에 따라 확장) */}
                 {processingComplete && (
-                    <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-transparent dark:border-gray-700">
                         <div className="flex items-center gap-2 text-green-600 mb-4">
                             <CheckCircle className="h-6 w-6" />
-                            <h2 className="text-xl font-semibold">처리 완료!</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">처리 완료!</h2>
                         </div>
-                        <p className="text-gray-700">
+                        <p className="text-gray-700 dark:text-gray-300">
                             삭제 처리가 완료되었습니다
                         </p>
                     </div>
@@ -374,12 +374,12 @@ export default function WordsDelHome() {
 
             {/* 처리 모달 */}
             <Dialog open={showModal} onOpenChange={setShowModal}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900">
                     <DialogHeader>
-                        <DialogTitle>
+                        <DialogTitle className="text-gray-900 dark:text-gray-100">
                             {processingComplete ? '처리 완료' : '처리 진행 중'}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="dark:text-gray-300">
                             {processingComplete
                                 ? '모든 작업이 성공적으로 완료되었습니다.'
                                 : '텍스트 파일을 처리하고 있습니다. 잠시만 기다려주세요.'}
@@ -388,8 +388,8 @@ export default function WordsDelHome() {
 
                     <div className="py-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium">{currentTask}</span>
-                            <span className="text-sm font-medium">{progress}%</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{currentTask}</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-2" />
 
