@@ -74,7 +74,7 @@ export default function RequestsPage() {
     const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
     return (
-        <div className="p-6 max-w-6xl mx-auto min-h-full text-gray-800 dark:text-gray-100">
+        <div className="p-6 max-w-6xl mx-auto min-h-screen text-gray-800 dark:text-gray-100 bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
             {errorModalView && (
                 <ErrorModal
                     error={errorModalView}
@@ -86,7 +86,7 @@ export default function RequestsPage() {
 
             <div className="flex gap-4 mb-4">
                 <Select value={filterStatus} onValueChange={(v) => { setPage(1); setFilterStatus(v); }}>
-                    <SelectTrigger className="w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100">
+                    <SelectTrigger className="w-[160px] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:border-blue-300 dark:hover:border-blue-600">
                         <SelectValue placeholder="상태 선택" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
@@ -98,77 +98,78 @@ export default function RequestsPage() {
                 </Select>
             </div>
 
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-16">ID</TableHead>
-                        <TableHead>요청 단어</TableHead>
-                        <TableHead>요청 타입</TableHead>
-                        <TableHead>요청자</TableHead>
-                        <TableHead>요청 시간</TableHead>
-                        <TableHead>상태</TableHead>
-                    </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                    {isLoading ? (
-                        Array.from({ length: itemsPerPage }).map((_, idx) => (
-                            <TableRow key={idx}>
-                                <TableCell><Skeleton width={20} /></TableCell>
-                                <TableCell><Skeleton width={150} /></TableCell>
-                                <TableCell><Skeleton width={80} /></TableCell>
-                                <TableCell><Skeleton width={100} /></TableCell>
-                                <TableCell><Skeleton width={120} /></TableCell>
-                                <TableCell><Skeleton width={80} /></TableCell>
-                            </TableRow>
-                        ))
-                    ) : (
-                        currentRequests.map((req) => {
-                            const isMyRequest = req.requested_by === user.uuid;
-                            const localTime = new Date(req.requested_at).toLocaleString(undefined, { timeZone: userTimeZone });
-
-                            return (
-                                <TableRow key={req.id} className={isMyRequest ? "bg-gray-50 dark:bg-gray-800/50" : ""}>
-                                    <TableCell>{req.id}</TableCell>
-                                    <TableCell
-                                        className="text-blue-600 dark:text-blue-400 underline hover:cursor-pointer"
-                                        onClick={() => router.push(`/word/search/${req.word}`)}
-                                    >
-                                        {req.word}
-                                    </TableCell>
-                                    <TableCell>
-                                        {req.request_type === "add" ? (
-                                            <span className="text-blue-600 dark:text-blue-400">추가</span>
-                                        ) : (
-                                            <span className="text-orange-600 dark:text-orange-400">삭제</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell
-                                        className={req.requested_by ? "text-blue-600 dark:text-blue-400 underline hover:cursor-pointer" : ""}
-                                        onClick={() => {
-                                            if (req.requested_by) {
-                                                router.push(`/profile/${req.requested_by.nickname}`)
-                                            }
-                                        }}
-                                    >
-                                        {req.requested_by?.nickname || "-"}
-                                    </TableCell>
-                                    <TableCell>{localTime}</TableCell>
-                                    <TableCell>
-                                        {req.status === "approved" ? (
-                                            <span className="text-green-600 dark:text-green-400 font-semibold">승인</span>
-                                        ) : req.status === "rejected" ? (
-                                            <span className="text-red-600 dark:text-red-400 font-semibold">거절</span>
-                                        ) : (
-                                            <span className="text-gray-500 dark:text-gray-400">대기중</span>
-                                        )}
-                                    </TableCell>
+            <div className="rounded-xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-gray-100 dark:bg-gray-900">
+                            <TableHead className="w-16">ID</TableHead>
+                            <TableHead>요청 단어</TableHead>
+                            <TableHead>요청 타입</TableHead>
+                            <TableHead>요청자</TableHead>
+                            <TableHead>요청 시간</TableHead>
+                            <TableHead>상태</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: itemsPerPage }).map((_, idx) => (
+                                <TableRow key={idx}>
+                                    <TableCell><Skeleton width={20} /></TableCell>
+                                    <TableCell><Skeleton width={150} /></TableCell>
+                                    <TableCell><Skeleton width={80} /></TableCell>
+                                    <TableCell><Skeleton width={100} /></TableCell>
+                                    <TableCell><Skeleton width={120} /></TableCell>
+                                    <TableCell><Skeleton width={80} /></TableCell>
                                 </TableRow>
-                            );
-                        })
-                    )}
-                </TableBody>
-            </Table>
+                            ))
+                        ) : (
+                            currentRequests.map((req) => {
+                                const isMyRequest = req.requested_by === user.uuid;
+                                const localTime = new Date(req.requested_at).toLocaleString(undefined, { timeZone: userTimeZone });
+
+                                return (
+                                    <TableRow key={req.id} className={isMyRequest ? "bg-blue-50 dark:bg-blue-900/20" : ""}>
+                                        <TableCell>{req.id}</TableCell>
+                                        <TableCell
+                                            className="text-blue-600 dark:text-blue-400 underline hover:cursor-pointer"
+                                            onClick={() => router.push(`/word/search/${req.word}`)}
+                                        >
+                                            {req.word}
+                                        </TableCell>
+                                        <TableCell>
+                                            {req.request_type === "add" ? (
+                                                <span className="text-blue-600 dark:text-blue-400">추가</span>
+                                            ) : (
+                                                <span className="text-orange-600 dark:text-orange-400">삭제</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell
+                                            className={req.requested_by ? "text-blue-600 dark:text-blue-400 underline hover:cursor-pointer" : ""}
+                                            onClick={() => {
+                                                if (req.requested_by) {
+                                                    router.push(`/profile/${req.requested_by.nickname}`)
+                                                }
+                                            }}
+                                        >
+                                            {req.requested_by?.nickname || "-"}
+                                        </TableCell>
+                                        <TableCell>{localTime}</TableCell>
+                                        <TableCell>
+                                            {req.status === "approved" ? (
+                                                <span className="text-green-600 dark:text-green-400 font-semibold">승인</span>
+                                            ) : req.status === "rejected" ? (
+                                                <span className="text-red-600 dark:text-red-400 font-semibold">거절</span>
+                                            ) : (
+                                                <span className="text-yellow-600 dark:text-yellow-400 font-semibold">대기중</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
 
             {/* 페이지네이션 */}
             <div className="flex justify-between items-center mt-6">
@@ -176,6 +177,7 @@ export default function RequestsPage() {
                     variant="outline"
                     disabled={page === 1 || isLoading}
                     onClick={() => setPage((prev) => prev - 1)}
+                    className="border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:border-blue-300 dark:hover:border-blue-600"
                 >
                     이전
                 </Button>
@@ -188,6 +190,7 @@ export default function RequestsPage() {
                     variant="outline"
                     disabled={page === totalPages || isLoading}
                     onClick={() => setPage((prev) => prev + 1)}
+                    className="border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:border-blue-300 dark:hover:border-blue-600"
                 >
                     다음
                 </Button>
