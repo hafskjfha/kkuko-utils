@@ -36,7 +36,7 @@ import ErrorModal from "@/app/components/ErrModal";
 import { AppDispatch, RootState } from "@/app/store/store";
 import { useDispatch, useSelector } from "react-redux";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import { userAction } from "@/app/store/slice";
 import CompleteModal from "@/app/components/CompleteModal";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
@@ -158,11 +158,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     useEffect(() => {
         const getData = async () => {
             // 유저 기본 데이터 가져오기
-            const { data: getUserData, error: getUserError } = await supabase
-                .from("users")
-                .select("*")
-                .eq("nickname", userName)
-                .maybeSingle();
+            const { data: getUserData, error: getUserError } = await SCM.get().userByNickname(userName);
             if (getUserError) {
                 return makeError(getUserError);
             }
@@ -176,17 +172,14 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 });
             }
             // 이번달 기여도 랭킹 가져오기
-            const { data: mcrankData, error: mcrankError } = await supabase.rpc(
-                "get_user_monthly_rank",
-                { uid: getUserData.id }
-            );
+            const { data: mcrankData, error: mcrankError } = await SCM.get().monthlyConRank(getUserData.id);
             if (mcrankError) {
                 return makeError(mcrankError);
             }
             setNewNickname(getUserData.nickname);
             setUser({ ...getUserData, month_contribution_rank: mcrankData });
             setIsAdmin(getUserData.role === "admin");
-            const {data: monthlyContributionsData, error: monthlyContributionsError} = await supabase.from('user_month_contributions').select('*').eq('user_id',getUserData.id).limit(4);
+            const {data: monthlyContributionsData, error: monthlyContributionsError} = await SCM.get().monthlyContributions(getUserData.id);
             if (monthlyContributionsError) return makeError(monthlyContributionsError);
 
             const now = new Date();
@@ -264,10 +257,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 즐겨찾기 문서 로딩
         const loadStarredDocs = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("user_star_docs")
-                    .select("*,docs(name,typez,last_update,id)")
-                    .eq("user_id", userId);
+                const { data, error } = await SCM.get().starredDocsById(userId);
                 
                 if (error) throw error;
                 
@@ -289,12 +279,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 요청 내역 로딩
         const loadRequests = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("wait_words")
-                    .select("*")
-                    .eq("requested_by", userId)
-                    .order("requested_at", { ascending: false })
-                    .limit(30);
+                const { data, error } = await SCM.get().requestsListById(userId);
                 
                 if (error) throw error;
                 setWaitWords(data);
@@ -308,12 +293,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 처리 내역 로딩
         const loadProcessed = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("logs")
-                    .select("*")
-                    .eq("make_by", userId)
-                    .order("created_at", { ascending: false })
-                    .limit(30);
+                const { data, error } = await SCM.get().logsListById(userId);
                 
                 if (error) throw error;
                 setLogs(data);
@@ -422,16 +402,12 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         }
 
         setLoading("닉네임 변경 처리중...");
-        const { data: existingUser, error: existingUserError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("nickname", newNickname)
-            .maybeSingle();
+        const { data: existingUser, error: existingUserError } = await SCM.get().checkNick(newNickname);
 
         if (existingUserError) {
             return makeError(existingUserError);
         }
-        if (existingUser) {
+        if (existingUser.length > 0) {
             setNicknameError("이미 존재하는 닉네임 입니다.");
         } else {
             // 존재하는 닉네임이 아니면 업데이트 처리

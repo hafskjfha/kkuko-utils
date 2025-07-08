@@ -11,6 +11,8 @@ type docs = Database['public']['Tables']['docs']['Row']
 type user = Database['public']['Tables']['users']['Row'];
 type docs_log = Database['public']['Tables']['docs_logs']['Row'];
 type docs_wait = Database['public']['Tables']['docs_wait']['Row'] & { users: user | null; }
+type user_star_docs = Database['public']['Tables']['user_star_docs']['Row'];
+type log = Database['public']['Tables']['logs']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -55,6 +57,13 @@ export interface IGetManager{
     userById(userId: string): Promise<PostgrestSingleResponse<user | null>>;
     session(): Promise<{data: {session: Session}, error: null} | {data: { session: null}, error: AuthError} | { data: {session: null}, error: null}>;
     checkNick(userName: string): Promise<PostgrestSingleResponse<user[]>>;
+    users(q: string): Promise<PostgrestSingleResponse<user[]>>;
+    userByNickname(nicknmae: string): Promise<PostgrestSingleResponse<user | null>>;
+    monthlyConRank(userId: string): Promise<PostgrestSingleResponse<number>>;
+    monthlyContributions(userId: string): Promise<PostgrestSingleResponse<Database['public']['Tables']['user_month_contributions']['Row'][]>>
+    starredDocsById(userId: string): Promise<PostgrestSingleResponse<(user_star_docs & {docs: docs})[]>>;
+    requestsListById(userId: string): Promise<PostgrestSingleResponse<wait_word[]>>;
+    logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
 }
 
 // delete 관련 타입

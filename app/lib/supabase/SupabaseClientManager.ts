@@ -265,7 +265,28 @@ class GetManager implements IGetManager {
         return await this.supabase.auth.getSession();
     }
     public async checkNick(userName: string){
-        return await this.supabase.from("users").select("*").ilike("nickname", userName.trim())
+        return await this.supabase.from("users").select("*").eq("nickname", userName.trim())
+    }
+    public async users(q: string){
+        return this.supabase.from("users").select("*").ilike("nickname", `%${q}%`);
+    }
+    public async userByNickname(nickname: string){
+        return await this.supabase.from('users').select('*').eq('nickname',nickname).maybeSingle();
+    }
+    public async monthlyConRank(userId: string){
+        return await this.supabase.rpc("get_user_monthly_rank",{ uid: userId });
+    }
+    public async monthlyContributions(userId: string){
+        return await this.supabase.from('user_month_contributions').select('*').eq('user_id',userId).limit(4);
+    }
+    public async starredDocsById(userId: string){
+        return await this.supabase.from("user_star_docs").select("*,docs(*)").eq("user_id", userId);
+    }
+    public async requestsListById(userId: string){
+        return await this.supabase.from("wait_words").select("*").eq("requested_by", userId).order("requested_at", { ascending: false }).limit(30);
+    }
+    public async logsListById(userId: string){
+        return await this.supabase.from("logs").select("*").eq("make_by", userId).order("created_at", { ascending: false }).limit(30);
     }
 }
 
@@ -371,9 +392,7 @@ export class SupabaseClientManager implements ISupabaseClientManager {
             try{
                 await func(session)
             }
-            finally {
-                
-            }
+            finally { }
         });
     }
 }

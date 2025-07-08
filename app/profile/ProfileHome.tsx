@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { supabase } from "../lib/supabaseClient";
+import { SCM } from "../lib/supabaseClient";
 import ErrorModal from "../components/ErrModal";
 import Link from "next/link";
 
@@ -56,10 +56,7 @@ export default function ProfileHomePage() {
   const handleSearch = async () => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1));
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .ilike("nickname", `%${searchInput}%`);
+    const { data, error } = await SCM.get().users(searchInput)
     if (error){
         setIsLoading(false);
         setResultUsers([]);
