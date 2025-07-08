@@ -73,6 +73,7 @@ export interface IGetManager{
     allWordWaitTheme(c?: "add" | "delete"): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
     waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme, wait_words:{word: string}})[]>>;
     wordsByWords(words: string[]): Promise<PostgrestSingleResponse<word[]>>;
+    
 }
 
 // delete 관련 타입

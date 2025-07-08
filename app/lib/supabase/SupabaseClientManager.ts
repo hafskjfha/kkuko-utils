@@ -193,12 +193,12 @@ class GetManager implements IGetManager {
     }
     public async allWaitWords(c?:"add" | "delete") {
         if (c=="add"){
-            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"add");
+            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"add").order('requested_at', { ascending: true });
         }
         else if (c=="delete"){
-            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"delete");
+            return await this.supabase.from('wait_words').select('*,words(*),users(*)').eq('request_type',"delete").order('requested_at', { ascending: true });
         }
-        return await this.supabase.from('wait_words').select('*,words(*),users(*)');
+        return await this.supabase.from('wait_words').select('*,words(*),users(*)').order('requested_at', { ascending: true });
     }
     public async wordsThemes(words_id: number[]) {
         return await this.supabase.from('word_themes').select('*,themes(*),words(*)').in('word_id', words_id);

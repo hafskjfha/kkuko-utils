@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import ErrorModal from "@/app/components/ErrModal";
@@ -16,12 +16,11 @@ interface RequestItem {
     id: number;
     request_type: "add" | "delete";
     requested_at: string;
-    requested_by: (string & {
-        nickname: string;
-    }) | null;
+    requested_by: string | null;
     status: "approved" | "rejected" | "pending";
     word: string;
     word_id: number | null;
+    users: {nickname: string} | null
 }
 
 export default function RequestsPage() {
@@ -38,13 +37,7 @@ export default function RequestsPage() {
     useEffect(() => {
         const fetchRequests = async () => {
             setIsLoading(true);
-            const { data, error } = await supabase
-                .from('wait_words')
-                .select(`
-          *,
-          requested_by:users!wait_words_requested_by_fkey(nickname)
-        `)
-                .order('requested_at', { ascending: false });
+            const { data, error } = await SCM.get().allWaitWords();
 
             if (error) {
                 setErrorModalView({
@@ -146,12 +139,12 @@ export default function RequestsPage() {
                                         <TableCell
                                             className={req.requested_by ? "text-blue-600 dark:text-blue-400 underline hover:cursor-pointer" : ""}
                                             onClick={() => {
-                                                if (req.requested_by) {
-                                                    router.push(`/profile/${req.requested_by.nickname}`)
+                                                if (req.users) {
+                                                    router.push(`/profile/${req.users?.nickname}`)
                                                 }
                                             }}
                                         >
-                                            {req.requested_by?.nickname || "-"}
+                                            {req.users?.nickname || "-"}
                                         </TableCell>
                                         <TableCell>{localTime}</TableCell>
                                         <TableCell>
