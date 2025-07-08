@@ -156,7 +156,8 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
             const { data: requestDeleteData, error: requestDeleteError } = await supabase.from('wait_words').insert({
                 word: wordInfo.word,
                 request_type: "delete" as const,
-                requested_by: user.uuid
+                requested_by: user.uuid,
+                word_id: wordInfo.dbId
             }).select('*');
 
             if (requestDeleteError) {
