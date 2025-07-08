@@ -318,7 +318,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             // api로 업데이트 요청 날리고 적절하게 반환값 가공
             const res = await axios.post<
                 { data: null; error: PostgrestError } | { data: userInfo; error: null }
-            >("/api/update_nickname", {
+            >("/api/auth/update_nickname", {
                 nickname: updateNickname,
             });
             const { data, error } = res.data;
