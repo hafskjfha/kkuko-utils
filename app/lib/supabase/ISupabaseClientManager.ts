@@ -104,4 +104,5 @@ export interface ISupabaseClientManager {
     update(): IUpdateManager;
     loginByGoogle(originUrl: string): Promise<OAuthResponse>;
     onAuthStateChange(func: (session: Session | null) => Promise<void>): {data: {subscription: Subscription}}
+    logout(): Promise<void>;
 }

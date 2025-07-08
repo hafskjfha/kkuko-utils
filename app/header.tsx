@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from 'react-redux';
 import { Menu, X, User, ChevronDown, LayoutDashboard, Sun, Moon } from 'lucide-react';
 import type { RootState, AppDispatch } from "./store/store";
-import { supabase } from "./lib/supabaseClient";
+import { SCM } from "./lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { userAction } from "./store/slice";
 import { useTheme } from 'next-themes'
@@ -24,7 +24,7 @@ const Header = () => {
     const { theme, setTheme } = useTheme();
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await SCM.logout();
         dispatch(
             userAction.setInfo({
                 username: undefined,

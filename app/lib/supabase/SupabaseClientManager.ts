@@ -431,4 +431,7 @@ export class SupabaseClientManager implements ISupabaseClientManager {
             finally { }
         });
     }
+    public async logout(){
+        await this.supabase.auth.signOut()
+    }
 }
