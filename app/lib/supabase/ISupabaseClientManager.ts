@@ -50,6 +50,7 @@ export interface IGetManager{
     allWords({ includeAddReq, includeDeleteReq, includeInjung, includeNoInjung, onlyWordChain, lenf }: { includeAddReq?: boolean; includeDeleteReq?: boolean; includeInjung?: boolean; includeNoInjung?: boolean; onlyWordChain?: boolean; lenf?: boolean; }): Promise<{ data: { word: string; noin_canuse: boolean; k_canuse: boolean; status: "ok" | "add" | "delete"; }[]; error: null } | {data: null; error: PostgrestError; }>
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
     addWaitDocs(): Promise<PostgrestSingleResponse<docs_wait[]>>;
+    releaseNote(): Promise<PostgrestSingleResponse<{ id: number; content: string; created_at: string; title: string; }[]>>;
 }
 
 // delete 관련 타입
