@@ -193,18 +193,6 @@ export default function WordInfoPage({ query }: { query: string }) {
                     updateLoadingState(70, "문서 연결 정보 가져오는 중...");
 
                     // 문서 연결 정보 가져오기
-                    const { data: docsData1, error: docsData1Error } = await supabase.from('docs_words').select('docs_id,docs(name)').eq('word_id', wordTableCheck.id);
-                    if (docsData1Error) {
-                        makeError(docsData1Error);
-                        return;
-                    }
-
-                    const { data: docsData2, error: docsData2Error } = await supabase.from('docs_words_wait').select('docs_id,docs(name)').eq('word_id', wordTableCheck.id).eq('typez', 'add');
-                    if (docsData2Error) {
-                        makeError(docsData2Error);
-                        return;
-                    }
-
                     const { data: docsData3, error: docsData3Error} = await supabase.from('docs').select('*').eq('name',wordTableCheck.word[wordTableCheck.word.length - 1]);
                     if (docsData3Error){
                         return makeError(docsData3Error);
@@ -276,7 +264,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: wordTableCheck.id,
                         word: wordTableCheck.word,
                         typez: waitTableCheck && waitTableCheck.request_type === "delete" ? "delete" : "ok",
-                        documents: [...docsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docsData2.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
+                        documents: [...docc],
                         themes: {
                             ok: wordThemes ? wordThemes.filter(theme => !wordThemes2.map(t => t.themes.name).includes(theme.themes.name)).map(theme => theme.themes.name) : [],
                             waitAdd: wordThemes2 ? wordThemes2.filter(theme => theme.typez === 'add').map(theme => theme.themes.name) : [],
@@ -305,12 +293,6 @@ export default function WordInfoPage({ query }: { query: string }) {
                     updateLoadingState(75, "대기 단어 문서 정보 가져오는 중...");
 
                     // 대기 단어 문서 정보 가져오기
-                    const { data: waitDocsData1, error: waitDocsData1Error } = await supabase.from('docs_wait_words').select('docs_id,docs(name)').eq('wait_word_id', waitTableCheck.id);
-                    if (waitDocsData1Error) {
-                        makeError(waitDocsData1Error);
-                        return;
-                    }
-
                     const {data: waitDocsData4, error: waitDocsData4Error} = await supabase.from('docs').select('*').eq('typez','theme').in('name',[...waitWordThemes.map(d=>d.themes.name)]);
                     if (waitDocsData4Error){
                         return makeError(waitDocsData4Error);
@@ -370,7 +352,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                         id: waitTableCheck.id,
                         word: waitTableCheck.word,
                         typez: waitTableCheck.request_type,
-                        documents: [...waitDocsData1.map((d) => ({ doc_id: d.docs_id, doc_name: d.docs.name })), ...docc],
+                        documents: [...docc],
                         themes: {
                             ok: [],
                             waitAdd: waitWordThemes ? waitWordThemes.map(theme => theme.themes.name) : [],
