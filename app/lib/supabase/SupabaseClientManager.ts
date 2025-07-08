@@ -186,7 +186,7 @@ class GetManager implements IGetManager {
         }
     }
     public async allWaitWords() {
-        return await this.supabase.from('wait_words').select('*,words(*)');
+        return await this.supabase.from('wait_words').select('*,words(*),users(*)');
     }
     public async wordsThemes(words_id: number[]) {
         return await this.supabase.from('word_themes').select('*,words(*)').in('word_id', words_id);
@@ -288,6 +288,18 @@ class GetManager implements IGetManager {
     public async logsListById(userId: string){
         return await this.supabase.from("logs").select("*").eq("make_by", userId).order("created_at", { ascending: false }).limit(30);
     }
+    public async wordsCount(){
+        return await this.supabase.from('words').select('word',{ count: 'exact', head: true });
+    }
+    public async waitWordsCount() {
+        return await this.supabase.from('wait_words').select('word',{ count: 'exact', head: true });
+    }
+    public async allWordWaitTheme() {
+        return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)');
+    }
+    public async waitWordsThemes(waitWordIds: number[]) {
+        return await this.supabase.from('wait_word_themes').select('*,themes(*)').in('wait_word_id', waitWordIds)
+    }
 }
 
 class DeleteManager implements IDeleteManager {
@@ -337,6 +349,12 @@ class DeleteManager implements IDeleteManager {
     }
     public async waitDocs(id: number[]) {
         return await this.supabase.from('docs_wait').delete().in('id', id);
+    }
+    public async waitWords(words: string[]){
+        return await this.supabase.from('wait_words').delete().in('word', words);
+    }
+    public async waitWordsByIds(ids: number[]) {
+        return await this.supabase.from('wait_words').delete().in('id',ids);
     }
 }
 

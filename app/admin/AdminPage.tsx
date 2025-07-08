@@ -16,7 +16,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
+import { SCM } from '../lib/supabaseClient';
 
 const AdminDashboard = () => {
     const router = useRouter();
@@ -24,7 +24,7 @@ const AdminDashboard = () => {
     const [waitRequestCount,setWaitRequestCount] = useState<number|null>(null);
 
     const getWordCount = async () => {
-        const {count, error} = await supabase.from('words').select('word',{ count: 'exact', head: true });
+        const {count, error} = await SCM.get().wordsCount();
         if (error){
             console.log(error)
         }
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
     }
 
     const getWaitRequestCount = async () => {
-        const {count, error} = await supabase.from('wait_words').select('',{ count: 'exact', head: true });
+        const {count, error} = await SCM.get().waitWordsCount();
         if (error){
             console.log(error)
             

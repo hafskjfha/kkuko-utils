@@ -13,6 +13,8 @@ type docs_log = Database['public']['Tables']['docs_logs']['Row'];
 type docs_wait = Database['public']['Tables']['docs_wait']['Row'] & { users: user | null; }
 type user_star_docs = Database['public']['Tables']['user_star_docs']['Row'];
 type log = Database['public']['Tables']['logs']['Row'];
+type word_themes_wait = Database['public']['Tables']['word_themes_wait']['Row'];
+type wait_word_themes = Database['public']['Tables']['wait_word_themes']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -48,7 +50,7 @@ export interface IGetManager{
     searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
     docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
     docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; })[]}, error: null}>
-    allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null;})[]>>;
+    allWaitWords(): Promise<PostgrestSingleResponse<(wait_word & {words: word | null; users: user | null})[]>>;
     wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
     allWords({ includeAddReq, includeDeleteReq, includeInjung, includeNoInjung, onlyWordChain, lenf }: { includeAddReq?: boolean; includeDeleteReq?: boolean; includeInjung?: boolean; includeNoInjung?: boolean; onlyWordChain?: boolean; lenf?: boolean; }): Promise<{ data: { word: string; noin_canuse: boolean; k_canuse: boolean; status: "ok" | "add" | "delete"; }[]; error: null } | {data: null; error: PostgrestError; }>
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
@@ -64,6 +66,10 @@ export interface IGetManager{
     starredDocsById(userId: string): Promise<PostgrestSingleResponse<(user_star_docs & {docs: docs})[]>>;
     requestsListById(userId: string): Promise<PostgrestSingleResponse<wait_word[]>>;
     logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
+    wordsCount(): Promise<PostgrestSingleResponse<{word: string}[]>>;
+    waitWordsCount(): Promise<PostgrestSingleResponse<{word: string}[]>>;
+    allWordWaitTheme(): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
+    waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme})[]>>;
 }
 
 // delete 관련 타입
@@ -77,6 +83,8 @@ export interface IDeleteManager{
     wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
     waitDocs(id: number[]): Promise<PostgrestSingleResponse<null>>;
+    waitWords(words: string[]): Promise<PostgrestSingleResponse<null>>;
+    waitWordsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
 }
 
 // update 관련 타입

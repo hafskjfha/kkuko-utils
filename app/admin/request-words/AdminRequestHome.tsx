@@ -29,7 +29,7 @@ import {
     CardTitle
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
-import { SCM, supabase } from '../../lib/supabaseClient'
+import { SCM } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
@@ -362,7 +362,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
-        const { error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('word', AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word)));
+        const { error: deleteWaitQueueError } = await SCM.delete().waitWords(AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word))) 
         if (deleteWaitQueueError) return makeError(deleteWaitQueueError);
 
         if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0) {
@@ -461,7 +461,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         const {error: logError} = await SCM.add().wordLog(wordsLogQuery);
 
         // 대기큐에서 삭제
-        const {error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('id',[...new Set(deleteWaitQuery)]);
+        const {error: deleteWaitQueueError } = await SCM.delete().waitWordsByIds([...new Set(deleteWaitQuery)]);
         const { error: deleteWaitQueueError2 } = await SCM.delete().waitWordThemes(waitThemeQuery);
         if (deleteWaitQueueError) { return makeError(deleteWaitQueueError); }
         if (deleteWaitQueueError2) { return makeError(deleteWaitQueueError2); }
