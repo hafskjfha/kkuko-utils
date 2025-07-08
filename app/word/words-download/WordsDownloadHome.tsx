@@ -133,10 +133,11 @@ const fetchWordData = async (params: {
 
         const delR = wordsData.filter(word => word.status === 'delete');
 
-        resultWords.push(...wordsData.filter(word => {
-            return word.status === 'ok' && !delR.some(delWord => delWord.word === word.word);
-        }).map(word => word.word));
-        resultWords.push(...wordsData.filter(word => word.status === 'add').map(word => word.word));
+        wordsData
+        .filter(word => word.status === 'ok' && !delR.some(delWord => delWord.word === word.word))
+        .map(word => word.word)
+        .forEach(word => resultWords.push(word));
+        wordsData.filter(word => word.status === 'add').map(word => word.word).forEach(word=>resultWords.push(word))
 
         return [...new Set(resultWords)].sort((a, b) => a.localeCompare(b, 'ko'));
     } catch (error) {
@@ -246,7 +247,7 @@ export default function KoreanWordStats() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch (err) {
-            setError('다운로드 중 오류가 발생했습니다.');
+            setError('다운로드 중 오류가 발생했습니다.'+`${err}`);
             console.error('다운로드 오류:', err);
         } finally {
             setDownloadLoading(false);
