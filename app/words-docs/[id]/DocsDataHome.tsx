@@ -286,11 +286,11 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
         : starCount.length;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* 헤더 섹션 */}
-                <div className="bg-white rounded-2xl shadow-lg border-0 overflow-hidden mb-8">
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border-0 overflow-hidden mb-8">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 px-8 py-6">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                             <div className="flex-1">
                                 <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
@@ -358,7 +358,7 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                         className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-3 ${
                                             activeTab === tab
                                                 ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
-                                                : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                                                : "text-gray-600 dark:text-gray-200 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                                         } ${
                                             isTabSwitching ? "opacity-50 cursor-not-allowed" : "hover:shadow-md transform hover:-translate-y-0.5"
                                         }`}
@@ -368,7 +368,7 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                             activeTab === tab 
                                                 ? "bg-white/20 text-white" 
-                                                : "bg-gray-200 text-gray-600"
+                                                : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-200"
                                         }`}>
                                             {getTabCount(tab).toLocaleString()}
                                         </span>
@@ -384,12 +384,12 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
 
                 {/* 목차 섹션 */}
                 {!isTabSwitching && (
-                    <div className="bg-white rounded-2xl shadow-lg border-0 p-6 mb-8">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border-0 p-6 mb-8">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                                 <FileText className="w-4 h-4 text-white" />
                             </div>
-                            <h2 className="text-xl font-bold text-gray-800">목차</h2>
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">목차</h2>
                         </div>
                         <ToC 
                             items={tocItems} 
@@ -400,24 +400,24 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                 )}
 
                 {/* 컨텐츠 섹션 */}
-                <div className="bg-white rounded-2xl shadow-lg border-0 overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border-0 overflow-hidden">
                     {isLoading || isTabSwitching ? (
                         <div className="p-8">
                             {isTabSwitching ? (
                                 <div className="flex flex-col items-center justify-center py-20">
                                     <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-                                    <p className="text-gray-600 text-lg font-medium">탭 전환 중...</p>
-                                    <p className="text-gray-400 text-sm mt-1">잠시만 기다려주세요</p>
+                                    <p className="text-gray-600 dark:text-gray-300 text-lg font-medium">탭 전환 중...</p>
+                                    <p className="text-gray-400 dark:text-gray-400 text-sm mt-1">잠시만 기다려주세요</p>
                                 </div>
                             ) : (
                                 <div className="space-y-8">
                                     {Array.from({ length: 5 }).map((_, idx) => (
                                         <div key={idx} className="animate-pulse">
-                                            <div className="h-8 bg-gray-200 rounded-lg w-20 mb-4"></div>
+                                            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded-lg w-20 mb-4"></div>
                                             <div className="space-y-3">
-                                                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
                                             </div>
                                         </div>
                                     ))}
@@ -426,13 +426,13 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                         </div>
                     ) : filteredData.length === 0 ? (
                         <div className="p-12 text-center">
-                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <FileText className="w-10 h-10 text-gray-400" />
                             </div>
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">
+                            <h3 className="text-xl font-medium text-gray-800 dark:text-gray-100 mb-2">
                                 단어를 찾을 수 없습니다
                             </h3>
-                            <p className="text-gray-500">
+                            <p className="text-gray-500 dark:text-gray-400">
                                 {activeTab === "long" && "9자 이상의 장문 단어가 없습니다."}
                                 {activeTab === "mission" && "미션 조건에 해당하는 단어가 없습니다."}
                             </p>
@@ -452,38 +452,38 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                     height: `${virtualizer.getTotalSize()}px`,
                                     width: '100%',
                                     position: 'relative',
-                                }}
-                            >
-                                {virtualizer.getVirtualItems().map((virtualItem) => {
-                                    const item = virtualItems[virtualItem.index];
-                                    return (
-                                        <div
-                                            key={virtualItem.key}
-                                            data-index={virtualItem.index}
-                                            ref={virtualizer.measureElement}
-                                            style={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                width: '100%',
-                                                transform: `translateY(${virtualItem.start}px)`,
-                                            }}
-                                        >
-                                            <div className="mb-8">
-                                                <WordsTableBody 
-                                                    key={`${activeTab}-${item.title}-${item.data.length}`}
-                                                    title={item.title} 
-                                                    initialData={item.data || []} 
-                                                    id={`${id}`} 
-                                                    isMission={activeTab === "mission"}
-                                                    isLong={activeTab==="long"}
-                                                />
-                                            </div>
+                            }}
+                        >
+                            {virtualizer.getVirtualItems().map((virtualItem) => {
+                                const item = virtualItems[virtualItem.index];
+                                return (
+                                    <div
+                                        key={virtualItem.key}
+                                        data-index={virtualItem.index}
+                                        ref={virtualizer.measureElement}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            transform: `translateY(${virtualItem.start}px)`,
+                                        }}
+                                    >
+                                        <div className="mb-8">
+                                            <WordsTableBody 
+                                                key={`${activeTab}-${item.title}-${item.data.length}`}
+                                                title={item.title} 
+                                                initialData={item.data || []} 
+                                                id={`${id}`} 
+                                                isMission={activeTab === "mission"}
+                                                isLong={activeTab==="long"}
+                                            />
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+                    </div>
                     )}
                 </div>
             </div>

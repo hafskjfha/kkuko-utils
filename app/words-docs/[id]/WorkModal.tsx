@@ -44,21 +44,23 @@ const WorkModal = ({
 }: ModalProps) => {
 	return (
 		<Dialog open onOpenChange={onClose}>
-			<DialogContent className="max-w-md">
+			<DialogContent className="max-w-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700">
 				{/* Spinner Overlay */}
 				{isSaving && (
-					<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg">
+					<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-lg">
 						<Spinner />
 					</div>
 				)}
 				<DialogHeader>
-					<DialogTitle className="text-center">{word}</DialogTitle>
+					<DialogTitle className="text-center text-gray-900 dark:text-gray-100">
+						{word}
+					</DialogTitle>
 				</DialogHeader>
 
 				<div className="space-y-2">
 					{/* 상태 설명 */}
-					<div className="flex items-center justify-between bg-gray-100 p-3 rounded-md">
-						<span className="text-gray-700">
+					<div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+						<span className="text-gray-700 dark:text-gray-200">
 							{status === "add" && "현재 이 단어는 추가 요청 상태입니다."}
 							{status === "delete" && "현재 이 단어는 삭제 요청 상태입니다."}
 							{status === "ok" && "현재 등록된 단어입니다."}
@@ -140,7 +142,7 @@ const WorkModal = ({
 
 				<DialogFooter className="mt-4">
 					<button
-						className="w-full bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400"
+						className="w-full bg-gray-300 dark:bg-gray-700 text-black dark:text-gray-100 px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600"
 						onClick={onClose}
 					>
 						닫기
@@ -166,24 +168,24 @@ const ActionBlock = ({
 	const bgClass =
 		bg ||
 		{
-			green: "bg-green-50",
-			red: "bg-red-50",
-			gray: "bg-gray-50",
-			yellow: "bg-yellow-50",
+			green: "bg-green-50 dark:bg-green-900",
+			red: "bg-red-50 dark:bg-red-900",
+			gray: "bg-gray-50 dark:bg-gray-800",
+			yellow: "bg-yellow-50 dark:bg-yellow-900",
 		}[color];
 
 	const textClass = {
-		green: "text-green-700",
-		red: "text-red-700",
-		gray: "text-gray-700",
-		yellow: "text-yellow-700",
+		green: "text-green-700 dark:text-green-200",
+		red: "text-red-700 dark:text-red-200",
+		gray: "text-gray-700 dark:text-gray-200",
+		yellow: "text-yellow-700 dark:text-yellow-200",
 	}[color];
 
 	const buttonClass = {
-		green: "bg-green-500 hover:bg-green-600",
-		red: "bg-red-500 hover:bg-red-600",
-		gray: "bg-gray-500 hover:bg-gray-600",
-		yellow: "bg-yellow-500 hover:bg-yellow-600",
+		green: "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700",
+		red: "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700",
+		gray: "bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700",
+		yellow: "bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700",
 	}[color];
 
 	return (

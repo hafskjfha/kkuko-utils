@@ -23,10 +23,10 @@ const WordsTableBody = ({
     const user = useSelector((state: RootState) => state.user);
 
     return (
-        <div className="w-full mx-auto py-2">
+        <div className="w-full mx-auto py-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm">
             {/* 제목 표시 */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-left">{title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-left text-gray-900 dark:text-gray-100">{title}</h1>
 
                 <button
                     className="px-3 py-1 text-sm text-white bg-purple-500 hover:bg-purple-600 rounded"
@@ -58,7 +58,11 @@ const WordsTableBody = ({
 
             {/* 단어 추가 모달 */}
             {wordAddModalOpen && (
-                <Suspense fallback={<div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 rounded-lg"><Spinner /></div>}>
+                <Suspense fallback={
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-lg">
+                        <Spinner />
+                    </div>
+                }>
                     <WordAddModal
                         isOpen={wordAddModalOpen}
                         onClose={() => setWordAddModalOpen(false)}
@@ -67,7 +71,7 @@ const WordsTableBody = ({
                 </Suspense>
             )}
 
-            <hr className="mt-3 border-gray-400" />
+            <hr className="mt-3 border-gray-300 dark:border-gray-700" />
         </div>
 
     );
