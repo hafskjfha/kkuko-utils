@@ -1,5 +1,5 @@
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
-import type { PostgrestError, PostgrestSingleResponse } from '@supabase/supabase-js';
+import type { AuthError, OAuthResponse, PostgrestError, PostgrestSingleResponse, Session, Subscription } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types'
 
 type wait_word = Database['public']['Tables']['wait_words']['Row']
@@ -25,6 +25,7 @@ export interface IAddManager {
     waitWordThemes(insertWaitWordThemeData: { wait_word_id: number; theme_id: number; }[]): Promise<PostgrestSingleResponse<null>>
     waitDocs({ docsName, userId }: { docsName: string; userId: string | undefined; }): Promise<PostgrestSingleResponse<null>>;
     docs(insertDocsData: { name: string; maker: string | null; duem: boolean; typez: "letter" | "theme"; }[]): Promise<PostgrestSingleResponse<null>>;
+    nickname(userId: string, nick: string): Promise<PostgrestSingleResponse<user>>;
 }
 
 // get 관련 타입
@@ -51,6 +52,9 @@ export interface IGetManager{
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
     addWaitDocs(): Promise<PostgrestSingleResponse<docs_wait[]>>;
     releaseNote(): Promise<PostgrestSingleResponse<{ id: number; content: string; created_at: string; title: string; }[]>>;
+    userById(userId: string): Promise<PostgrestSingleResponse<user | null>>;
+    session(): Promise<{data: {session: Session}, error: null} | {data: { session: null}, error: AuthError} | { data: {session: null}, error: null}>;
+    checkNick(userName: string): Promise<PostgrestSingleResponse<user[]>>;
 }
 
 // delete 관련 타입
@@ -79,4 +83,6 @@ export interface ISupabaseClientManager {
     get(): IGetManager;
     delete(): IDeleteManager;
     update(): IUpdateManager;
+    loginByGoogle(originUrl: string): Promise<OAuthResponse>;
+    onAuthStateChange(func: (session: Session | null) => Promise<void>): {data: {subscription: Subscription}}
 }

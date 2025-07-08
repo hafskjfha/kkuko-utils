@@ -1,5 +1,5 @@
 import { ISupabaseClientManager, IAddManager, IGetManager, IDeleteManager, IUpdateManager } from './ISupabaseClientManager';
-import type { PostgrestError, PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError, PostgrestSingleResponse, Session, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
 import { reverDuemLaw } from '../DuemLaw';
@@ -39,7 +39,9 @@ class AddManager implements IAddManager {
     }
     public async docs(docsInserQuery:{ name: string, maker: string | null, duem: boolean, typez: "letter" }[]) {
         return await this.supabase.from('docs').insert(docsInserQuery);
-
+    }
+    public async nickname(userId: string, nick: string){
+        return this.supabase.from("users").insert({ id: userId, nickname: nick.trim()}).select("*").single();
     }
 }
 
@@ -256,6 +258,15 @@ class GetManager implements IGetManager {
     public async releaseNote(){
         return await this.supabase.from('release_note').select('*').order('created_at', { ascending: false });
     }
+    public async userById(userId: string) {
+        return await this.supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    }
+    public async session(){
+        return await this.supabase.auth.getSession();
+    }
+    public async checkNick(userName: string){
+        return await this.supabase.from("users").select("*").ilike("nickname", userName.trim())
+    }
 }
 
 class DeleteManager implements IDeleteManager {
@@ -346,5 +357,23 @@ export class SupabaseClientManager implements ISupabaseClientManager {
     }
     public update() {
         return this._update;
+    }
+    public async loginByGoogle(originUrl: string){
+        return await this.supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: `${originUrl}/api/auth/callback`, 
+            },
+        });
+    }
+    public onAuthStateChange(func: (session: Session | null) => Promise<void>){
+        return this.supabase.auth.onAuthStateChange(async (_event, session) => {
+            try{
+                await func(session)
+            }
+            finally {
+                
+            }
+        });
     }
 }

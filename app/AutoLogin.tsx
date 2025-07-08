@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "./lib/supabaseClient";
+import { SCM } from "./lib/supabaseClient";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "./store/store";
 import { userAction } from "./store/slice";
@@ -10,22 +10,19 @@ const AutoLogin = () => {
     const dispatch = useDispatch<AppDispatch>()
     useEffect(() => {
         const checkSession = async () => {
-            const { data, error } = await supabase.auth.getSession();
+            const { data, error } = await SCM.get().session();
 
             if (!data || !data.session || error) return;
 
-            const { data: ddata, error: err } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", data.session.user.id);
+            const { data: ddata, error: err } = await SCM.get().userById(data.session.user.id);
             
-            if (err || ddata.length == 0) return;
+            if (err || !ddata) return;
 
             dispatch(
                 userAction.setInfo({
-                    username: ddata[0].nickname,
-                    role: ddata[0].role ?? "guest",
-                    uuid: ddata[0].id,
+                    username: ddata.nickname,
+                    role: ddata.role ?? "guest",
+                    uuid: ddata.id,
                 })
             );
         }

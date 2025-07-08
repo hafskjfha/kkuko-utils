@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app
 import { Alert, AlertDescription } from "@/app/components/ui/alert";
 import ErrorModal from '../components/ErrModal';
 import type { ErrorMessage } from "../types/type";
-import { supabase } from "../lib/supabaseClient";
+import { SCM } from "../lib/supabaseClient";
 
 const AuthPage = () => {
     const router = useRouter();
@@ -33,10 +33,7 @@ const AuthPage = () => {
                 return;
             }
 
-            const { data, error: err } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", session.user.id);
+            const { data, error: err } = await SCM.get().userById(session.user.id);
     
             if (err) {
                 seterrorModalView({
@@ -48,34 +45,27 @@ const AuthPage = () => {
                 return;
             }
     
-            if (data.length === 0) {
+            if (!data) {
                 setIsNewUser(true);
                 setLoading(false);
             } else {
                 dispatch(
                     userAction.setInfo({
-                        username: data[0].nickname,
-                        role: data[0].role ?? "guest",
+                        username: data.nickname,
+                        role: data.role ?? "guest",
                     })
                 );
-                if (data[0].role === "admin"){
+                if (data.role === "admin"){
                     router.push("/admin");
                 } else {
-                    router.push(`/profile/${data[0].nickname}`);
-                }   
-                
+                    router.push(`/profile/${data.nickname}`);
+                }
+
             }
     
         };
         setLoading(true);
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            try{
-                await checkUser(session);
-            }
-            finally {
-                
-            }
-        });
+        const { data: authListener } = SCM.onAuthStateChange(checkUser);
         return () => {
             authListener.subscription.unsubscribe();
         };
@@ -83,12 +73,7 @@ const AuthPage = () => {
     
 
     const signInWithGoogle = async () => {
-        const { error: err } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: {
-                redirectTo: `${location.origin}/api/auth/callback`, 
-            },
-        });
+        const { error: err } = await SCM.loginByGoogle(location.origin);
         if (err) {
             if (err instanceof Error) {
                 seterrorModalView({
@@ -113,14 +98,14 @@ const AuthPage = () => {
         setLoading(true);
         setNicknameError("");
 
-        const session = await supabase.auth.getSession();
+        const session = await SCM.get().session();
         if (!session.data.session) {
             setLoading(false);
             return;
         }
 
         // 닉네임 중복 확인
-        const { data: checkData, error: checkErr } = await supabase.from("users").select("*").ilike("nickname", nickname.trim());
+        const { data: checkData, error: checkErr } = await SCM.get().checkNick(nickname);
         if (checkErr) {
             seterrorModalView({
                 ErrName: checkErr.name,
@@ -139,11 +124,7 @@ const AuthPage = () => {
         }
 
         // 닉네임 등록
-        const { data, error:err } = await supabase
-            .from("users")
-            .insert([{ id: session.data.session.user.id, nickname: nickname.trim() }])
-            .select("*")
-            .single();
+        const { data, error:err } = await SCM.add().nickname(session.data.session.user.id, nickname)
 
         if (err) {
             seterrorModalView({
