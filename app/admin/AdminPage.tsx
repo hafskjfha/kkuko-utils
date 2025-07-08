@@ -168,31 +168,32 @@ const AdminDashboard = () => {
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <button
-                                onClick={() => handleNavigation('/add-words')}
+                                onClick={() => handleNavigation('/admin/add-words')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 bg-white dark:bg-transparent"
                             >
                                 <Plus className="w-8 h-8 text-green-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">단어 추가</span>
                             </button>
                             <button
-                                onClick={() => handleNavigation('/del-words')}
+                                onClick={() => handleNavigation('/admin/del-words')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 bg-white dark:bg-transparent"
                             >
                                 <Trash2 className="w-8 h-8 text-red-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">단어 삭제</span>
                             </button>
                             <button
-                                onClick={() => handleNavigation('/request-words')}
+                                onClick={() => handleNavigation('/admin/request-words')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 transition-all duration-200 bg-white dark:bg-transparent"
                             >
                                 <FileText className="w-8 h-8 text-blue-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">요청 처리</span>
                             </button>
                             <button
+                                onClick={() => handleNavigation('/admin/request-docs')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900 transition-all duration-200 bg-white dark:bg-transparent"
                             >
                                 <Activity className="w-8 h-8 text-purple-600 mb-2" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">활동 로그</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">문서 요청</span>
                             </button>
                         </div>
                     </CardContent>

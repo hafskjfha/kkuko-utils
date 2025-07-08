@@ -37,6 +37,10 @@ class AddManager implements IAddManager {
             req_by: userId ?? null,
         })
     }
+    public async docs(docsInserQuery:{ name: string, maker: string | null, duem: boolean, typez: "letter" }[]) {
+        return await this.supabase.from('docs').insert(docsInserQuery);
+
+    }
 }
 
 class GetManager implements IGetManager {
@@ -246,6 +250,9 @@ class GetManager implements IGetManager {
     public async letterDocs(){
         return await this.supabase.from('docs').select('*').eq('typez','letter');
     }
+    public async addWaitDocs(){
+        return await this.supabase.from('docs_wait').select('*,users(*)');
+    }
 }
 
 class DeleteManager implements IDeleteManager {
@@ -292,6 +299,9 @@ class DeleteManager implements IDeleteManager {
     }
     public async startDocs({ docsId, userId }: { docsId: number, userId: string }) {
         return await this.supabase.from('user_star_docs').delete().eq('docs_id', docsId).eq('user_id', userId);
+    }
+    public async waitDocs(id: number[]) {
+        return await this.supabase.from('docs_wait').delete().in('id', id);
     }
 }
 

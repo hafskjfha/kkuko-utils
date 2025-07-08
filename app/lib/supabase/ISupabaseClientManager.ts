@@ -10,6 +10,7 @@ type word_theme = {words: word, themes: theme }
 type docs = Database['public']['Tables']['docs']['Row']
 type user = Database['public']['Tables']['users']['Row'];
 type docs_log = Database['public']['Tables']['docs_logs']['Row'];
+type docs_wait = Database['public']['Tables']['docs_wait']['Row'] & { users: user | null; }
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -23,6 +24,7 @@ export interface IAddManager {
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
     waitWordThemes(insertWaitWordThemeData: { wait_word_id: number; theme_id: number; }[]): Promise<PostgrestSingleResponse<null>>
     waitDocs({ docsName, userId }: { docsName: string; userId: string | undefined; }): Promise<PostgrestSingleResponse<null>>;
+    docs(insertDocsData: { name: string; maker: string | null; duem: boolean; typez: "letter" | "theme"; }[]): Promise<PostgrestSingleResponse<null>>;
 }
 
 // get 관련 타입
@@ -47,6 +49,7 @@ export interface IGetManager{
     wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; }[]>>
     allWords({ includeAddReq, includeDeleteReq, includeInjung, includeNoInjung, onlyWordChain, lenf }: { includeAddReq?: boolean; includeDeleteReq?: boolean; includeInjung?: boolean; includeNoInjung?: boolean; onlyWordChain?: boolean; lenf?: boolean; }): Promise<{ data: { word: string; noin_canuse: boolean; k_canuse: boolean; status: "ok" | "add" | "delete"; }[]; error: null } | {data: null; error: PostgrestError; }>
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
+    addWaitDocs(): Promise<PostgrestSingleResponse<docs_wait[]>>;
 }
 
 // delete 관련 타입
@@ -59,6 +62,7 @@ export interface IDeleteManager{
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
     wordsFromWaitcId(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
+    waitDocs(id: number[]): Promise<PostgrestSingleResponse<null>>;
 }
 
 // update 관련 타입

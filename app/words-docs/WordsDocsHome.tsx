@@ -164,6 +164,7 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
             setNewDocError(null);
 
             const {data: checkData ,error: checkError} = await SCM.get().letterDocs();
+            const {data: checkData2, error: checkError2} = await SCM.get().addWaitDocs();
             if (checkError) {
                 setNewDocError("문서 추가 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
                 setTimeout(() => {
@@ -172,8 +173,24 @@ const WordsDocsHome = ({ docs }: WordsDocsHomeProps) => {
                 setNewDocLoading(false);
                 return;
             }
+            if (checkError2) {
+                setNewDocError("문서 추가 요청에 실패했습니다. 잠시 후 다시 시도해주세요." + checkError2.message + checkError2.details);
+                setTimeout(() => {
+                    setNewDocError(null);
+                }, 3000);
+                setNewDocLoading(false);
+                return;
+            }
             if (checkData.some(doc => doc.name === newDocName)) {
                 setNewDocError("이미 존재하는 문서명입니다.");
+                setTimeout(() => {
+                    setNewDocError(null);
+                }, 3000);
+                setNewDocLoading(false);
+                return;
+            }
+            if (checkData2.some(doc => doc.docs_name === newDocName)) {
+                setNewDocError("이미 추가 요청된 문서명입니다.");
                 setTimeout(() => {
                     setNewDocError(null);
                 }, 3000);
