@@ -114,7 +114,7 @@ export default function WordInfoPage({ query }: { query: string }) {
                 updateLoadingState(10, "단어 정보 확인 중...");
 
                 // 단어 테이블 확인
-                const { data: wordTableCheck, error: wordTableCheckError } = await SCM.get().wordNomalInfo('query')
+                const { data: wordTableCheck, error: wordTableCheckError } = await SCM.get().wordNomalInfo(query)
                 if (wordTableCheckError) { return makeError(wordTableCheckError); }
 
                 updateLoadingState(20, "대기 단어 정보 확인 중...");
