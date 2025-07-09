@@ -14,13 +14,10 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronDown, Save, Search, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/app/components/ui/card";
-import { SCM } from "@/app/lib/supabaseClient";
 import useSWR from "swr";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
-import CompleteModal from "@/app/components/CompleteModal";
-import LoginRequiredModal from "@/app/components/LoginRequiredModal";
 import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
 import { PostgrestError } from "@supabase/supabase-js";
@@ -63,7 +60,7 @@ const TopicItem = React.memo(({
 }: TopicItemProps) => {
     return (
         <label
-            className={`flex items-center p-2 rounded cursor-pointer transition-colors 
+            className={`flex items-center p-2 rounded cursor-pointer transition-colors dark:border-gray-600
                         ${isSelected
                     ? "bg-primary/20 hover:bg-primary/30"
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
@@ -109,7 +106,7 @@ const TopicsList = React.memo(({
                 />
             </div>
 
-            <ScrollArea className="h-48 border rounded-md p-1 w-full">
+            <ScrollArea className="h-48 border rounded-md p-1 w-full dark:border-gray-600">
                 <div className="grid grid-cols-2 gap-1">
                     {topics.length > 0 ? topics.map(([label, code]) => (
                         <TopicItem
@@ -229,7 +226,7 @@ type InfoItemProps = {
 // Info item for word details
 const InfoItem = ({ label, value }: InfoItemProps) => (
     <div className="flex justify-between items-center py-1.5 border-b last:border-b-0">
-        <span className="w-12 text-sm font-medium text-gray-600 whitespace-nowrap">{label}</span>
+        <span className="w-12 text-sm font-medium text-gray-600 whitespace-nowrap dark:text-gray-200">{label}</span>
         <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{value}</span>
     </div>
 );
@@ -241,13 +238,15 @@ interface TopicInfo {
 }
 
 type WordAddFormProps = {
-    compleSave?: () => () => void
+    saveFn: (word: string, themes: string[]) => Promise<void>;
+    initWord?: string;
+    initThemes?: string[];
 };
 
 // Main component
-const WordAddForm = ({ compleSave }: WordAddFormProps) => {
-    const [word, setWord] = useState<string>("");
-    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+const WordAddForm = ({ saveFn, initWord = "", initThemes = [] }: WordAddFormProps) => {
+    const [word, setWord] = useState<string>(initWord);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>(initThemes);
     const [groupVisibility, setGroupVisibility] = useState<{ noInjung: boolean; other: boolean }>({
         noInjung: false,
         other: false,
@@ -263,14 +262,6 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
         topicsID: {}
     });
     const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
-    const [completeState, setCompleteState] = useState<{ word: string, selectedTheme: string, onClose: () => void } | null>(null);
-    const [workFail, setWorkFail] = useState<string | null>(null);
-    const user = useSelector((state: RootState) => state.user);
-    const [isLogin, setIsLogin] = useState(!!user.uuid);
-
-    useEffect(() => {
-        setIsLogin(!!user.uuid);
-    }, [user]);
 
     useEffect(() => {
         if (error) {
@@ -381,90 +372,20 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
     // Handle word save
     const onSave = async () => {
         if (isSaving) return;
-        if (!user.uuid) return;
 
         setIsSaving(true);
 
         try {
-            // Check if word already exists
-            const { data: existingWord, error: exstedCheckError } = await SCM.get().wordInfoByWord(word);
-
-            if (exstedCheckError) {
-                throw exstedCheckError;
-            }
-
-            if (existingWord) {
-                setWorkFail("이미 존재하는 단어입니다.");
-                setIsSaving(false);
-                return;
-            }
-
-            // Insert word into wait list
-            const insertWaitWordData = {
-                word,
-                requested_by: user.uuid,
-                request_type: "add" as const
-            };
-
-            const { data: insertedWaitWord, error: insertedWaitWordError } = await SCM.add().waitWord(insertWaitWordData);
-
-            if (insertedWaitWordError) {
-                if (insertedWaitWordError.code === '23505') {
-                    setWorkFail("이미 요청이 들어온 단어입니다.");
-                    setIsSaving(false);
-                    return;
-                }
-                throw insertedWaitWordError;
-            }
-
-            // Insert selected topics
-            if (insertedWaitWord) {
-                const insertWaitWordTopicsData = selectedTopics
-                    .filter(tc => topicInfo.topicsID[tc])
-                    .map(tc => ({
-                        wait_word_id: insertedWaitWord.id,
-                        theme_id: topicInfo.topicsID[tc]
-                    }));
-
-                const { error: insertWaitWordTopicsDataError } = await SCM.add().waitWordThemes(insertWaitWordTopicsData);
-
-                if (insertWaitWordTopicsDataError) {
-                    throw insertWaitWordTopicsDataError;
-                }
-
-                // Call completion callback if provided
-                if (compleSave) {
-
-                    // Show completion state
-                    setCompleteState({
-                        word: word,
-                        selectedTheme: selectedTopics.map(code => topicInfo.topicsCode[code]).join(', '),
-                        onClose: async () => {
-                            setCompleteState(null);
-                            compleSave?.();
-                        }
-                    });
-                } else {
-                    setCompleteState({
-                        word: word,
-                        selectedTheme: selectedTopics.map(code => topicInfo.topicsCode[code]).join(', '),
-                        onClose: () => {
-                            setCompleteState(null);
-                        }
-                    });
-                }
-
-                // Reset form
-                setWord("");
-                setSelectedTopics([]);
-            }
-
+            await saveFn(word, selectedTopics);
+            setWord("");
+            setSelectedTopics([]);
+        
         } catch (error) {
             if (error instanceof PostgrestError)
                 setErrorModalView({
                     ErrName: error.name || "Unknown Error",
                     ErrMessage: error.message || "An unknown error occurred",
-                    ErrStackRace: error.stack || "",
+                    ErrStackRace: error.code || "",
                     inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
                 });
         } finally {
@@ -697,7 +618,7 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                     {/* Word details */}
                     <div className="space-y-1">
                         <h4 className="font-medium text-sm text-gray-500 dark:text-gray-400">단어 특성</h4>
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3 border border-gray-200 dark:border-gray-600">
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3 border border-gray-200 dark:border-gray-600 ">
                             <InfoItem label="단어" value={word || "-"} />
                             <InfoItem label="길이" value={wordInfo.length || "0"} />
                             <InfoItem label="첫 글자" value={wordInfo.firstLetter} />
@@ -734,29 +655,6 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                 />
             }
 
-            {completeState &&
-                <CompleteModal
-                    open={!!completeState}
-                    onClose={completeState.onClose}
-                    title="단어 추가 요청이 완료되었습니다."
-                    description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 추가요청이 완료되었습니다.`}
-                />
-            }
-
-            {workFail &&
-                <FailModal
-                    open={!!workFail}
-                    onClose={() => setWorkFail(null)}
-                    description={workFail}
-                />
-            }
-
-            {!isLogin &&
-                <LoginRequiredModal
-                    open={!isLogin}
-                    onClose={() => setIsLogin(true)}
-                />
-            }
         </div>
     );
 };

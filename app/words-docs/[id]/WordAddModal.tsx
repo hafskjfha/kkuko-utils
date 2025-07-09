@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 interface WordAddModalProps {
     isOpen: boolean;
     onClose: () => void;
-    id: number;
 }
 
-const WordAddModal = ({ isOpen, onClose, id }: WordAddModalProps) => {
+const WordAddModal = ({ isOpen, onClose }: WordAddModalProps) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="w-full max-w-2xl h-auto p-6 flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700">
@@ -17,17 +16,17 @@ const WordAddModal = ({ isOpen, onClose, id }: WordAddModalProps) => {
                     <DialogTitle className="text-gray-900 dark:text-gray-100">단어 추가</DialogTitle>
                 </DialogHeader>
                 <div>
-                    <AddWordForm docsID={id} />
+                    <AddWordForm />
                 </div>
             </DialogContent>
         </Dialog>
     )
 }
 
-const AddWordForm = ({ docsID }: { docsID: number }) => {
+const AddWordForm = () => {
     const router = useRouter();
     const onMoveToAddPage = () => {
-        router.push('/word/add?docsID=' + docsID);
+        router.push('/word/add');
     };
 
     // 동적 ui모달창 만들기 귀찮아서 그냥 단어 추가 페이지로 이동시키기

@@ -66,7 +66,6 @@ const WordsTableBody = ({
                     <WordAddModal
                         isOpen={wordAddModalOpen}
                         onClose={() => setWordAddModalOpen(false)}
-                        id={Number(id)}
                     />
                 </Suspense>
             )}
