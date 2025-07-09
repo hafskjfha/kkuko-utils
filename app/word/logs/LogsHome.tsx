@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import ErrorModal from "@/app/components/ErrModal";
@@ -94,30 +94,14 @@ export default function LogPage() {
         setIsLoading(true);
 
         try {
-            // Supabase 쿼리 빌더 시작
-            let query = supabase
-                .from('logs')
-                .select(`
-                    *,
-                    make_by_user:users!logs_make_by_fkey(nickname),
-                    processed_by_user:users!logs_processed_by_fkey(nickname)
-                `, { count: 'exact' })
-                .order('created_at', { ascending: false });
-
-            // 필터 적용
-            if (currentFilterState !== "all") {
-                query = query.eq('state', currentFilterState);
-            }
-            if (currentFilterType !== "all") {
-                query = query.eq('r_type', currentFilterType);
-            }
-
-            // 페이지네이션 적용
             const from = (currentPage - 1) * itemsPerPage;
             const to = from + itemsPerPage - 1;
-            query = query.range(from, to);
 
-            const { data: LogsData, error: LogsDataError, count } = await query;
+            const { data: LogsData, error: LogsDataError, count } = await SCM.get().logsByFillter({
+                filterState: currentFilterState,
+                filterType: currentFilterType,
+                from, to
+            });
 
             if (LogsDataError) {
                 setErrorModalView({

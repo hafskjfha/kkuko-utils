@@ -381,6 +381,57 @@ class GetManager implements IGetManager {
 
         return (sum((lasWordsCount1 ?? []).map(({count})=>count))) + (lasWordsCount2 || 0)
     }
+    public async wordsByQuery(query: string) {
+        const cleanQuery = query.replace(/[^가-힣a-zA-Z0-9]/g, '');
+        let dbqueryA = this.supabase.from('words').select('word')
+        if (cleanQuery.length > 4) {
+            dbqueryA = dbqueryA.ilike('word', `${cleanQuery}%`);
+        } else {
+            dbqueryA = dbqueryA.eq('word', cleanQuery);
+        }
+        const { data: getWords, error: getWordsError } = await dbqueryA;
+        if (getWordsError) return {data: null, error: getWordsError}
+
+        let dbqueryB = this.supabase.from('wait_words').select('word');    
+        if (cleanQuery.length > 4) {
+            dbqueryB = dbqueryB.ilike('word', `${cleanQuery}%`);
+        } else {
+            dbqueryB = dbqueryB.eq('word', cleanQuery);
+        }
+        const { data: getWaitWords, error: getWaitWordsError } = await dbqueryB;
+        if (getWaitWordsError) return {data: null, error: getWaitWordsError}
+
+        const words = getWords.map((item) => item.word) || [];
+        const waitWords = getWaitWords.map((item) => item.word) || [];
+        const allWords = [...words];
+        const wordsSet = new Set(words)
+        waitWords.forEach((word)=>{
+            if (!wordsSet.has(word)){
+                allWords.push(word)   
+            }
+        })
+        return {data: allWords.sort((a,b)=>a.length - b.length), error: null}
+    }
+    public async logsByFillter({ filterState, filterType, from, to }: { filterState: 'approved' | 'rejected' | 'pending' | 'all'; filterType: 'delete' | 'add' | 'all'; from: number; to: number; }) {
+        let query = this.supabase
+            .from('logs')
+            .select(`
+                *,
+                make_by_user:users!logs_make_by_fkey(nickname),
+                processed_by_user:users!logs_processed_by_fkey(nickname)
+            `, { count: 'exact' })
+            .order('created_at', { ascending: false });
+
+        if (filterState !== "all") {
+            query = query.eq('state', filterState);
+        }
+        if (filterType !== "all") {
+            query = query.eq('r_type', filterType);
+        }
+        query = query.range(from, to);
+
+        return await query;
+    }
 }
 
 class DeleteManager implements IDeleteManager {

@@ -25,12 +25,7 @@ import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
 import { PostgrestError } from "@supabase/supabase-js";
 import HelpModal from "@/app/components/HelpModal";
-
-
-// Utility function to calculate Korean initials
-const calculateKoreanInitials = (word: string) => {
-    return word.split("").map((c) => disassemble(c)[0]).join("");
-};
+import { calculateKoreanInitials } from "@/app/lib/lib";
 
 // Utility function for Korean search filtering
 const filterKoreanText = (text: string, search: string) => {

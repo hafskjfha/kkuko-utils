@@ -1,5 +1,5 @@
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
-import type { AuthError, OAuthResponse, PostgrestError, PostgrestSingleResponse, Session, Subscription } from '@supabase/supabase-js';
+import { AuthError, OAuthResponse, PostgrestError, PostgrestSingleResponse, Session, Subscription } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types'
 
 type wait_word = Database['public']['Tables']['wait_words']['Row']
@@ -81,6 +81,8 @@ export interface IGetManager{
     themeDocsByThemeNames(themeNames: string[]): Promise<PostgrestSingleResponse<docs[]>>;
     firstWordCountByLetters(letters: string[]): Promise<number>;
     lastWordCountByLetters(letters: string[]): Promise<number>;
+    wordsByQuery(query: string): Promise<{data: string[], error: null} | {data: null; error: PostgrestError}>;
+    logsByFillter({filterState, filterType, from, to}:{filterState?: "approved" | "rejected" | "pending" | "all", filterType: "delete" | "add" | "all", from: number, to: number}): Promise<PostgrestSingleResponse<(log & {make_by_user: { nickname: string; } | null; processed_by_user: { nickname: string | null } | null;})[]>>
 }
 
 // delete 관련 타입

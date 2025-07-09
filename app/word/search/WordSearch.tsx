@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import { Search, Loader2, BookOpen, ArrowRight } from 'lucide-react';
 
 export default function WordSearch() {
@@ -14,55 +14,14 @@ export default function WordSearch() {
     const handleSearch = async () => {
         if (!query.trim()) return;
         
-        const cleanQuery = query.replace(/[^가-힣a-zA-Z0-9]/g, '');
-        setQuery(cleanQuery);
         setLoading(true);
         setSearchPerformed(true);
         setResults([]);
         
         try {
-            // 첫 번째 데이터베이스 쿼리
-            let dbqueryA = supabase.from('words').select('word');
-            if (cleanQuery.length > 4) {
-                dbqueryA = dbqueryA.ilike('word', `${cleanQuery}%`);
-            } else {
-                dbqueryA = dbqueryA.eq('word', cleanQuery);
-            }
-            const { data: getWords, error: getWordsError } = await dbqueryA;
-            
-            if (getWordsError) {
-                console.error('단어 테이블에서 검색 중 오류:', getWordsError);
-                setLoading(false);
-                return;
-            }
-            
-            // 두 번째 데이터베이스 쿼리
-            let dbqueryB = supabase.from('wait_words').select('word');    
-            if (cleanQuery.length > 4) {
-                dbqueryB = dbqueryB.ilike('word', `${cleanQuery}%`);
-            } else {
-                dbqueryB = dbqueryB.eq('word', cleanQuery);
-            }
-            const { data: getWaitWords, error: getWaitWordsError } = await dbqueryB;
-            
-            if (getWaitWordsError) {
-                console.error('대기 단어 테이블에서 검색 중 오류:', getWaitWordsError);
-                setLoading(false);
-                return;
-            }
-            
-            // 결과 합치기
-            const words = getWords?.map((item) => item.word) || [];
-            const waitWords = getWaitWords?.map((item) => item.word) || [];
-            const allWords = [...words];
-            const wordsSet = new Set(words)
-            waitWords.forEach((word)=>{
-                if (!wordsSet.has(word)){
-                    allWords.push(word)   
-                }
-            })
-            
-            setResults(allWords);
+            const {data, error} = await SCM.get().wordsByQuery(query)
+            if (error) return setLoading(false);
+            setResults(data);
         } catch (error) {
             console.error('검색 중 오류 발생:', error);
         } finally {
