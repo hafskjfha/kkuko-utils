@@ -19,6 +19,7 @@ import ConfirmModal from "@/app/components/ConfirmModal";
 import { josa } from "es-hangul";
 import { useRouter } from 'next/navigation'
 import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
+import WordSearchBar from "./SearchBar";
 
 export interface WordInfoProps {
     word: string;
@@ -232,6 +233,8 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     
     return (
         <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+            <WordSearchBar />
+
             {isLoading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/60 rounded-lg" >
                     <Spinner />

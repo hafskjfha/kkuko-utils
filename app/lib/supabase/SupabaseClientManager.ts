@@ -358,7 +358,7 @@ class GetManager implements IGetManager {
         return (sum((lasWordsCount1 ?? []).map(({count})=>count))) + (lasWordsCount2 || 0)
     }
     public async wordsByQuery(query: string) {
-        const cleanQuery = query.replace(/[^가-힣a-zA-Z0-9]/g, '');
+        const cleanQuery = query.trim().replace(/[^가-힣a-zA-Z0-9]/g, '');
         let dbqueryA = this.supabase.from('words').select('word')
         if (cleanQuery.length > 4) {
             dbqueryA = dbqueryA.ilike('word', `${cleanQuery}%`);
