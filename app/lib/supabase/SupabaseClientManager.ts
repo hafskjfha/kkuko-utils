@@ -23,7 +23,7 @@ class AddManager implements IAddManager {
         return await this.supabase.from('word_themes').insert(insertWordThemesData).select('words(*),themes(*)');
     }
     public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete", word_id: number } | { word: string, requested_by: string | null, request_type: "add" }) {
-        return await this.supabase.from('wait_words').insert(insertWaitWordData).select('id').maybeSingle();
+        return await this.supabase.from('wait_words').insert(insertWaitWordData).select('*').maybeSingle();
     }
     public async startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
         return await this.supabase.from('user_star_docs').insert({ docs_id: docsId, user_id: userId })
@@ -49,6 +49,9 @@ class AddManager implements IAddManager {
     public async wordsThemes(q: addWordThemeQueryType[]){
        return await this.supabase.from('word_themes').upsert(q, { ignoreDuplicates: true, onConflict: "word_id,theme_id" }).select('words(word),themes(name)')
     }
+    public async wordThemesReq(q: { word_id: number; theme_id: number; typez: 'add' | 'delete'; req_by: string | null; }[]) {
+        return await this.supabase.from('word_themes_wait').upsert(q, { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
+    }
 }
 
 class GetManager implements IGetManager {
@@ -57,13 +60,13 @@ class GetManager implements IGetManager {
     private wordsCache: Record<string,{data: {word: string, noin_canuse: boolean, k_canuse: boolean, status: "ok" | "add" | "delete"}[], time: number}> = {};
 
     public async waitWordInfo(word: string) {
-        return await this.supabase.from('wait_words').select('*').eq('word', word).maybeSingle();
+        return await this.supabase.from('wait_words').select('*,users(nickname)').eq('word', word).maybeSingle();
     }
     public async waitWordThemes(wordId: number) {
         return await this.supabase.from('wait_word_themes').select('*,themes(*)').eq('wait_word_id', wordId);
     }
     public async wordNomalInfo(word: string) {
-        return await this.supabase.from('words').select('*').eq('word', word).maybeSingle();
+        return await this.supabase.from('words').select('*,users(nickname)').eq('word', word).maybeSingle();
     }
     public async allDocs() {
         return await this.supabase.from('docs').select('*, users(*)').eq('is_hidden', false)
@@ -321,6 +324,63 @@ class GetManager implements IGetManager {
     public async wordsByWords(words: string[]){
         return await this.supabase.from('words').select('*').in('word',words);
     }
+    public async randomWordByFirstLetter(f: string[]) {
+        const {data,error} = await this.supabase.rpc('random_word_ff',{fir1: f});
+        if (error) return {data: null, error}
+        const {data:data2, error:error2} = await this.supabase.rpc('random_wait_word_ff',{prefixes: f});
+        if (error2) return {data: null, error: error2}
+        if (data.length > 0) return {data: data[0].word, error: null}
+        else if (data2.length > 0) return {data: data2[0].word, error: null}
+        else return {data: null, error: null}
+    }
+    public async randomWordByLastLetter(l: string[]) {
+        const {data, error} = await this.supabase.rpc('random_word_ll',{fir1:l})
+        if (error) return {data: null, error}
+        const {data:data2, error:error2} = await this.supabase.rpc('random_wait_word_ll',{prefixes: l}) 
+        if (error2) return {data: null, error: error2}
+        if (data.length > 0) return {data: data[0].word, error: null};
+        if (data2.length > 0) return {data: data2[0].word, error: null}
+        return {data: null, error: null};
+    }
+    public async wordThemeWaitByWordId(wordId: number) {
+        return await this.supabase.from('word_themes_wait').select('themes(*), typez').eq('word_id', wordId)
+    }
+    public async letterDocsByWord(word: string){
+        return await this.supabase.from('docs').select('*').eq('name',word[word.length - 1]).eq('typez','letter');
+    }
+    public async themeDocsByThemeNames(themeNames: string[]){
+        return this.supabase.from('docs').select('*').eq('typez','theme').in('name',themeNames);
+    }
+    public async firstWordCountByLetters(letters: string[]) {
+        const { data: firWordsCount1, error: firWordsError1 } = await this.supabase
+                .from('word_last_letter_counts')
+                .select('*')
+                .in('last_letter', letters);
+                
+        const { count: firWordsCount2, error: firWordsError2 } = await this.supabase
+            .from('wait_words')
+            .select('*', { count: 'exact', head: true })
+            .or(letters.map(c => `word.ilike.%${c}`).join(','));
+        
+        if (firWordsError1 || firWordsError2) return 0;
+
+        return (sum((firWordsCount1 ?? []).map(({count})=>count))) + (firWordsCount2 || 0);
+    }
+    public async lastWordCountByLetters(letters: string[]) {
+        const { data: lasWordsCount1, error: lasWordsError1 } = await this.supabase
+                .from('word_first_letter_counts')
+                .select('*')
+                .in('first_letter', letters);
+
+        const { count: lasWordsCount2, error: lasWordsError2 } = await this.supabase
+            .from('wait_words')
+            .select('*', { count: 'exact', head: true })
+            .or(letters.map(c => `word.ilike.${c}%`).join(','));
+        
+        if (lasWordsError1 || lasWordsError2) return 0;
+
+        return (sum((lasWordsCount1 ?? []).map(({count})=>count))) + (lasWordsCount2 || 0)
+    }
 }
 
 class DeleteManager implements IDeleteManager {
@@ -373,6 +433,9 @@ class DeleteManager implements IDeleteManager {
     }
     public async waitWordsByIds(ids: number[]) {
         return await this.supabase.from('wait_words').delete().in('id',ids);
+    }
+    public async waitWordByWord(word: string) {
+        return await this.supabase.from('wait_words').delete().eq("word", word)
     }
 }
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/ca
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import Link from "next/link";
-import { FileText, Edit, Trash2, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { FileText, Edit, Trash2, AlertCircle, CheckCircle, Info, Loader2 } from "lucide-react";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import useSWR from "swr";
@@ -14,13 +14,13 @@ import ErrorModal from "@/app/components/ErrModal";
 import WordThemeEditModal from "./WordhemeEditModal";
 import { noInjungTopic } from "../../const";
 import CompleteModal from "@/app/components/CompleteModal";
-import { supabase } from "@/app/lib/supabaseClient"
+import { SCM } from "@/app/lib/supabaseClient"
 import ConfirmModal from "@/app/components/ConfirmModal";
 import { josa } from "es-hangul";
 import { useRouter } from 'next/navigation'
 import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 
-interface WordInfoProps {
+export interface WordInfoProps {
     word: string;
     missionLetter: [string, number][]; // [["가", 1], ["나", 2]] 형태
     initial: string;
@@ -32,8 +32,8 @@ interface WordInfoProps {
     };
     isChainable: boolean;
     isSeniorApproved: boolean;
-    goFirstLetterWords: number;
-    goLastLetterWords: number;
+    goFirstLetterWords: () => Promise<number>;
+    goLastLetterWords: () => Promise<number>;
     status: "ok" | "추가요청" | "삭제요청";
     dbId: number;
     documents: { doc_id: number; doc_name: string }[];
@@ -56,6 +56,21 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const router = useRouter();
     const fir1 = reverDuemLaw(wordInfo.word[0]);
     const las1 = [DuemRaw(wordInfo.word[wordInfo.word.length - 1])];
+    const [goFirstLetterWords, setGoFirstLetterWords] = useState<number | null>(null);
+    const [goLastLetterWords, setGoLastLetterWords] = useState<number | null>(null);
+
+    useEffect(()=>{
+        const gf = async () => {
+            const s = await wordInfo.goFirstLetterWords();
+            setGoFirstLetterWords(s)
+        }
+        const gl = async () => {
+            const s = await wordInfo.goLastLetterWords();
+            setGoLastLetterWords(s);
+        }
+        gf();
+        gl();
+    },[])
 
     // 상태에 따른 스타일 설정
     const getStatusBadge = () => {
@@ -116,10 +131,10 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     };
 
     const handleThemeEditSave = async (newThemes: string[], delThemes: string[]) => {
-        const delThemesQuery = delThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const, req_by: user.uuid }));
-        const newThemesQuery = newThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const, req_by: user.uuid }));
+        const delThemesQuery = delThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "delete" as const, req_by: user.uuid ?? null }));
+        const newThemesQuery = newThemes.map((theme) => ({ word_id: wordInfo.dbId, theme_id: topicInfo.topicsID[topicInfo.topicsKo[theme]], typez: "add" as const, req_by: user.uuid ?? null }));
 
-        const { data: editRequestData, error: editRequestError } = await supabase.from('word_themes_wait').upsert([...delThemesQuery, ...newThemesQuery], { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
+        const { data: editRequestData, error: editRequestError } = await SCM.add().wordThemesReq([...delThemesQuery, ...newThemesQuery]);
         if (editRequestError) {
             setErrorModalView({
                 ErrMessage: "An error occurred while saving the theme edit.",
@@ -153,29 +168,30 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const onCancelOrDeleteRequest = async () => {
         setConFirmModalOpen(false)
         if (wordInfo.status === "ok" && user.uuid) {
-            const { data: requestDeleteData, error: requestDeleteError } = await supabase.from('wait_words').insert({
+            const { data: requestDeleteData, error: requestDeleteError } = await SCM.add().waitWordTable({
                 word: wordInfo.word,
                 request_type: "delete" as const,
                 requested_by: user.uuid,
                 word_id: wordInfo.dbId
-            }).select('*');
+            })
 
             if (requestDeleteError) {
                 setErrorModalView({
                     ErrMessage: "An error occurred while delete request",
                     ErrName: "ErrorDeleteRequest",
-                    ErrStackRace: requestDeleteError.message,
+                    ErrStackRace: requestDeleteError.hint,
                     inputValue: "delete request"
                 });
                 return;
             };
+            if (!requestDeleteData) return;
 
             wordInfo.status = "삭제요청"
-            wordInfo.requestTime = requestDeleteData[0].requested_at;
+            wordInfo.requestTime = requestDeleteData.requested_at;
             setCompleteModalOpen({ word: wordInfo.word, work: "dr", s: "r" });
         }
         else if (wordInfo.status !== "ok" && user.uuid && wordInfo.requester_uuid === user.uuid) {
-            const { error: requestCancelError } = await supabase.from('wait_words').delete().eq("word", wordInfo.word);
+            const { error: requestCancelError } = await SCM.delete().waitWordByWord(wordInfo.word);
             if (requestCancelError) {
                 setErrorModalView({
                     ErrMessage: "An error occurred while cancel request",
@@ -187,7 +203,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
             };
             if (wordInfo.status === "삭제요청") {
                 wordInfo.status = "ok"
-                const { data: originData, error: originDataError } = await supabase.from('words').select('*').eq('word', wordInfo.word).maybeSingle();
+                const { data: originData, error: originDataError } = await SCM.get().wordNomalInfo(wordInfo.word);
                 if (originDataError) {
                     setErrorModalView({
                         ErrMessage: "An error occurred while cancel request",
@@ -253,21 +269,26 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                 <Card className="mb-6 shadow-md border-none overflow-hidden dark:bg-gray-800">
                     <CardContent className="py-4 flex items-center justify-center gap-6">
                         {/* 첫 글자로 시작하는 단어 버튼 */}
-                        {wordInfo.goFirstLetterWords > 0 ? (
+                        {goFirstLetterWords===null ? (
+                            <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2 dark:text-red-300 dark:border-red-700">
+                                <Loader2 size={16} className="animate-spin" />
+                                <span className="font-bold text-sm">로드중</span>
+                            </div>
+                        ) : (goFirstLetterWords > 0 ? (
                             <Button
                                 variant="outline"
                                 className="flex items-center gap-1 text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900"
                                 onClick={()=>{wordInfo.goFirstLetterWord(fir1)}}
                             >
                                 <span className="font-bold">&lt;{wordInfo.word[0]}</span>
-                                <span className="text-sm ml-1">({wordInfo.goFirstLetterWords})</span>
+                                <span className="text-sm ml-1">({goFirstLetterWords})</span>
                             </Button>
                         ) : (
                             <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2 dark:text-red-300 dark:border-red-700">
                                 <AlertCircle size={16} />
                                 <span className="font-bold">&lt;{wordInfo.word[0]}</span>
                             </div>
-                        )}
+                        ))}
 
                         {/* 연결 표시 */}
                         <div className="flex items-center">
@@ -275,14 +296,19 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
                         </div>
 
                         {/* 마지막 글자로 끝나는 단어 버튼 */}
-                        {wordInfo.goLastLetterWords > 0 ? (
+                        {!goLastLetterWords ? (
+                            <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2 dark:text-red-300 dark:border-red-700">
+                                <Loader2 size={16} className="animate-spin" />
+                                <span className="font-bold text-sm">로드중</span>
+                            </div>
+                        ) : goLastLetterWords > 0 ? (
                             <Button
                                 variant="outline"
                                 className="flex items-center gap-1 text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-700 dark:hover:bg-blue-900"
                                 onClick={()=>{wordInfo.goLastLetterWord(las1)}}
                             >
                                 <span className="font-bold">{wordInfo.word[wordInfo.word.length - 1]}&gt;</span>
-                                <span className="text-sm ml-1">({wordInfo.goLastLetterWords})</span>
+                                <span className="text-sm ml-1">({goLastLetterWords})</span>
                             </Button>
                         ) : (
                             <div className="flex items-center gap-1 text-red-400 border border-red-200 rounded-md px-3 py-2 dark:text-red-300 dark:border-red-700">
