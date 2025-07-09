@@ -105,7 +105,7 @@ const AuthPage = () => {
         }
 
         // 닉네임 중복 확인
-        const { data: checkData, error: checkErr } = await SCM.get().checkNick(nickname);
+        const { data: checkData, error: checkErr } = await SCM.get().usersByNickname(nickname);
         if (checkErr) {
             seterrorModalView({
                 ErrName: checkErr.name,

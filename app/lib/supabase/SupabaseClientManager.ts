@@ -22,10 +22,10 @@ class AddManager implements IAddManager {
     public async wordThemes(insertWordThemesData: addWordThemeQueryType[]) {
         return await this.supabase.from('word_themes').insert(insertWordThemesData).select('words(*),themes(*)');
     }
-    public async waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete", word_id: number } | { word: string, requested_by: string | null, request_type: "add" }) {
+    public async waitWord(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete", word_id: number } | { word: string, requested_by: string | null, request_type: "add" }) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('*').maybeSingle();
     }
-    public async startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
+    public async starDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>> {
         return await this.supabase.from('user_star_docs').insert({ docs_id: docsId, user_id: userId })
     }
     public async waitWordThemes(insertWaitWordThemeData: { wait_word_id: number, theme_id: number }[]) {
@@ -59,26 +59,23 @@ class GetManager implements IGetManager {
 
     private wordsCache: Record<string,{data: {word: string, noin_canuse: boolean, k_canuse: boolean, status: "ok" | "add" | "delete"}[], time: number}> = {};
 
-    public async waitWordInfo(word: string) {
+    public async waitWordInfoByWord(word: string) {
         return await this.supabase.from('wait_words').select('*,users(nickname)').eq('word', word).maybeSingle();
     }
     public async waitWordThemes(wordId: number) {
         return await this.supabase.from('wait_word_themes').select('*,themes(*)').eq('wait_word_id', wordId);
     }
-    public async wordNomalInfo(word: string) {
+    public async wordInfoByWord(word: string) {
         return await this.supabase.from('words').select('*,users(nickname)').eq('word', word).maybeSingle();
     }
     public async allDocs() {
         return await this.supabase.from('docs').select('*, users(*)').eq('is_hidden', false)
     }
-    public async wordThemes(wordIds: number[]) {
-        return await this.supabase.from('word_themes').select('words(*),themes(*)').in('word_id', wordIds);
-    }
-    public async wordTheme(wordId: number) {
+    public async wordThemeByWordId(wordId: number) {
         return await this.supabase.from('word_themes').select('words(*),themes(*)').eq('word_id', wordId);
     }
-    public async docs(id: number) {
-        return await this.supabase.from('docs').select('*,users(*)').eq('id', id).maybeSingle();
+    public async docsInfoByDocsId(docsId: number) {
+        return await this.supabase.from('docs').select('*,users(*)').eq('id', docsId).maybeSingle();
     }
     public async docsWordCount({ name, duem, typez }: { name: string, duem: boolean, typez: "letter" | "theme" }) {
         if (typez === "letter") {
@@ -91,19 +88,19 @@ class GetManager implements IGetManager {
             }
         }
         else {
-            const { data: themeData, error: themeDataError } = await this.theme(name)
+            const { data: themeData, error: themeDataError } = await this.themeInfoByThemeName(name)
             if (themeDataError || !themeData) return { count: 0, error: themeDataError }
             const { count, error } = await this.supabase.from('word_themes').select('*', { count: 'exact', head: true }).eq('theme_id', themeData.id);
             return { count, error }
         }
     }
-    public async docsRank(id: number) {
-        return await this.supabase.rpc('get_doc_rank', { doc_id: id })
+    public async docsVeiwRankByDocsId(docsId: number) {
+        return await this.supabase.rpc('get_doc_rank', { doc_id: docsId })
     }
-    public async allTheme() {
+    public async allThemes() {
         return await this.supabase.from('themes').select('*');
     }
-    public async theme(name: string) {
+    public async themeInfoByThemeName(name: string) {
         const { data, error } = await this.supabase.from('themes').select('*').eq('name', name).maybeSingle();
         return { data, error }
     }
@@ -113,27 +110,6 @@ class GetManager implements IGetManager {
     }
     public async docsLogs(id: number) {
         return await this.supabase.from("docs_logs").select("*, users(*)").eq("docs_id", id).order("date", { ascending: false });
-    }
-    public async searchWord(query: string, onlyWords: boolean = false, addReqOnly: boolean = false) {
-        if (query.length < 5) {
-            const { data: wordsData, error: wordsError } = await this.supabase.from('words').select('id,word').eq('word', query);
-            if (wordsError) return { data: null, error: wordsError };
-            if (onlyWords) return { data: wordsData, error: null }
-            else {
-                const { data: waitWordsData, error: waitWordsError } = await this.supabase.from('wait_words').select('id,word,request_type').eq('word', query);
-                if (waitWordsError) return { data: null, error: waitWordsError }
-                return { data: wordsData.concat(waitWordsData.filter(({ request_type }) => addReqOnly ? request_type === "add" : true)), error: null }
-            }
-        } else {
-            const { data: wordsData, error: wordsError } = await this.supabase.from('words').select('id,word').ilike('word', `%${query}%`);
-            if (wordsError) return { data: null, error: wordsError };
-            if (onlyWords) return { data: wordsData, error: null }
-            else {
-                const { data: waitWordsData, error: waitWordsError } = await this.supabase.from('wait_words').select('id,word,request_type').ilike('word', `%${query}%`);
-                if (waitWordsError) return { data: null, error: waitWordsError }
-                return { data: wordsData.concat(waitWordsData.filter(({ request_type }) => addReqOnly ? request_type === "add" : true)), error: null }
-            }
-        }
     }
     public async docsStar(id: number) {
         return await this.supabase.from('user_star_docs').select('user_id').eq('docs_id', id);
@@ -159,7 +135,7 @@ class GetManager implements IGetManager {
             }
         }
         else if (typez === "theme") {
-            const { data: themeData, error: themeDataError } = await this.theme(name)
+            const { data: themeData, error: themeDataError } = await this.themeInfoByThemeName(name)
             if (themeDataError) return { data: null, error: themeDataError };
             if (!themeData) return { data: { words: [], waitWords: [] }, error: null }
             const { data: wordsData, error: wordsError } = await this.supabase.from('word_themes').select('words(*)').eq('theme_id', themeData.id);
@@ -203,8 +179,8 @@ class GetManager implements IGetManager {
         }
         return await this.supabase.from('wait_words').select('*,words(*),users(*)').order('requested_at', { ascending: true });
     }
-    public async wordsThemes(words_id: number[]) {
-        return await this.supabase.from('word_themes').select('*,themes(*),words(*)').in('word_id', words_id);
+    public async wordsThemes(wordIds: number[]) {
+        return await this.supabase.from('word_themes').select('*,themes(*),words(*)').in('word_id', wordIds);
     }
     public async allWords({ includeAddReq=false, includeDeleteReq=false, includeInjung=true, includeNoInjung=true, onlyWordChain=true, lenf=false }: {
         includeAddReq?: boolean;
@@ -279,19 +255,19 @@ class GetManager implements IGetManager {
     public async session(){
         return await this.supabase.auth.getSession();
     }
-    public async checkNick(userName: string){
+    public async usersByNickname(userName: string){
         return await this.supabase.from("users").select("*").eq("nickname", userName.trim())
     }
-    public async users(q: string){
+    public async usersLikeByNickname(q: string){
         return this.supabase.from("users").select("*").ilike("nickname", `%${q}%`);
     }
     public async userByNickname(nickname: string){
         return await this.supabase.from('users').select('*').eq('nickname',nickname).maybeSingle();
     }
-    public async monthlyConRank(userId: string){
+    public async monthlyConRankByUserId(userId: string){
         return await this.supabase.rpc("get_user_monthly_rank",{ uid: userId });
     }
-    public async monthlyContributions(userId: string){
+    public async monthlyContributionsByUserId(userId: string){
         return await this.supabase.from('user_month_contributions').select('*').eq('user_id',userId).limit(4);
     }
     public async starredDocsById(userId: string){
@@ -437,16 +413,16 @@ class GetManager implements IGetManager {
 class DeleteManager implements IDeleteManager {
     constructor(private readonly supabase: SupabaseClient<Database>) { }
 
-    public async waitWord(wordId: number) {
+    public async waitWordById(wordId: number) {
         return await this.supabase.from('wait_words').delete().eq('id', wordId);
     }
-    public async wordcWord(word: string) {
+    public async wordByWord(word: string) {
         return await this.supabase.from('words').delete().eq('word', word).select('*');
     }
-    public async wordcId(wordId: number) {
+    public async wordById(wordId: number) {
         return await this.supabase.from('words').delete().eq('id', wordId).select('*');
     }
-    public async wordcIds(wordIds: number[]) {
+    public async wordByIds(wordIds: number[]) {
         return await this.supabase.from('words').delete().in('id', wordIds).select('*');
     }
     public async wordTheme(deleteQuery: { word_id: number, theme_id: number }[]) {
@@ -476,10 +452,10 @@ class DeleteManager implements IDeleteManager {
     public async startDocs({ docsId, userId }: { docsId: number, userId: string }) {
         return await this.supabase.from('user_star_docs').delete().eq('docs_id', docsId).eq('user_id', userId);
     }
-    public async waitDocs(id: number[]) {
+    public async waitDocsByIds(id: number[]) {
         return await this.supabase.from('docs_wait').delete().in('id', id);
     }
-    public async waitWords(words: string[]){
+    public async waitWordsByWords(words: string[]){
         return await this.supabase.from('wait_words').delete().in('word', words);
     }
     public async waitWordsByIds(ids: number[]) {

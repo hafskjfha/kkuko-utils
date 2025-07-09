@@ -226,7 +226,7 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
             const { error } = await SCM.delete().startDocs({ docsId: id, userId: user.uuid });
             if (error) return makeError(error)
         } else {
-            const { error } = await SCM.add().startDocs({ docsId: id, userId: user.uuid });
+            const { error } = await SCM.add().starDocs({ docsId: id, userId: user.uuid });
             if (error) return makeError(error);
         }
 

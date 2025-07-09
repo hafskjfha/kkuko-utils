@@ -32,7 +32,7 @@ export default function DocsDataPage({id}:{id:number}){
     useEffect(()=>{
         const getDatas = async () => {
             updateLoadingState(10,"문서 정보 가져오는 중...")
-            const {data: docsData, error: docsDataError} = await SCM.get().docs(id);
+            const {data: docsData, error: docsDataError} = await SCM.get().docsInfoByDocsId(id);
             if (docsDataError) return makeError(docsDataError);
             if (docsData===null) return setIsNotFound(true);
             const {data: docsStarData, error: docsStarError} = await SCM.get().docsStar(docsData.id);
@@ -58,7 +58,7 @@ export default function DocsDataPage({id}:{id:number}){
             }
             else if (docsData.typez === "theme"){
                 updateLoadingState(30, "문서에 들어간 단어 정보 가져오는 중...");
-                const {data: themeData, error: themeDataError} = await SCM.get().theme(docsData.name);
+                const {data: themeData, error: themeDataError} = await SCM.get().themeInfoByThemeName(docsData.name);
                 if (themeDataError) return makeError(themeDataError);
                 if (!themeData) return setIsNotFound(true)
 

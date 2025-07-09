@@ -172,14 +172,14 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 });
             }
             // 이번달 기여도 랭킹 가져오기
-            const { data: mcrankData, error: mcrankError } = await SCM.get().monthlyConRank(getUserData.id);
+            const { data: mcrankData, error: mcrankError } = await SCM.get().monthlyConRankByUserId(getUserData.id);
             if (mcrankError) {
                 return makeError(mcrankError);
             }
             setNewNickname(getUserData.nickname);
             setUser({ ...getUserData, month_contribution_rank: mcrankData });
             setIsAdmin(getUserData.role === "admin");
-            const {data: monthlyContributionsData, error: monthlyContributionsError} = await SCM.get().monthlyContributions(getUserData.id);
+            const {data: monthlyContributionsData, error: monthlyContributionsError} = await SCM.get().monthlyContributionsByUserId(getUserData.id);
             if (monthlyContributionsError) return makeError(monthlyContributionsError);
 
             const now = new Date();
@@ -402,7 +402,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         }
 
         setLoading("닉네임 변경 처리중...");
-        const { data: existingUser, error: existingUserError } = await SCM.get().checkNick(newNickname);
+        const { data: existingUser, error: existingUserError } = await SCM.get().usersByNickname(newNickname);
 
         if (existingUserError) {
             return makeError(existingUserError);

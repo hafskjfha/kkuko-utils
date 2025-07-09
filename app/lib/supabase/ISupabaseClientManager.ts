@@ -24,8 +24,8 @@ export interface IAddManager {
     wordLog(logsData: WordLogData[]): Promise<PostgrestSingleResponse<null>>;
     word(insertWordData: addWordQueryType[]): Promise<PostgrestSingleResponse<word[]>>;
     wordThemes(insertWordThemesData: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<word_theme[]>>;
-    waitWordTable(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete"; word_id: number; } | {word: string, requested_by: string | null, request_type: "add"}): Promise<PostgrestSingleResponse<wait_word | null>>;
-    startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
+    waitWord(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete"; word_id: number; } | {word: string, requested_by: string | null, request_type: "add"}): Promise<PostgrestSingleResponse<wait_word | null>>;
+    starDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
     waitWordThemes(insertWaitWordThemeData: { wait_word_id: number; theme_id: number; }[]): Promise<PostgrestSingleResponse<null>>
     waitDocs({ docsName, userId }: { docsName: string; userId: string | undefined; }): Promise<PostgrestSingleResponse<null>>;
     docs(insertDocsData: { name: string; maker: string | null; duem: boolean; typez: "letter" | "theme"; }[]): Promise<PostgrestSingleResponse<null>>;
@@ -37,35 +37,33 @@ export interface IAddManager {
 
 // get 관련 타입
 export interface IGetManager{
-    waitWordInfo(word: string): Promise<PostgrestSingleResponse<wait_word & {users: {nickname: string} | null} | null>>;
+    waitWordInfoByWord(word: string): Promise<PostgrestSingleResponse<wait_word & {users: {nickname: string} | null} | null>>;
     waitWordThemes(wordId: number): Promise<PostgrestSingleResponse<wait_word_theme[]>>;
-    wordNomalInfo(word: string): Promise<PostgrestSingleResponse<word & {users: {nickname: string} | null} | null>>;
+    wordInfoByWord(word: string): Promise<PostgrestSingleResponse<word & {users: {nickname: string} | null} | null>>;
     allDocs(): Promise<PostgrestSingleResponse<(docs & { users: user | null })[]>>;
-    wordThemes(wordIds: number[]): Promise<PostgrestSingleResponse<word_theme[]>>;
-    wordTheme(wordId: number): Promise<PostgrestSingleResponse<word_theme[]>>;
-    docs(id: number): Promise<PostgrestSingleResponse<(docs & { users: user | null }) | null>>
+    wordThemeByWordId(wordId: number): Promise<PostgrestSingleResponse<word_theme[]>>;
+    docsInfoByDocsId(docsId: number): Promise<PostgrestSingleResponse<(docs & { users: user | null }) | null>>
     docsWordCount({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";}): Promise<{count: number | null; error: PostgrestError | null;}>
-    docsRank(id: number): Promise<PostgrestSingleResponse<number>>;
-    allTheme(): Promise<PostgrestSingleResponse<theme[]>>
-    theme(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
+    docsVeiwRankByDocsId(docsId: number): Promise<PostgrestSingleResponse<number>>;
+    allThemes(): Promise<PostgrestSingleResponse<theme[]>>
+    themeInfoByThemeName(name: string): Promise<{ data: theme | null; error: PostgrestError | null;}>
     docsStarCount(id: number): Promise<{ data: number; error: PostgrestError | null;}>
     docsLogs(id:number): Promise<PostgrestSingleResponse<(docs_log & {users: user | null})[]>>
-    searchWord(query: string, onlyWords?: boolean, addReqOnly?: boolean): Promise<{ data: null; error: PostgrestError; } | { data: { id: number; word: string; }[]; error: null;}>
     docsStar(id: number): Promise<PostgrestSingleResponse<{user_id: string;}[]>>;
     docsWords({ name, duem, typez }: { name: string; duem: boolean; typez: "letter" | "theme";} | {name: number; duem: boolean; typez: "ect";}): Promise<{data: null, error: PostgrestError} | {data: {words: word[], waitWords: ({ word: string; request_type: "add" | "delete"; requested_by: string | null; })[]}, error: null}>
     allWaitWords(c?:"add" | "delete"): Promise<PostgrestSingleResponse<(wait_word & {words: word | null; users: user | null})[]>>;
-    wordsThemes(word_ids: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; themes: theme}[]>>
+    wordsThemes(wordIds: number[]): Promise<PostgrestSingleResponse<{ theme_id: number; word_id: number; words: word; themes: theme}[]>>
     allWords({ includeAddReq, includeDeleteReq, includeInjung, includeNoInjung, onlyWordChain, lenf }: { includeAddReq?: boolean; includeDeleteReq?: boolean; includeInjung?: boolean; includeNoInjung?: boolean; onlyWordChain?: boolean; lenf?: boolean; }): Promise<{ data: { word: string; noin_canuse: boolean; k_canuse: boolean; status: "ok" | "add" | "delete"; }[]; error: null } | {data: null; error: PostgrestError; }>
     letterDocs(): Promise<PostgrestSingleResponse<docs[]>>;
     addWaitDocs(): Promise<PostgrestSingleResponse<docs_wait[]>>;
     releaseNote(): Promise<PostgrestSingleResponse<{ id: number; content: string; created_at: string; title: string; }[]>>;
     userById(userId: string): Promise<PostgrestSingleResponse<user | null>>;
     session(): Promise<{data: {session: Session}, error: null} | {data: { session: null}, error: AuthError} | { data: {session: null}, error: null}>;
-    checkNick(userName: string): Promise<PostgrestSingleResponse<user[]>>;
-    users(q: string): Promise<PostgrestSingleResponse<user[]>>;
+    usersByNickname(userName: string): Promise<PostgrestSingleResponse<user[]>>;
+    usersLikeByNickname(q: string): Promise<PostgrestSingleResponse<user[]>>;
     userByNickname(nicknmae: string): Promise<PostgrestSingleResponse<user | null>>;
-    monthlyConRank(userId: string): Promise<PostgrestSingleResponse<number>>;
-    monthlyContributions(userId: string): Promise<PostgrestSingleResponse<Database['public']['Tables']['user_month_contributions']['Row'][]>>
+    monthlyConRankByUserId(userId: string): Promise<PostgrestSingleResponse<number>>;
+    monthlyContributionsByUserId(userId: string): Promise<PostgrestSingleResponse<Database['public']['Tables']['user_month_contributions']['Row'][]>>
     starredDocsById(userId: string): Promise<PostgrestSingleResponse<(user_star_docs & {docs: docs})[]>>;
     requestsListById(userId: string): Promise<PostgrestSingleResponse<wait_word[]>>;
     logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
@@ -87,15 +85,15 @@ export interface IGetManager{
 
 // delete 관련 타입
 export interface IDeleteManager{
-    waitWord(wordId: number): Promise<PostgrestSingleResponse<null>>;
-    wordcWord(word: string): Promise<PostgrestSingleResponse<word[]>>;
-    wordcId(wordId: number): Promise<PostgrestSingleResponse<word[]>>;
-    wordcIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
+    waitWordById(wordId: number): Promise<PostgrestSingleResponse<null>>;
+    wordByWord(word: string): Promise<PostgrestSingleResponse<word[]>>;
+    wordById(wordId: number): Promise<PostgrestSingleResponse<word[]>>;
+    wordByIds(wordIds: number[]): Promise<PostgrestSingleResponse<word[]>>;
     wordTheme(deleteQuery: { word_id: number, theme_id: number }[]): Promise<PostgrestSingleResponse<delete_word_themes_bulk>>;
     waitWordThemes(query:{word_id: number, theme_id: number}[]): Promise<PostgrestSingleResponse<undefined>>;
     startDocs({ docsId, userId }: { docsId: number; userId: string; }): Promise<PostgrestSingleResponse<null>>;
-    waitDocs(id: number[]): Promise<PostgrestSingleResponse<null>>;
-    waitWords(words: string[]): Promise<PostgrestSingleResponse<null>>;
+    waitDocsByIds(id: number[]): Promise<PostgrestSingleResponse<null>>;
+    waitWordsByWords(words: string[]): Promise<PostgrestSingleResponse<null>>;
     waitWordsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     waitWordByWord(word: string): Promise<PostgrestSingleResponse<null>>;
 }

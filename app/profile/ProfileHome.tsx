@@ -56,7 +56,7 @@ export default function ProfileHomePage() {
   const handleSearch = async () => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1));
-    const { data, error } = await SCM.get().users(searchInput)
+    const { data, error } = await SCM.get().usersLikeByNickname(searchInput)
     if (error){
         setIsLoading(false);
         setResultUsers([]);

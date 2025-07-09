@@ -387,7 +387,7 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
 
         try {
             // Check if word already exists
-            const { data: existingWord, error: exstedCheckError } = await SCM.get().wordNomalInfo(word);
+            const { data: existingWord, error: exstedCheckError } = await SCM.get().wordInfoByWord(word);
 
             if (exstedCheckError) {
                 throw exstedCheckError;
@@ -406,7 +406,7 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                 request_type: "add" as const
             };
 
-            const { data: insertedWaitWord, error: insertedWaitWordError } = await SCM.add().waitWordTable(insertWaitWordData);
+            const { data: insertedWaitWord, error: insertedWaitWordError } = await SCM.add().waitWord(insertWaitWordData);
 
             if (insertedWaitWordError) {
                 if (insertedWaitWordError.code === '23505') {

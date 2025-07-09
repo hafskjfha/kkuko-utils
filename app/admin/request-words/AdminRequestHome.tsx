@@ -210,7 +210,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }
 
         const deleteWordIds = wordDeleteQuery.map(({ word_id }) => word_id);
-        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.get().wordThemes(deleteWordIds);
+        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.get().wordsThemes(deleteWordIds);
 
         // db에 올리기
         const { data: AddedWords, error: AddedWordsError } = await SCM.add().word(wordAddQuery);
@@ -218,7 +218,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
         const { data: AddWordThemes, error: AddWordThemesError } = await SCM.add().wordThemes(wordAddThemesQuery);
         const { data: DeleteWordThemes, error: DeleteWordThemesError } = await SCM.delete().wordTheme(wordDeleteThemesQuery);
-        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.delete().wordcIds(deleteWordIds)
+        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.delete().wordByIds(deleteWordIds)
 
 
         if (DeleteWordThemesError) { return makeError(DeleteWordThemesError) }
@@ -362,7 +362,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
-        const { error: deleteWaitQueueError } = await SCM.delete().waitWords(AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word))) 
+        const { error: deleteWaitQueueError } = await SCM.delete().waitWordsByWords(AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word))) 
         if (deleteWaitQueueError) return makeError(deleteWaitQueueError);
 
         if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0) {

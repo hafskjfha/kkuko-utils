@@ -251,7 +251,7 @@ export default function WordsDelHome() {
         for (let i = 0; i < deleteWordIdChuck.length; i++) {
             const wordIdsA = deleteWordIdChuck[i]
             setCurrentTask(`삭제 처리중... ${i}/${deleteWordIdChuck.length}`)
-            const { error: deleteWordError } = await SCM.delete().wordcIds(wordIdsA);
+            const { error: deleteWordError } = await SCM.delete().wordByIds(wordIdsA);
             if (deleteWordError) return makeError(deleteWordError)
         }
         for (const id of docsLogData) {

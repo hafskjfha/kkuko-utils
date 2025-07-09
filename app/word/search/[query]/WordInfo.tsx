@@ -168,7 +168,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const onCancelOrDeleteRequest = async () => {
         setConFirmModalOpen(false)
         if (wordInfo.status === "ok" && user.uuid) {
-            const { data: requestDeleteData, error: requestDeleteError } = await SCM.add().waitWordTable({
+            const { data: requestDeleteData, error: requestDeleteError } = await SCM.add().waitWord({
                 word: wordInfo.word,
                 request_type: "delete" as const,
                 requested_by: user.uuid,
@@ -203,7 +203,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
             };
             if (wordInfo.status === "삭제요청") {
                 wordInfo.status = "ok"
-                const { data: originData, error: originDataError } = await SCM.get().wordNomalInfo(wordInfo.word);
+                const { data: originData, error: originDataError } = await SCM.get().wordInfoByWord(wordInfo.word);
                 if (originDataError) {
                     setErrorModalView({
                         ErrMessage: "An error occurred while cancel request",

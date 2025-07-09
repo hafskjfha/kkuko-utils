@@ -93,7 +93,7 @@ export default function DocsWaitManager({initialData}: {initialData?: DocsWaitRe
     const {error} = await SCM.add().docs(insertQuery);
     if (error) return makeError(error);
     const idsToRemove = Array.from(selectedRequests);
-    const {error: deleteError} = await SCM.delete().waitDocs(idsToRemove);
+    const {error: deleteError} = await SCM.delete().waitDocsByIds(idsToRemove);
     if (deleteError) return makeError(deleteError);
     setDocsWaitRequests(prev => prev.filter(req => !idsToRemove.includes(req.id)));
     setSelectedRequests(new Set());
@@ -109,7 +109,7 @@ export default function DocsWaitManager({initialData}: {initialData?: DocsWaitRe
 
   const rejectSelected = async () => {
     const idsToReject = Array.from(selectedRequests);
-    const {error} = await SCM.delete().waitDocs(idsToReject);
+    const {error} = await SCM.delete().waitDocsByIds(idsToReject);
     if (error) return makeError(error);
 
     setDocsWaitRequests(prev => prev.filter(req => !selectedRequests.has(req.id)));

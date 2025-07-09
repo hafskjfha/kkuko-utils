@@ -19,10 +19,12 @@ const hasPermission = false;
 ---
 
 ## ⚙️ 2. 함수명 (Functions)
-### 2.1 일반
-
-* **동사 + 명사** 형태로 작성
+### 공통
 * **camelCase** 사용
+* 복수형을 처리하거나 반환하는 함수는 `s` suffix로 붙일 것을 권장
+
+### 2.1 일반
+* **동사 + 명사** 형태로 작성
 * 기능 중심으로 명확하게
 
 ```ts
@@ -32,7 +34,6 @@ function updateUserProfile() { ... }
 ```
 
 ### 2.2 DB (supabaseManager)
-* **camelCase** 사용
 * **테이블** + **By파라미터** 형태 작성 
 * 테이블 전체 데이터 fetch는 `all` prefix 사용
 

@@ -114,20 +114,20 @@ export default function WordInfoPage({ query }: { query: string }) {
                 updateLoadingState(10, "단어 정보 확인 중...");
 
                 // 단어 테이블 확인
-                const { data: wordTableCheck, error: wordTableCheckError } = await SCM.get().wordNomalInfo(query)
+                const { data: wordTableCheck, error: wordTableCheckError } = await SCM.get().wordInfoByWord(query)
                 if (wordTableCheckError) { return makeError(wordTableCheckError); }
 
                 updateLoadingState(20, "대기 단어 정보 확인 중...");
 
                 // 대기 테이블 확인
-                const { data: waitTableCheck, error: waitTableCheckError } = await SCM.get().waitWordInfo(query);
+                const { data: waitTableCheck, error: waitTableCheckError } = await SCM.get().waitWordInfoByWord(query);
                 if (waitTableCheckError) { return makeError(waitTableCheckError); }
 
                 if (wordTableCheck) {
                     updateLoadingState(40, "단어 주제 정보 가져오는 중...");
 
                     // 단어 주제 정보 가져오기
-                    const { data: wordThemes, error: wordThemesError } = await SCM.get().wordTheme(wordTableCheck.id);
+                    const { data: wordThemes, error: wordThemesError } = await SCM.get().wordThemeByWordId(wordTableCheck.id);
                     if (wordThemesError) { return makeError(wordThemesError); }
 
                     updateLoadingState(60, "단어 대기 주제 정보 가져오는 중...");

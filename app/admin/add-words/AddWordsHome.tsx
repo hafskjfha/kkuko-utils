@@ -184,7 +184,7 @@ export default function WordsAddHome() {
 
         const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) return makeError(docsDataError);
-        const { data: themeData, error: themeError } = await SCM.get().allTheme();
+        const { data: themeData, error: themeError } = await SCM.get().allThemes();
         if (themeError) return makeError(themeError);
 
         const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('add');
@@ -380,7 +380,7 @@ export default function WordsAddHome() {
         await SCM.update().docsLastUpdate([...updateThemeDocsIds]);
 
         for (const p of chunkArray(logsQuery.map(({word})=>word),100)){
-            const {error} = await SCM.delete().waitWords(p);
+            const {error} = await SCM.delete().waitWordsByWords(p);
             if (error) { return makeError(error); }
         }
 
