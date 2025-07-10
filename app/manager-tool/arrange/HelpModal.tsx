@@ -2,13 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import HelpModal from '@/app/components/HelpModal';
 
 interface HelpModalprop {
-    wantGo?: 1 | 2 | 3;
+    wantGo?: 1 | 2 | 3 | 4;
 }
 
 const HelpModalB = ({ wantGo }: HelpModalprop) => {
     // 각 섹션에 대한 
     const sortRef1 = useRef<HTMLHeadingElement>(null);
     const sortRef2 = useRef<HTMLHeadingElement>(null);
+    const sortRef3 = useRef<HTMLHeadingElement>(null);
 
     const scrollToSection = (ref: React.RefObject<HTMLElement | null>) => {
         if (ref.current) {
@@ -24,6 +25,9 @@ const HelpModalB = ({ wantGo }: HelpModalprop) => {
                     break;
                 case 3:
                     scrollToSection(sortRef2);
+                    break;
+                case 4:
+                    scrollToSection(sortRef3);
                     break;
             }
         }
@@ -47,6 +51,14 @@ const HelpModalB = ({ wantGo }: HelpModalprop) => {
                         onClick={() => scrollToSection(sortRef2)}
                     >
                         ㄱㄴㄷ순 정렬 v2
+                    </button>
+                </li>
+                <li>
+                    <button
+                        className="text-blue-500 dark:text-blue-400 hover:underline"
+                        onClick={() => scrollToSection(sortRef3)}
+                    >
+                        ㄱㄴㄷ순 정렬 v3
                     </button>
                 </li>
             </ul>
@@ -81,6 +93,21 @@ const HelpModalB = ({ wantGo }: HelpModalprop) => {
 
                 <pre className="bg-gray-100 dark:bg-gray-800 text-sm p-3 rounded-md text-gray-800 dark:text-gray-200">
                     {`나릅\n개두릅\n주릅\n사릅`} <br />→<br />{`=[개]=\n개두릅\n\n=[나]=\n나릅\n\n=[사]=\n사릅\n\n=[주]=\n주릅`}
+                </pre>
+
+                <h3
+                    ref={sortRef3}
+                    className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100"
+                >
+                    ㄱㄴㄷ순 정렬 v3
+                </h3>
+
+                <p className="text-gray-700 dark:text-gray-300">
+                    v3 버전은 한글 앞글자순으로 정렬하고 길이별로 정렬합니다.
+                </p>
+
+                <pre className="bg-gray-100 dark:bg-gray-800 text-sm p-3 rounded-md text-gray-800 dark:text-gray-200">
+                    {`가끔가끔\n가격\n오늘\n오글오글`} <br />→<br />{`가끔가끔\n가격\n오글오글\n오늘`}
                 </pre>
             </div>
         </div>

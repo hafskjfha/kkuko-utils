@@ -30,10 +30,10 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head />
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
+				className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen dark:bg-gray-900`}>
 				{ process.env.NODE_ENV === "production" && (<><noscript>
 					<iframe
 						src="https://www.googletagmanager.com/ns.html?id=GTM-MBK4DFC4"

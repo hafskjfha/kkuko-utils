@@ -1,6 +1,6 @@
 "use client";
 import AdminHome from "./AdminRequestHome";
-import { supabase } from "../../lib/supabaseClient";
+import { SCM } from "../../lib/supabaseClient";
 import { useEffect, useState } from 'react';
 import LoadingPage, {useLoadingState } from '@/app/components/LoadingPage';
 import ErrorPage from "../../components/ErrorPage";
@@ -38,31 +38,26 @@ export default function AdminHomeWrapper(){
 
     const getWaitQueue = async () => {
         updateLoadingState(10, "기존 단어 주제 수정 요청 목록 가져오는 중...");
-        const {data: waitThemeWordData, error: waitThemeWordError} = await supabase.from('word_themes_wait').select('*,words(word),themes(name,code),users(*)')
+        const {data: waitThemeWordData, error: waitThemeWordError} = await SCM.get().allWordWaitTheme();
         if (waitThemeWordError) {
             MakeError(waitThemeWordError);
             return;
         }
 
         updateLoadingState(30, "단어 삭제/추가 요청 단아 가져오는 중...");
-        const {data: waitWordsData, error: waitWordsError} = await supabase.from('wait_words').select('*, users(nickname)');
+        const {data: waitWordsData, error: waitWordsError} = await SCM.get().allWaitWords();
         if (waitWordsError){
             MakeError(waitWordsError);
             return;
         }
 
         updateLoadingState(60,"추가 요청 단어의 주제 목록 가져오는 중...");
-        const {data: waitWordsThemesData, error: waitWordsThemesError} = await supabase.from('wait_word_themes').select('*,themes(name,code)').in('wait_word_id',waitWordsData.filter((d)=>d.request_type === "add").map(({id})=>id));
+        const {data: waitWordsThemesData, error: waitWordsThemesError} = await SCM.get().waitWordsThemes(waitWordsData.filter((d)=>d.request_type === "add").map(({id})=>id));
         if (waitWordsThemesError){
             MakeError(waitWordsThemesError);
             return;
         }
 
-        const {data: deleteWordIds, error: deleteWordIdsError} = await supabase.from('words').select('*').in('word',waitWordsData.filter((d)=>d.request_type === "delete").map(({word})=>word));
-        if (deleteWordIdsError) { return MakeError(deleteWordIdsError); }
-
-        const wordIdMap: Record<string,number> = {};
-        deleteWordIds.forEach(({word,id})=>wordIdMap[word]=id);
         updateLoadingState(85, "데이터를 가공 중...");
         const waitQueue: WordRequest[] = [];
 
@@ -123,7 +118,7 @@ export default function AdminHomeWrapper(){
                 requested_by_uuid: data.requested_by ?? undefined,
                 requested_by: data.users?.nickname ?? "unknown",
                 wait_themes: data.request_type === "add" ? waitWordsAddThemes.get(data.id) : undefined,
-                word_id: wordIdMap[data.word]
+                word_id: data.words?.id
             }
             waitQueue.push(r);
         });

@@ -95,7 +95,7 @@ const TableOfContents = ({ items, onItemClick, isSp = false }: TocProps) => {
     };
 
     return (
-        <div className="w-full max-w-full p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-lg transition-colors duration-300">
+        <div className="w-full max-w-full p-4 sm:p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg transition-colors duration-300">
             <div className="flex justify-between items-center mb-2">
                 <button
                     className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none flex items-center space-x-1 transition-colors duration-200"
@@ -119,14 +119,14 @@ const TableOfContents = ({ items, onItemClick, isSp = false }: TocProps) => {
                 <div className="max-h-80 overflow-y-auto pr-2 space-y-4">
                     {displayItems.map(({ group, items: groupItems }) => (
                         <div key={group} className="mb-4">
-                            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 text-lg border-b border-gray-200 dark:border-gray-700 pb-1">
+                            <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2 text-lg border-b border-gray-200 dark:border-gray-700 pb-1">
                                 {group}
                             </h3>
                             <div className="flex flex-wrap gap-2 ml-2">
                                 {groupItems.map((item) => (
                                     <button
                                         key={item.index}
-                                        className="px-3 py-1 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-700 dark:hover:text-blue-300 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                        className="px-3 py-1 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-700 dark:hover:text-blue-200 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                                         onClick={() => handleItemClick(item.index)}
                                     >
                                         {item.title}

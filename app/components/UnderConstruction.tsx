@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Construction, ArrowLeft } from 'lucide-react';
-import { Button } from '@/app/components/ui/button'; // shadcn/ui 버튼 (없으면 아래에 대체 버튼도 있어요)
+import { Button } from '@/app/components/ui/button';
 
 export default function UnderConstructionPage() {
     const router = useRouter();
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-800 p-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-4">
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -20,7 +20,7 @@ export default function UnderConstructionPage() {
                     <Construction className="w-16 h-16 text-yellow-500 animate-bounce" />
                 </div>
                 <h1 className="text-3xl font-bold">페이지가 아직 제작 중입니다 🛠️</h1>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 dark:text-gray-400">
                     더 좋은 서비스를 위해 열심히 개발 중입니다. 곧 찾아뵙겠습니다.
                 </p>
                 <div className="pt-4">

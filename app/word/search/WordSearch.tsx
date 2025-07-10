@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import { Search, Loader2, BookOpen, ArrowRight } from 'lucide-react';
 
 export default function WordSearch() {
@@ -14,55 +14,14 @@ export default function WordSearch() {
     const handleSearch = async () => {
         if (!query.trim()) return;
         
-        const cleanQuery = query.replace(/[^가-힣a-zA-Z0-9]/g, '');
-        setQuery(cleanQuery);
         setLoading(true);
         setSearchPerformed(true);
         setResults([]);
         
         try {
-            // 첫 번째 데이터베이스 쿼리
-            let dbqueryA = supabase.from('words').select('word');
-            if (cleanQuery.length > 4) {
-                dbqueryA = dbqueryA.ilike('word', `${cleanQuery}%`);
-            } else {
-                dbqueryA = dbqueryA.eq('word', cleanQuery);
-            }
-            const { data: getWords, error: getWordsError } = await dbqueryA;
-            
-            if (getWordsError) {
-                console.error('단어 테이블에서 검색 중 오류:', getWordsError);
-                setLoading(false);
-                return;
-            }
-            
-            // 두 번째 데이터베이스 쿼리
-            let dbqueryB = supabase.from('wait_words').select('word');    
-            if (cleanQuery.length > 4) {
-                dbqueryB = dbqueryB.ilike('word', `${cleanQuery}%`);
-            } else {
-                dbqueryB = dbqueryB.eq('word', cleanQuery);
-            }
-            const { data: getWaitWords, error: getWaitWordsError } = await dbqueryB;
-            
-            if (getWaitWordsError) {
-                console.error('대기 단어 테이블에서 검색 중 오류:', getWaitWordsError);
-                setLoading(false);
-                return;
-            }
-            
-            // 결과 합치기
-            const words = getWords?.map((item) => item.word) || [];
-            const waitWords = getWaitWords?.map((item) => item.word) || [];
-            const allWords = [...words];
-            const wordsSet = new Set(words)
-            waitWords.forEach((word)=>{
-                if (!wordsSet.has(word)){
-                    allWords.push(word)   
-                }
-            })
-            
-            setResults(allWords);
+            const {data, error} = await SCM.get().wordsByQuery(query)
+            if (error) return setLoading(false);
+            setResults(data);
         } catch (error) {
             console.error('검색 중 오류 발생:', error);
         } finally {
@@ -85,15 +44,15 @@ export default function WordSearch() {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white p-4">
-            <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6 sm:p-8">
-                <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950 p-4">
+            <div className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 sm:p-8">
+                <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
                     <span className="text-blue-600">단어</span> 검색
                 </h1>
                 
                 <div className="relative mb-6">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400" />
+                        <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                     </div>
                     <input
                         id="search-input"
@@ -102,7 +61,7 @@ export default function WordSearch() {
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="검색할 단어를 입력하세요"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     <button
                         onClick={handleSearch}
@@ -114,9 +73,9 @@ export default function WordSearch() {
                 </div>
                 
                 {searchPerformed && (
-                    <div className="rounded-lg border border-gray-200 overflow-hidden">
-                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                            <h2 className="font-medium text-gray-700">
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="font-medium text-gray-700 dark:text-gray-200">
                                 검색 결과 {results.length > 0 ? `(${results.length}개)` : ''}
                             </h2>
                         </div>
@@ -124,23 +83,23 @@ export default function WordSearch() {
                         {loading ? (
                             <div className="flex justify-center items-center py-12">
                                 <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-                                <span className="ml-2 text-gray-600">검색 중...</span>
+                                <span className="ml-2 text-gray-600 dark:text-gray-300">검색 중...</span>
                             </div>
                         ) : results.length > 0 ? (
-                            <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                            <ul className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
                                 {results.map((word, index) => (
                                     <li 
                                         key={index} 
-                                        className="hover:bg-blue-50 transition-colors"
+                                        className="hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors"
                                     >
                                         <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
                                             <div className="flex items-center">
                                                 <BookOpen className="h-5 w-5 text-blue-500 mr-3" />
-                                                <span className="text-gray-800 font-medium">{word}</span>
+                                                <span className="text-gray-800 dark:text-gray-100 font-medium">{word}</span>
                                             </div>
                                             <Link 
                                                 href={`/word/search/${word}`}
-                                                className="ml-4 flex items-center px-4 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors text-gray-700 font-medium"
+                                                className="ml-4 flex items-center px-4 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-colors text-gray-700 dark:text-gray-200 font-medium"
                                             >
                                                 상세보기
                                                 <ArrowRight className="ml-1 h-4 w-4" />
@@ -151,17 +110,18 @@ export default function WordSearch() {
                             </ul>
                         ) : (
                             <div className="py-12 text-center">
-                                <p className="text-gray-500">검색 결과가 없습니다</p>
-                                <p className="text-gray-400 text-sm mt-1">다른 검색어로 시도해보세요</p>
+                                <p className="text-gray-500 dark:text-gray-400">검색 결과가 없습니다</p>
+                                <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">다른 검색어로 시도해보세요</p>
                             </div>
                         )}
                     </div>
                 )}
                 
-                <div className="text-xs text-center text-gray-400 mt-6">
+                <div className="text-xs text-center text-gray-400 dark:text-gray-500 mt-6">
                     정확한 단어를 입력하시거나, 5글자 이상 입력하시면 시작 부분이 일치하는 단어를 검색합니다
                 </div>
             </div>
         </div>
     );
+
 }

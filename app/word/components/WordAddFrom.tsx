@@ -14,23 +14,12 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronDown, Save, Search, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/app/components/ui/card";
-import { SCM } from "@/app/lib/supabaseClient";
 import useSWR from "swr";
-import { useSelector } from 'react-redux';
-import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
-import CompleteModal from "@/app/components/CompleteModal";
-import LoginRequiredModal from "@/app/components/LoginRequiredModal";
-import FailModal from "@/app/components/FailModal";
 import { fetcher } from "../lib";
 import { PostgrestError } from "@supabase/supabase-js";
 import HelpModal from "@/app/components/HelpModal";
-
-
-// Utility function to calculate Korean initials
-const calculateKoreanInitials = (word: string) => {
-    return word.split("").map((c) => disassemble(c)[0]).join("");
-};
+import { calculateKoreanInitials } from "@/app/lib/lib";
 
 // Utility function for Korean search filtering
 const filterKoreanText = (text: string, search: string) => {
@@ -68,7 +57,7 @@ const TopicItem = React.memo(({
 }: TopicItemProps) => {
     return (
         <label
-            className={`flex items-center p-2 rounded cursor-pointer transition-colors 
+            className={`flex items-center p-2 rounded cursor-pointer transition-colors dark:border-gray-600
                         ${isSelected
                     ? "bg-primary/20 hover:bg-primary/30"
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
@@ -114,7 +103,7 @@ const TopicsList = React.memo(({
                 />
             </div>
 
-            <ScrollArea className="h-48 border rounded-md p-1 w-full">
+            <ScrollArea className="h-48 border rounded-md p-1 w-full dark:border-gray-600">
                 <div className="grid grid-cols-2 gap-1">
                     {topics.length > 0 ? topics.map(([label, code]) => (
                         <TopicItem
@@ -234,7 +223,7 @@ type InfoItemProps = {
 // Info item for word details
 const InfoItem = ({ label, value }: InfoItemProps) => (
     <div className="flex justify-between items-center py-1.5 border-b last:border-b-0">
-        <span className="w-12 text-sm font-medium text-gray-600 whitespace-nowrap">{label}</span>
+        <span className="w-12 text-sm font-medium text-gray-600 whitespace-nowrap dark:text-gray-200">{label}</span>
         <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{value}</span>
     </div>
 );
@@ -246,13 +235,15 @@ interface TopicInfo {
 }
 
 type WordAddFormProps = {
-    compleSave?: () => () => void
+    saveFn: (word: string, themes: string[]) => Promise<void>;
+    initWord?: string;
+    initThemes?: string[];
 };
 
 // Main component
-const WordAddForm = ({ compleSave }: WordAddFormProps) => {
-    const [word, setWord] = useState<string>("");
-    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+const WordAddForm = ({ saveFn, initWord = "", initThemes = [] }: WordAddFormProps) => {
+    const [word, setWord] = useState<string>(initWord);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>(initThemes);
     const [groupVisibility, setGroupVisibility] = useState<{ noInjung: boolean; other: boolean }>({
         noInjung: false,
         other: false,
@@ -268,14 +259,6 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
         topicsID: {}
     });
     const [errorModalView, setErrorModalView] = useState<ErrorMessage | null>(null);
-    const [completeState, setCompleteState] = useState<{ word: string, selectedTheme: string, onClose: () => void } | null>(null);
-    const [workFail, setWorkFail] = useState<string | null>(null);
-    const user = useSelector((state: RootState) => state.user);
-    const [isLogin, setIsLogin] = useState(!!user.uuid);
-
-    useEffect(() => {
-        setIsLogin(!!user.uuid);
-    }, [user]);
 
     useEffect(() => {
         if (error) {
@@ -386,90 +369,20 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
     // Handle word save
     const onSave = async () => {
         if (isSaving) return;
-        if (!user.uuid) return;
 
         setIsSaving(true);
 
         try {
-            // Check if word already exists
-            const { data: existingWord, error: exstedCheckError } = await SCM.get().wordNomalInfo(word);
-
-            if (exstedCheckError) {
-                throw exstedCheckError;
-            }
-
-            if (existingWord) {
-                setWorkFail("이미 존재하는 단어입니다.");
-                setIsSaving(false);
-                return;
-            }
-
-            // Insert word into wait list
-            const insertWaitWordData = {
-                word,
-                requested_by: user.uuid,
-                request_type: "add" as const
-            };
-
-            const { data: insertedWaitWord, error: insertedWaitWordError } = await SCM.add().waitWordTable(insertWaitWordData);
-
-            if (insertedWaitWordError) {
-                if (insertedWaitWordError.code === '23505') {
-                    setWorkFail("이미 요청이 들어온 단어입니다.");
-                    setIsSaving(false);
-                    return;
-                }
-                throw insertedWaitWordError;
-            }
-
-            // Insert selected topics
-            if (insertedWaitWord) {
-                const insertWaitWordTopicsData = selectedTopics
-                    .filter(tc => topicInfo.topicsID[tc])
-                    .map(tc => ({
-                        wait_word_id: insertedWaitWord.id,
-                        theme_id: topicInfo.topicsID[tc]
-                    }));
-
-                const { error: insertWaitWordTopicsDataError } = await SCM.add().waitWordThemes(insertWaitWordTopicsData);
-
-                if (insertWaitWordTopicsDataError) {
-                    throw insertWaitWordTopicsDataError;
-                }
-
-                // Call completion callback if provided
-                if (compleSave) {
-
-                    // Show completion state
-                    setCompleteState({
-                        word: word,
-                        selectedTheme: selectedTopics.map(code => topicInfo.topicsCode[code]).join(', '),
-                        onClose: async () => {
-                            setCompleteState(null);
-                            compleSave?.();
-                        }
-                    });
-                } else {
-                    setCompleteState({
-                        word: word,
-                        selectedTheme: selectedTopics.map(code => topicInfo.topicsCode[code]).join(', '),
-                        onClose: () => {
-                            setCompleteState(null);
-                        }
-                    });
-                }
-
-                // Reset form
-                setWord("");
-                setSelectedTopics([]);
-            }
-
+            await saveFn(word, selectedTopics);
+            setWord("");
+            setSelectedTopics([]);
+        
         } catch (error) {
             if (error instanceof PostgrestError)
                 setErrorModalView({
                     ErrName: error.name || "Unknown Error",
                     ErrMessage: error.message || "An unknown error occurred",
-                    ErrStackRace: error.stack || "",
+                    ErrStackRace: error.code || "",
                     inputValue: `word: ${word}, selected themes: ${selectedTopics.join(", ")}`
                 });
         } finally {
@@ -482,37 +395,37 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
             {/* Loading overlay */}
             {isSaving && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center">
-                        <Loader2 className="h-5 w-5 animate-spin" size={"lg"} />
-                        <p className="mt-4 font-medium">저장 중...</p>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center border dark:border-gray-700">
+                        <Loader2 className="h-5 w-5 animate-spin text-gray-600 dark:text-gray-300" size={"lg"} />
+                        <p className="mt-4 font-medium text-gray-900 dark:text-gray-100">저장 중...</p>
                     </div>
                 </div>
             )}
 
             {/* Input card */}
-            <Card className="w-full lg:w-[60%] flex flex-col max-h-[calc(100vh-6rem)]">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-2xl flex items-center gap-2">
+            <Card className="w-full lg:w-[60%] flex flex-col max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <CardTitle className="text-2xl flex items-center gap-2 text-gray-900 dark:text-gray-100">
                         <span>단어 정보 입력</span>
 
                         {/* Help Modal */}
                         <HelpModal
                             title="단어 추가하기 사용법"
                             triggerText="도움말"
-                            triggerClassName="border border-gray-200 border-1 rounded-md p-2"
+                            triggerClassName="border border-gray-200 dark:border-gray-600 border-1 rounded-md p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                             <div className="space-y-6">
                                 {/* Step 0 */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">0</span>
-                                        <h3 className="font-semibold">단어를 입력합니다.</h3>
+                                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">0</span>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">단어를 입력합니다.</h3>
                                     </div>
                                     <div className="ml-6 space-y-2">
-                                        <p>한글 또는 숫자로만 입력할 수 있습니다.</p>
-                                        <div className="bg-gray-50 p-3 rounded-lg border">
-                                            <Input value="사과" disabled className="w-40" />
-                                            <div className="flex items-center gap-1 mt-2 text-red-500 text-xs">
+                                        <p className="text-gray-700 dark:text-gray-300">한글 또는 숫자로만 입력할 수 있습니다.</p>
+                                        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                                            <Input value="사과" disabled className="w-40 bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600" />
+                                            <div className="flex items-center gap-1 mt-2 text-red-500 dark:text-red-400 text-xs">
                                                 <AlertTriangle className="h-3.5 w-3.5" />
                                                 한글과 숫자만 입력할 수 있습니다.
                                             </div>
@@ -522,17 +435,17 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                                 {/* Step 1 */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">1</span>
-                                        <h3 className="font-semibold">주제를 선택합니다.</h3>
+                                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">1</span>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">주제를 선택합니다.</h3>
                                     </div>
                                     <div className="ml-6 space-y-2">
-                                        <p>주제는 여러 개 선택할 수 있습니다. 검색창을 활용해 빠르게 찾을 수 있습니다.</p>
-                                        <div className="bg-gray-50 p-3 rounded-lg border">
+                                        <p className="text-gray-700 dark:text-gray-300">주제는 여러 개 선택할 수 있습니다. 검색창을 활용해 빠르게 찾을 수 있습니다.</p>
+                                        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
                                             <div className="flex flex-col gap-2">
-                                                <Input value="과일" disabled className="w-40" placeholder="주제 검색" />
+                                                <Input value="과일" disabled className="w-40 bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600" placeholder="주제 검색" />
                                                 <div className="flex gap-2">
-                                                    <Badge variant="secondary">과일</Badge>
-                                                    <Badge variant="secondary">음식</Badge>
+                                                    <Badge variant="secondary" className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">과일</Badge>
+                                                    <Badge variant="secondary" className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">음식</Badge>
                                                 </div>
                                             </div>
                                         </div>
@@ -541,13 +454,13 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                                 {/* Step 2 */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">2</span>
-                                        <h3 className="font-semibold">단어 저장</h3>
+                                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">2</span>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">단어 저장</h3>
                                     </div>
                                     <div className="ml-6 space-y-2">
-                                        <p>단어와 주제를 모두 입력/선택해야 저장할 수 있습니다.</p>
-                                        <div className="bg-gray-50 p-3 rounded-lg border">
-                                            <Button className="w-full" disabled>
+                                        <p className="text-gray-700 dark:text-gray-300">단어와 주제를 모두 입력/선택해야 저장할 수 있습니다.</p>
+                                        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                                            <Button className="w-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400" disabled>
                                                 <Save className="mr-2 h-4 w-4" />
                                                 단어 저장
                                             </Button>
@@ -557,13 +470,13 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                                 {/* Step 3 */}
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">3</span>
-                                        <h3 className="font-semibold">결과 확인</h3>
+                                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">3</span>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">결과 확인</h3>
                                     </div>
                                     <div className="ml-6 space-y-2">
-                                        <p>저장이 완료되면 완료 안내창이 나타납니다.</p>
-                                        <div className="bg-green-50 p-3 rounded border border-green-200">
-                                            <div className="text-sm">
+                                        <p className="text-gray-700 dark:text-gray-300">저장이 완료되면 완료 안내창이 나타납니다.</p>
+                                        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800">
+                                            <div className="text-sm text-green-800 dark:text-green-200">
                                                 <span className="font-bold">사과</span> (주제: 과일, 음식) 추가 요청 완료!
                                             </div>
                                         </div>
@@ -571,24 +484,24 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                                 </div>
                                 {/* 예시 */}
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold">사용 예시</h3>
+                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">사용 예시</h3>
                                     <div className="space-y-2">
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-2">입력 예시:</p>
-                                            <div className="bg-gray-100 p-3 rounded text-xs">
-                                                <div>단어: <span className="font-bold">사과</span></div>
-                                                <div>주제: <span className="font-bold">과일, 음식</span></div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">입력 예시:</p>
+                                            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs border border-gray-200 dark:border-gray-600">
+                                                <div className="text-gray-700 dark:text-gray-300">단어: <span className="font-bold">사과</span></div>
+                                                <div className="text-gray-700 dark:text-gray-300">주제: <span className="font-bold">과일, 음식</span></div>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-center">
                                             <div className="text-center">
-                                                <div className="text-2xl">↓</div>
+                                                <div className="text-2xl text-gray-500 dark:text-gray-400">↓</div>
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-2">저장 결과:</p>
-                                            <div className="bg-green-50 p-3 rounded border border-green-200">
-                                                <div className="text-sm">
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">저장 결과:</p>
+                                            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800">
+                                                <div className="text-sm text-green-800 dark:text-green-200">
                                                     <span className="font-bold">사과</span> (주제: 과일, 음식) 추가 요청 완료!
                                                 </div>
                                             </div>
@@ -596,13 +509,13 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                                     </div>
                                 </div>
                                 {/* Tip */}
-                                <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <p className="text-blue-800 text-sm">
+                                <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="text-blue-800 dark:text-blue-200 text-sm">
                                         <strong>💡 팁:</strong> 주제는 언제든 검색해서 빠르게 찾을 수 있습니다.
                                     </p>
                                 </div>
-                                <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <p className="text-blue-800 text-sm">
+                                <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="text-blue-800 dark:text-blue-200 text-sm">
                                         <strong>💡 참고:</strong> 단어는 관리자의 승인후 등록됩니다. 주로 2~3일 내에 처리되지만 빠르게 처리할 수 있도록 하겠습니다.
                                     </p>
                                 </div>
@@ -611,20 +524,20 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                     </CardTitle>
                 </CardHeader>
 
-                <CardContent className="flex flex-col gap-4 overflow-y-auto">
+                <CardContent className="flex flex-col gap-4 overflow-y-auto bg-white dark:bg-gray-800">
                     {/* Word input section */}
                     <div className="space-y-2">
-                        <label className="font-medium text-sm">단어</label>
+                        <label className="font-medium text-sm text-gray-700 dark:text-gray-300">단어</label>
                         <div>
                             <Input
                                 value={word}
                                 onChange={handleWordChange}
                                 placeholder="단어를 입력하세요"
-                                className={invalidWord ? "border-red-500 focus-visible:ring-red-500" : ""}
+                                className={`bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${invalidWord ? "border-red-500 dark:border-red-400 focus-visible:ring-red-500 dark:focus-visible:ring-red-400" : "focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"}`}
                                 disabled={isSaving}
                             />
                             {invalidWord && (
-                                <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
+                                <div className="flex items-center gap-1 mt-1 text-red-500 dark:text-red-400 text-sm">
                                     <AlertTriangle className="h-3.5 w-3.5" />
                                     <span>한글과 숫자만 입력할 수 있습니다.</span>
                                 </div>
@@ -634,8 +547,8 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
 
                     {/* Selected topics display */}
                     <div className="space-y-2">
-                        <label className="font-medium text-sm">선택된 주제</label>
-                        <div className="min-h-10 bg-gray-50 dark:bg-gray-800 rounded-md p-2">
+                        <label className="font-medium text-sm text-gray-700 dark:text-gray-300">선택된 주제</label>
+                        <div className="min-h-10 bg-gray-50 dark:bg-gray-700 rounded-md p-2 border border-gray-200 dark:border-gray-600">
                             <SelectedTopics
                                 topics={selectedTopicsWithLabels}
                                 onRemove={handleRemoveTopic}
@@ -646,8 +559,8 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                     {/* Topics selection */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                            <label className="font-medium text-sm">주제 선택</label>
-                            <span className="text-xs text-gray-500">
+                            <label className="font-medium text-sm text-gray-700 dark:text-gray-300">주제 선택</label>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {selectedTopics.length} 개 선택됨
                             </span>
                         </div>
@@ -680,9 +593,9 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                     </div>
                 </CardContent>
 
-                <CardFooter className="pt-2 mt-auto">
+                <CardFooter className="pt-2 mt-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                     <Button
-                        className="w-full"
+                        className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400"
                         onClick={onSave}
                         disabled={word.length === 0 || selectedTopics.length === 0 || invalidWord || isSaving}
                     >
@@ -693,16 +606,16 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
             </Card>
 
             {/* Info card */}
-            <Card className="w-full lg:w-[40%] flex flex-col max-h-[calc(100vh-6rem)]">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-2xl">단어 정보</CardTitle>
+            <Card className="w-full lg:w-[40%] flex flex-col max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <CardTitle className="text-2xl text-gray-900 dark:text-gray-100">단어 정보</CardTitle>
                 </CardHeader>
 
-                <CardContent className="space-y-6 overflow-y-auto">
+                <CardContent className="space-y-6 overflow-y-auto bg-white dark:bg-gray-800">
                     {/* Word details */}
                     <div className="space-y-1">
-                        <h4 className="font-medium text-sm text-gray-500">단어 특성</h4>
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3">
+                        <h4 className="font-medium text-sm text-gray-500 dark:text-gray-400">단어 특성</h4>
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3 border border-gray-200 dark:border-gray-600 ">
                             <InfoItem label="단어" value={word || "-"} />
                             <InfoItem label="길이" value={wordInfo.length || "0"} />
                             <InfoItem label="첫 글자" value={wordInfo.firstLetter} />
@@ -713,8 +626,8 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
 
                     {/* Topics details */}
                     <div className="space-y-1">
-                        <h4 className="font-medium text-sm text-gray-500">주제 정보</h4>
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3">
+                        <h4 className="font-medium text-sm text-gray-500 dark:text-gray-400">주제 정보</h4>
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3 border border-gray-200 dark:border-gray-600">
                             <InfoItem
                                 label="주제"
                                 value={selectedTopics.length > 0
@@ -739,29 +652,6 @@ const WordAddForm = ({ compleSave }: WordAddFormProps) => {
                 />
             }
 
-            {completeState &&
-                <CompleteModal
-                    open={!!completeState}
-                    onClose={completeState.onClose}
-                    title="단어 추가 요청이 완료되었습니다."
-                    description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 추가요청이 완료되었습니다.`}
-                />
-            }
-
-            {workFail &&
-                <FailModal
-                    open={!!workFail}
-                    onClose={() => setWorkFail(null)}
-                    description={workFail}
-                />
-            }
-
-            {!isLogin &&
-                <LoginRequiredModal
-                    open={!isLogin}
-                    onClose={() => setIsLogin(true)}
-                />
-            }
         </div>
     );
 };

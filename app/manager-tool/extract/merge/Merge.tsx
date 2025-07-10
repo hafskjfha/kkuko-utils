@@ -439,17 +439,17 @@ const WordExtractorApp = () => {
                     <div className="xl:col-span-3">
                         <div className="space-y-6">
                             {/* File Upload Section */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Upload className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Upload className="h-5 w-5 dark:text-gray-400" />
                                         파일 업로드
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     {/* File 1 Upload */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="file-upload-1">첫 번째 텍스트 파일</Label>
+                                        <Label htmlFor="file-upload-1" className="dark:text-gray-200">첫 번째 텍스트 파일</Label>
                                         <Input
                                             id="file-upload-1"
                                             ref={fileInputRef1}
@@ -459,13 +459,13 @@ const WordExtractorApp = () => {
                                             disabled={loading}
                                         />
                                         {file1 && (
-                                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                            <div className="flex items-center justify-between p-3 bg-muted dark:bg-gray-900 rounded-lg">
                                                 <div className="flex items-center gap-2">
-                                                    <FileText className="h-4 w-4" />
-                                                    <span className="text-sm font-medium">{file1.name}</span>
+                                                    <FileText className="h-4 w-4 dark:text-gray-400" />
+                                                    <span className="text-sm font-medium dark:text-gray-200">{file1.name}</span>
                                                     <Badge variant="secondary">{(file1.size / 1024).toFixed(1)} KB</Badge>
                                                 </div>
-                                                <Button variant="outline" size="sm" onClick={() => resetFile(1)}>
+                                                <Button variant="outline" size="sm" onClick={() => resetFile(1)} className="dark:text-gray-200 dark:border-gray-700">
                                                     초기화
                                                 </Button>
                                             </div>
@@ -474,7 +474,7 @@ const WordExtractorApp = () => {
 
                                     {/* File 2 Upload */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="file-upload-2">두 번째 텍스트 파일</Label>
+                                        <Label htmlFor="file-upload-2" className="dark:text-gray-200">두 번째 텍스트 파일</Label>
                                         <Input
                                             id="file-upload-2"
                                             ref={fileInputRef2}
@@ -484,13 +484,13 @@ const WordExtractorApp = () => {
                                             disabled={loading}
                                         />
                                         {file2 && (
-                                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                            <div className="flex items-center justify-between p-3 bg-muted dark:bg-gray-900 rounded-lg">
                                                 <div className="flex items-center gap-2">
-                                                    <FileText className="h-4 w-4" />
-                                                    <span className="text-sm font-medium">{file2.name}</span>
+                                                    <FileText className="h-4 w-4 dark:text-gray-400" />
+                                                    <span className="text-sm font-medium dark:text-gray-200">{file2.name}</span>
                                                     <Badge variant="secondary">{(file2.size / 1024).toFixed(1)} KB</Badge>
                                                 </div>
-                                                <Button variant="outline" size="sm" onClick={() => resetFile(2)}>
+                                                <Button variant="outline" size="sm" onClick={() => resetFile(2)} className="dark:text-gray-200 dark:border-gray-700">
                                                     초기화
                                                 </Button>
                                             </div>
@@ -498,7 +498,7 @@ const WordExtractorApp = () => {
                                     </div>
 
                                     {(file1 || file2) && (
-                                        <Button variant="outline" onClick={resetAll} className="w-full">
+                                        <Button variant="outline" onClick={resetAll} className="w-full dark:text-gray-200 dark:border-gray-700">
                                             모든 파일 초기화
                                         </Button>
                                     )}
@@ -508,10 +508,10 @@ const WordExtractorApp = () => {
                             {/* Content Display Section */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* File 1 Content */}
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <FileText className="h-5 w-5" />
+                                        <CardTitle className="flex items-center gap-2 dark:text-white">
+                                            <FileText className="h-5 w-5 dark:text-gray-400" />
                                             첫 번째 파일 내용
                                             {file1LineCount > 0 && (
                                                 <Badge variant="outline" className="ml-auto">
@@ -537,10 +537,10 @@ const WordExtractorApp = () => {
                                 </Card>
 
                                 {/* File 2 Content */}
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <FileText className="h-5 w-5" />
+                                        <CardTitle className="flex items-center gap-2 dark:text-white">
+                                            <FileText className="h-5 w-5 dark:text-gray-400" />
                                             두 번째 파일 내용
                                             {file2LineCount > 0 && (
                                                 <Badge variant="outline" className="ml-auto">
@@ -566,10 +566,10 @@ const WordExtractorApp = () => {
                                 </Card>
 
                                 {/* Merged Content */}
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <List className="h-5 w-5" />
+                                        <CardTitle className="flex items-center gap-2 dark:text-white">
+                                            <List className="h-5 w-5 dark:text-gray-400" />
                                             병합된 파일 내용
                                             {mergedLineCount > 0 && (
                                                 <Badge variant="default" className="ml-auto">
@@ -595,10 +595,10 @@ const WordExtractorApp = () => {
                     <div className="xl:col-span-1">
                         <div className="space-y-6">
                             {/* Settings Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Settings className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Settings className="h-5 w-5 dark:text-gray-400" />
                                         설정
                                     </CardTitle>
                                 </CardHeader>
@@ -611,7 +611,7 @@ const WordExtractorApp = () => {
                                         />
                                         <Label
                                             htmlFor="sort-option"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                         >
                                             결과 정렬
                                         </Label>
@@ -620,10 +620,10 @@ const WordExtractorApp = () => {
                             </Card>
 
                             {/* Actions Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Merge className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Merge className="h-5 w-5 dark:text-gray-400" />
                                         실행
                                     </CardTitle>
                                 </CardHeader>
@@ -656,7 +656,7 @@ const WordExtractorApp = () => {
 
                             {/* Status Cards */}
                             {file1LineCount > 0 && (
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -671,7 +671,7 @@ const WordExtractorApp = () => {
                             )}
 
                             {file2LineCount > 0 && (
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-green-600 dark:text-green-400">

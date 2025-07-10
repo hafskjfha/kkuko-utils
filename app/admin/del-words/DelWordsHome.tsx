@@ -14,7 +14,7 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { PostgrestError } from '@supabase/supabase-js';
 import ErrorModal from "@/app/components/ErrModal";
-import { supabase } from '@/app/lib/supabaseClient';
+import { SCM } from '@/app/lib/supabaseClient';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import { chunk as chunkArray } from "es-toolkit";
@@ -129,16 +129,16 @@ export default function WordsDelHome() {
 
         setCurrentTask("필요한 정보 가져오는 중...");
         setProgress(0);
-        const { data: docsDatas, error: docsDataError } = await supabase.from('docs').select('*');
+        const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) return makeError(docsDataError);
 
-        const { data: waitWords, error: waitWordsError } = await supabase.from('wait_words').select('*').eq('request_type', 'delete')
-        const { data: waitThemeWord, error: waitThemeWordError } = await supabase.from('word_themes_wait').select('words(word),themes(*),*').eq('typez', 'delete');
+        const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('delete');
+        const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme('delete');
 
         if (waitWordsError) { return makeError(waitWordsError); }
         if (waitThemeWordError) { return makeError(waitThemeWordError); }
 
-        const { data: waitWordTheme, error: waitWordThemeError } = await supabase.from('wait_word_themes').select('wait_words(word),themes(*)').in('wait_word_id', waitWords.map(({ id }) => id))
+        const { data: waitWordTheme, error: waitWordThemeError } = await SCM.get().waitWordsThemes(waitWords.map(({ id }) => id))
         if (waitWordThemeError) { return makeError(waitWordThemeError); }
 
         const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
@@ -173,7 +173,7 @@ export default function WordsDelHome() {
 
         const chuckWords = chunkArray(words, 100)
         for (const ww of chuckWords) {
-            const { data: wordsData, error: wordsError } = await supabase.from('words').select('*').in('word', ww);
+            const { data: wordsData, error: wordsError } = await SCM.get().wordsByWords(ww);
             if (wordsError) return makeError(wordsError);
 
             for (const data of wordsData) {
@@ -189,7 +189,7 @@ export default function WordsDelHome() {
         const nodel: Set<number> = new Set();
 
         for (const chuckchu of chunkArray(wordIds, 100)) {
-            const { data: wordThemeData, error: wordThemeError } = await supabase.from('word_themes').select('words(word,id),themes(name,code)').in('word_id', chuckchu)
+            const { data: wordThemeData, error: wordThemeError } = await SCM.get().wordsThemes(chuckchu)
             if (wordThemeError) return makeError(wordThemeError)
 
             for (const data of wordThemeData) {
@@ -237,11 +237,12 @@ export default function WordsDelHome() {
         setCurrentTask("로그 등록중...");
         setProgress(75);
 
-        const { error: logError } = await supabase.from('logs').insert(logsQuery);
+        const { error: logError } = await SCM.add().wordLog(logsQuery);
         if (logError) return makeError(logError)
 
-        const { data: docsLogData, error: docsLogError } = await supabase.from('docs_logs').insert(docsLogsQuery).select('docs(id)')
+        const { error: docsLogError } = await SCM.add().docsLog(docsLogsQuery);
         if (docsLogError) return makeError(docsLogError)
+        const docsLogData = docsLogsQuery.map(({docs_id})=>docs_id)
 
         
         const deleteWordIdChuck = chunkArray(wordIdsAA, 200);
@@ -250,19 +251,18 @@ export default function WordsDelHome() {
         for (let i = 0; i < deleteWordIdChuck.length; i++) {
             const wordIdsA = deleteWordIdChuck[i]
             setCurrentTask(`삭제 처리중... ${i}/${deleteWordIdChuck.length}`)
-            const { error: deleteWordError } = await supabase.from('words').delete().in('id', wordIdsA)
+            const { error: deleteWordError } = await SCM.delete().wordByIds(wordIdsA);
             if (deleteWordError) return makeError(deleteWordError)
         }
-        for (const { docs } of docsLogData) {
-            updateDocsId.add(docs.id)
+        for (const id of docsLogData) {
+            updateDocsId.add(id)
         }
 
         setCurrentTask("마지막 처리중...");
         setProgress(95);
-        for (const docsId of updateDocsId) {
-            await supabase.rpc('update_last_update', { docs_id: docsId })
-        }
-        await supabase.rpc('increment_contribution', { target_id: user.uuid, inc_amount: wordIds.length })
+        await SCM.update().docsLastUpdate([...updateDocsId])
+        await SCM.update().userContribution({ userId: user.uuid, amount: wordIds.length })
+        
 
         setProgress(100);
         setIsProcessing(false);
@@ -277,10 +277,10 @@ export default function WordsDelHome() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 p-4 md:p-8">
+        <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">단어 대량 삭제 페이지</h1>
-                <p className="text-gray-600 mt-2">단어를 대량으로 삭제합니다.</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">단어 대량 삭제 페이지</h1>
+                <p className="text-gray-600 dark:text-gray-300 mt-2">단어를 대량으로 삭제합니다.</p>
             </header>
 
             <main className="flex-grow">
@@ -291,12 +291,12 @@ export default function WordsDelHome() {
                         관리자 대시보드로 이동
                     </Button>
                 </Link>
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h2 className="text-xl font-semibold mb-4">파일 업로드</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 border border-transparent dark:border-gray-700">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">파일 업로드</h2>
 
                     {/* 드래그 앤 드롭 영역 */}
                     <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors bg-white dark:bg-gray-900"
                         onClick={handleUploadClick}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
@@ -310,11 +310,11 @@ export default function WordsDelHome() {
                         />
 
                         <div className="flex flex-col items-center gap-3">
-                            <Upload className="h-12 w-12 text-gray-400" />
-                            <p className="text-lg font-medium">
+                            <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
                                 {fileName ? `${fileName} 선택됨` : '파일을 드래그하거나 클릭하여 업로드'}
                             </p>
-                            <p className="text-sm text-gray-500">지원 형식: TXT, CSV, MD, JSON</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">지원 형식: TXT, CSV, MD, JSON</p>
                         </div>
                     </div>
 
@@ -329,14 +329,14 @@ export default function WordsDelHome() {
                     {/* 파일 내용 미리보기 */}
                     {fileContent && (
                         <div className="mt-6">
-                            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                            <h3 className="text-lg font-medium mb-2 flex items-center gap-2 text-gray-900 dark:text-gray-100">
                                 <FileText className="h-5 w-5" />
                                 파일 미리보기
                             </h3>
                             <Textarea
                                 value={fileContent.length > 1000 ? `${fileContent.substring(0, 1000)}...` : fileContent}
                                 readOnly
-                                className="font-mono text-sm h-48"
+                                className="font-mono text-sm h-48 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                             />
                         </div>
                     )}
@@ -360,12 +360,12 @@ export default function WordsDelHome() {
 
                 {/* 추가 기능이나 결과를 보여주는 섹션 (필요에 따라 확장) */}
                 {processingComplete && (
-                    <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-transparent dark:border-gray-700">
                         <div className="flex items-center gap-2 text-green-600 mb-4">
                             <CheckCircle className="h-6 w-6" />
-                            <h2 className="text-xl font-semibold">처리 완료!</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">처리 완료!</h2>
                         </div>
-                        <p className="text-gray-700">
+                        <p className="text-gray-700 dark:text-gray-300">
                             삭제 처리가 완료되었습니다
                         </p>
                     </div>
@@ -374,12 +374,12 @@ export default function WordsDelHome() {
 
             {/* 처리 모달 */}
             <Dialog open={showModal} onOpenChange={setShowModal}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900">
                     <DialogHeader>
-                        <DialogTitle>
+                        <DialogTitle className="text-gray-900 dark:text-gray-100">
                             {processingComplete ? '처리 완료' : '처리 진행 중'}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="dark:text-gray-300">
                             {processingComplete
                                 ? '모든 작업이 성공적으로 완료되었습니다.'
                                 : '텍스트 파일을 처리하고 있습니다. 잠시만 기다려주세요.'}
@@ -388,8 +388,8 @@ export default function WordsDelHome() {
 
                     <div className="py-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium">{currentTask}</span>
-                            <span className="text-sm font-medium">{progress}%</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{currentTask}</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-2" />
 

@@ -116,7 +116,7 @@ const Table = ({
                 );
             },
             cell: ({ getValue }) => (
-                <Link href={`/word/search/${getValue()}`} className="font-semibold text-gray-900 underline">
+                <Link href={`/word/search/${getValue()}`} className="font-semibold text-gray-900 underline dark:text-gray-100">
                     {getValue() as string}
                 </Link>
             )
@@ -198,16 +198,16 @@ const Table = ({
 
     return (
         <div className="w-full mx-auto">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[600px]">
-                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
-                                            className="px-6 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap"
+                                            className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap"
                                         >
                                             {header.isPlaceholder
                                                 ? null
@@ -216,26 +216,26 @@ const Table = ({
                                                 : header.column.columnDef.header}
                                         </th>
                                     ))}
-                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                         작업
                                     </th>
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                             {table.getRowModel().rows.map((row, index) => {
                                 const wordData = row.original;
                                 return (
                                     <tr 
                                         key={wordData.word}
-                                        className={`hover:bg-gray-50 transition-colors ${
-                                            index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                                            index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-25 dark:bg-gray-800'
                                         }`}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <td
                                                 key={cell.id}
-                                                className="px-6 py-4 text-sm whitespace-nowrap"
+                                                className="px-6 py-4 text-sm whitespace-nowrap text-gray-900 dark:text-gray-100"
                                             >
                                                 {typeof cell.column.columnDef.cell === 'function'
                                                     ? cell.column.columnDef.cell(cell.getContext())
@@ -246,7 +246,7 @@ const Table = ({
                                         <td className="min-w-[100px] px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                                             {openWork !== undefined && user.uuid && (
                                                 <button
-                                                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+                                                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition"
                                                     onClick={user.uuid !== undefined ? 
                                                         () => openWork(wordData.word, wordData.status, wordData.maker ?? "") : 
                                                         undefined
@@ -266,7 +266,7 @@ const Table = ({
                 {/* 테이블이 비어있을 때 */}
                 {table.getRowModel().rows.length === 0 && (
                     <div className="text-center py-12">
-                        <p className="text-gray-500 text-lg">데이터가 없습니다.</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-lg">데이터가 없습니다.</p>
                     </div>
                 )}
             </div>
@@ -275,7 +275,7 @@ const Table = ({
             {modal && (
                 <Suspense fallback={
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-                        <div className="bg-white rounded-lg p-6">
+                        <div className="bg-white dark:bg-gray-900 rounded-lg p-6">
                             <Spinner />
                         </div>
                     </div>
@@ -308,7 +308,7 @@ const Table = ({
 
             {isProcessing && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg p-6">
+                    <div className="bg-white dark:bg-gray-900 rounded-lg p-6">
                         <Spinner />
                     </div>
                 </div>

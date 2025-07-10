@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { SCM } from '../lib/supabaseClient';
 import ErrorModal from '../components/ErrModal';
 import { Calendar, Clock, ChevronRight } from 'lucide-react';
 
@@ -9,13 +9,6 @@ interface Note {
     content: string;
     created_at: string;
     title: string;
-}
-
-interface ErrorMessage {
-    ErrName: string;
-    ErrMessage: string;
-    ErrStackRace: string;
-    inputValue: string;
 }
 
 const ReleaseNote = () => {
@@ -27,7 +20,7 @@ const ReleaseNote = () => {
     useEffect(() => {
         const fetchNotes = async () => {
             setLoading(true);
-            const { data, error } = await supabase.from('release_note').select('*').order('created_at', { ascending: false });
+            const { data, error } = await SCM.get().releaseNote();
             
             if (error) {
                 setErrorModalView({

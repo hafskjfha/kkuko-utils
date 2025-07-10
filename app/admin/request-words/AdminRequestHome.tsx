@@ -29,7 +29,7 @@ import {
     CardTitle
 } from "@/app/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
-import { SCM, supabase } from '../../lib/supabaseClient'
+import { SCM } from '../../lib/supabaseClient'
 import { PostgrestError } from '@supabase/supabase-js'
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
@@ -210,7 +210,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         }
 
         const deleteWordIds = wordDeleteQuery.map(({ word_id }) => word_id);
-        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.get().wordThemes(deleteWordIds);
+        const {data: beforeDeleteWordThemes, error: beforeDeleteWordThemesError} = await SCM.get().wordsThemes(deleteWordIds);
 
         // db에 올리기
         const { data: AddedWords, error: AddedWordsError } = await SCM.add().word(wordAddQuery);
@@ -218,7 +218,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
 
         const { data: AddWordThemes, error: AddWordThemesError } = await SCM.add().wordThemes(wordAddThemesQuery);
         const { data: DeleteWordThemes, error: DeleteWordThemesError } = await SCM.delete().wordTheme(wordDeleteThemesQuery);
-        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.delete().wordcIds(deleteWordIds)
+        const { data: deletedWordsData, error: DeleteWordsError } = await SCM.delete().wordByIds(deleteWordIds)
 
 
         if (DeleteWordThemesError) { return makeError(DeleteWordThemesError) }
@@ -362,7 +362,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         if (insertWordLogError) return makeError(insertWordLogError);
 
         // 대기 큐에서 삭제
-        const { error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('word', AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word)));
+        const { error: deleteWaitQueueError } = await SCM.delete().waitWordsByWords(AddedWords.map(({ word }) => word).concat(deletedWordsData.map(({ word }) => word))) 
         if (deleteWaitQueueError) return makeError(deleteWaitQueueError);
 
         if (wordDeleteThemesQuery.concat(wordAddThemesQuery).length > 0) {
@@ -461,7 +461,7 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
         const {error: logError} = await SCM.add().wordLog(wordsLogQuery);
 
         // 대기큐에서 삭제
-        const {error: deleteWaitQueueError } = await supabase.from('wait_words').delete().in('id',[...new Set(deleteWaitQuery)]);
+        const {error: deleteWaitQueueError } = await SCM.delete().waitWordsByIds([...new Set(deleteWaitQuery)]);
         const { error: deleteWaitQueueError2 } = await SCM.delete().waitWordThemes(waitThemeQuery);
         if (deleteWaitQueueError) { return makeError(deleteWaitQueueError); }
         if (deleteWaitQueueError2) { return makeError(deleteWaitQueueError2); }
@@ -524,190 +524,192 @@ export default function AdminHome({ requestDatas, refreshFn }: { requestDatas: W
     };
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
             {/* 관리자 대시보드로 이동 버튼 */}
-            <Link href={'/admin'} className="mb-4 flex">
-                <Button variant="outline">
-                    <ArrowLeft />
-                    관리자 대시보드로 이동
-                </Button>
-            </Link>
-            <Card className="w-full">
-                <CardHeader>
-                    <CardTitle>단어 DB 관리자 페이지</CardTitle>
-                    <CardDescription>
-                        단어 추가, 삭제 및 주제 변경 요청을 관리합니다.
-                    </CardDescription>
-                </CardHeader>
+            <div className="container mx-auto py-8">
+                <Link href={'/admin'} className="mb-4 flex">
+                    <Button variant="outline">
+                        <ArrowLeft />
+                        관리자 대시보드로 이동
+                    </Button>
+                </Link>
+                <Card className="w-full bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-gray-900 dark:text-gray-100">단어 DB 관리자 페이지</CardTitle>
+                        <CardDescription className="dark:text-gray-300">
+                            단어 추가, 삭제 및 주제 변경 요청을 관리합니다.
+                        </CardDescription>
+                    </CardHeader>
 
-                <CardContent>
-                    <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab}>
-                        <TabsList className="mb-4">
-                            <TabsTrigger value="all">전체 요청</TabsTrigger>
-                            <TabsTrigger value="add">추가 요청</TabsTrigger>
-                            <TabsTrigger value="delete">삭제 요청</TabsTrigger>
-                            <TabsTrigger value="theme_change">주제 변경 요청</TabsTrigger>
-                        </TabsList>
+                    <CardContent>
+                        <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab}>
+                            <TabsList className="mb-4">
+                                <TabsTrigger value="all">전체 요청</TabsTrigger>
+                                <TabsTrigger value="add">추가 요청</TabsTrigger>
+                                <TabsTrigger value="delete">삭제 요청</TabsTrigger>
+                                <TabsTrigger value="theme_change">주제 변경 요청</TabsTrigger>
+                            </TabsList>
 
-                        <TabsContent value={selectedTab}>
-                            <div className="flex justify-end mb-4 gap-2">
-                                <Button
-                                    variant="outline"
-                                    className="bg-green-100 hover:bg-green-200"
-                                    onClick={() => {
-                                        approveSelected()
-                                    }}
-                                >
-                                    선택 승인
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="bg-red-100 hover:bg-red-200"
-                                    onClick={rejectSelected}
-                                >
-                                    선택 거절
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="bg-purple-100 hover:bg-purple-200"
-                                    onClick={downloadRequestsTXT}
-                                >
-                                    요청 리스트 다운로드 (TXT)
-                                </Button>
-                            </div>
+                            <TabsContent value={selectedTab}>
+                                <div className="flex justify-end mb-4 gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800"
+                                        onClick={() => {
+                                            approveSelected()
+                                        }}
+                                    >
+                                        선택 승인
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800"
+                                        onClick={rejectSelected}
+                                    >
+                                        선택 거절
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800"
+                                        onClick={downloadRequestsTXT}
+                                    >
+                                        요청 리스트 다운로드 (TXT)
+                                    </Button>
+                                </div>
 
-                            <div className="border rounded-md">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-12">
-                                                <Checkbox
-                                                    checked={allSelected}
-                                                    onCheckedChange={toggleSelectAll}
-                                                    aria-label="전체 선택"
-                                                />
-                                            </TableHead>
-                                            <TableHead className="w-16">No.</TableHead>
-                                            <TableHead className="w-36">단어</TableHead>
-                                            <TableHead className="w-24">요청 타입</TableHead>
-                                            <TableHead className="w-48">주제</TableHead>
-                                            <TableHead className="w-40">요청 시간</TableHead>
-                                            <TableHead className="w-36">요청자</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {currentRequests.length === 0 ? (
+                                <div className="border rounded-md dark:border-gray-700">
+                                    <Table>
+                                        <TableHeader>
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-4">
-                                                    요청이 없습니다.
-                                                </TableCell>
+                                                <TableHead className="w-12"> {/* 체크박스 */}
+                                                    <Checkbox
+                                                        checked={allSelected}
+                                                        onCheckedChange={toggleSelectAll}
+                                                        aria-label="전체 선택"
+                                                    />
+                                                </TableHead>
+                                                <TableHead className="w-16 text-gray-700 dark:text-gray-200">No.</TableHead>
+                                                <TableHead className="w-36 text-gray-700 dark:text-gray-200">단어</TableHead>
+                                                <TableHead className="w-24 text-gray-700 dark:text-gray-200">요청 타입</TableHead>
+                                                <TableHead className="w-48 text-gray-700 dark:text-gray-200">주제</TableHead>
+                                                <TableHead className="w-40 text-gray-700 dark:text-gray-200">요청 시간</TableHead>
+                                                <TableHead className="w-36 text-gray-700 dark:text-gray-200">요청자</TableHead>
                                             </TableRow>
-                                        ) : (
-                                            currentRequests.map((request) => (
-                                                <TableRow key={`r-${request.id}`}>
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={selectedRequests.has(request.id)}
-                                                            onCheckedChange={() => toggleRequest(request.id)}
-                                                            aria-label={`${request.word} 선택`}
-                                                        />
+                                        </TableHeader>
+                                        <TableBody>
+                                            {currentRequests.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} className="text-center py-4 text-gray-500 dark:text-gray-400">
+                                                        요청이 없습니다.
                                                     </TableCell>
-                                                    <TableCell>{request.id}</TableCell>
-                                                    <TableCell>{request.word}</TableCell>
-                                                    <TableCell>
-                                                        {renderRequestTypeBadge(request.request_type)}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {request.wait_themes ? (
-                                                            <div className="flex flex-col gap-2">
-                                                                {request.wait_themes.map((theme, index) => (
-                                                                    <div key={`t-${theme.theme_id}-${request.id}-${index ^ 10110}`} className="flex items-center gap-2">
-                                                                        <Checkbox
-                                                                            id={`theme-${request.id}-${theme.theme_id}`}
-                                                                            checked={selectedThemes[request.id]?.has(theme.theme_id) || false}
-                                                                            onCheckedChange={() => toggleTheme(request.id, theme.theme_id)}
-                                                                        />
-                                                                        <label htmlFor={`theme-${request.id}-${theme.theme_id}`} className="text-sm flex items-center">
-                                                                            {theme.theme_name}
-                                                                            {theme.typez && (
-                                                                                <span className={`ml-1 text-xs px-1 rounded ${theme.typez === 'add' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-                                                                                    }`}>
-                                                                                    {theme.typez === 'add' ? '추가' : '삭제'}
-                                                                                </span>
-                                                                            )}
-                                                                        </label>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-gray-500">-</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>{request.requested_at !== "unknown" ? formatDate(request.requested_at) : "unknown"}</TableCell>
-                                                    <TableCell>{request.requested_by}</TableCell>
                                                 </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
+                                            ) : (
+                                                currentRequests.map((request) => (
+                                                    <TableRow key={`r-${request.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                                                        <TableCell>
+                                                            <Checkbox
+                                                                checked={selectedRequests.has(request.id)}
+                                                                onCheckedChange={() => toggleRequest(request.id)}
+                                                                aria-label={`${request.word} 선택`}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="text-gray-900 dark:text-gray-100">{request.id}</TableCell>
+                                                        <TableCell className="text-gray-900 dark:text-gray-100">{request.word}</TableCell>
+                                                        <TableCell>
+                                                            {renderRequestTypeBadge(request.request_type)}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {request.wait_themes ? (
+                                                                <div className="flex flex-col gap-2">
+                                                                    {request.wait_themes.map((theme, index) => (
+                                                                        <div key={`t-${theme.theme_id}-${request.id}-${index ^ 10110}`} className="flex items-center gap-2">
+                                                                            <Checkbox
+                                                                                id={`theme-${request.id}-${theme.theme_id}`}
+                                                                                checked={selectedThemes[request.id]?.has(theme.theme_id) || false}
+                                                                                onCheckedChange={() => toggleTheme(request.id, theme.theme_id)}
+                                                                            />
+                                                                            <label htmlFor={`theme-${request.id}-${theme.theme_id}`} className="text-sm flex items-center text-gray-700 dark:text-gray-200">
+                                                                                {theme.theme_name}
+                                                                                {theme.typez && (
+                                                                                    <span className={`ml-1 text-xs px-1 rounded ${theme.typez === 'add' ? 'text-green-600 bg-green-50 dark:bg-green-900' : 'text-red-600 bg-red-50 dark:bg-red-900'
+                                                                                        }`}>
+                                                                                        {theme.typez === 'add' ? '추가' : '삭제'}
+                                                                                    </span>
+                                                                                )}
+                                                                            </label>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-gray-500 dark:text-gray-400">-</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-gray-700 dark:text-gray-200">{request.requested_at !== "unknown" ? formatDate(request.requested_at) : "unknown"}</TableCell>
+                                                        <TableCell className="text-gray-700 dark:text-gray-200">{request.requested_by}</TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
 
-                <CardFooter>
-                    <div className="w-full">
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                                    />
-                                </PaginationItem>
+                    <CardFooter>
+                        <div className="w-full">
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
 
-                                {/* 페이지네이션 렌더링 - 최대 5개 버튼 표시 */}
-                                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                                    let pageNum: number;
+                                    {/* 페이지네이션 렌더링 - 최대 5개 버튼 표시 */}
+                                    {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                                        let pageNum: number;
 
-                                    if (totalPages <= 5) {
-                                        // 5페이지 이하면 1부터 순차적으로
-                                        pageNum = i + 1;
-                                    } else if (currentPage <= 3) {
-                                        // 현재 페이지가 앞쪽이면 1~5 표시
-                                        pageNum = i + 1;
-                                    } else if (currentPage >= totalPages - 2) {
-                                        // 현재 페이지가 뒤쪽이면 마지막 5개 표시
-                                        pageNum = totalPages - 4 + i;
-                                    } else {
-                                        // 중간이면 현재 페이지 중심으로 표시
-                                        pageNum = currentPage - 2 + i;
-                                    }
+                                        if (totalPages <= 5) {
+                                            // 5페이지 이하면 1부터 순차적으로
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            // 현재 페이지가 앞쪽이면 1~5 표시
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            // 현재 페이지가 뒤쪽이면 마지막 5개 표시
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            // 중간이면 현재 페이지 중심으로 표시
+                                            pageNum = currentPage - 2 + i;
+                                        }
 
-                                    return (
-                                        <PaginationItem key={`p-${pageNum}`}>
-                                            <PaginationLink
-                                                isActive={currentPage === pageNum}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                            >
-                                                {pageNum}
-                                            </PaginationLink>
-                                        </PaginationItem>
-                                    );
-                                })}
+                                        return (
+                                            <PaginationItem key={`p-${pageNum}`}>
+                                                <PaginationLink
+                                                    isActive={currentPage === pageNum}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                >
+                                                    {pageNum}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    })}
 
-                                <PaginationItem>
-                                    <PaginationNext
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
-                    </div>
-                </CardFooter>
-            </Card>
-            {errorModalView && <ErrorModal error={errorModalView} onClose={() => setErrorModalView(null)} />}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    </CardFooter>
+                </Card>
+                {errorModalView && <ErrorModal error={errorModalView} onClose={() => setErrorModalView(null)} />}
+            </div>
         </div>
     )
 }

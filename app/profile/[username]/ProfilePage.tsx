@@ -36,7 +36,7 @@ import ErrorModal from "@/app/components/ErrModal";
 import { AppDispatch, RootState } from "@/app/store/store";
 import { useDispatch, useSelector } from "react-redux";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "@/app/lib/supabaseClient";
+import { SCM } from "@/app/lib/supabaseClient";
 import { userAction } from "@/app/store/slice";
 import CompleteModal from "@/app/components/CompleteModal";
 import { ScrollArea } from "@/app/components/ui/scroll-area";
@@ -158,11 +158,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     useEffect(() => {
         const getData = async () => {
             // 유저 기본 데이터 가져오기
-            const { data: getUserData, error: getUserError } = await supabase
-                .from("users")
-                .select("*")
-                .eq("nickname", userName)
-                .maybeSingle();
+            const { data: getUserData, error: getUserError } = await SCM.get().userByNickname(userName);
             if (getUserError) {
                 return makeError(getUserError);
             }
@@ -176,17 +172,14 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 });
             }
             // 이번달 기여도 랭킹 가져오기
-            const { data: mcrankData, error: mcrankError } = await supabase.rpc(
-                "get_user_monthly_rank",
-                { uid: getUserData.id }
-            );
+            const { data: mcrankData, error: mcrankError } = await SCM.get().monthlyConRankByUserId(getUserData.id);
             if (mcrankError) {
                 return makeError(mcrankError);
             }
             setNewNickname(getUserData.nickname);
             setUser({ ...getUserData, month_contribution_rank: mcrankData });
             setIsAdmin(getUserData.role === "admin");
-            const {data: monthlyContributionsData, error: monthlyContributionsError} = await supabase.from('user_month_contributions').select('*').eq('user_id',getUserData.id).limit(4);
+            const {data: monthlyContributionsData, error: monthlyContributionsError} = await SCM.get().monthlyContributionsByUserId(getUserData.id);
             if (monthlyContributionsError) return makeError(monthlyContributionsError);
 
             const now = new Date();
@@ -264,10 +257,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 즐겨찾기 문서 로딩
         const loadStarredDocs = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("user_star_docs")
-                    .select("*,docs(name,typez,last_update,id)")
-                    .eq("user_id", userId);
+                const { data, error } = await SCM.get().starredDocsById(userId);
                 
                 if (error) throw error;
                 
@@ -289,12 +279,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 요청 내역 로딩
         const loadRequests = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("wait_words")
-                    .select("*")
-                    .eq("requested_by", userId)
-                    .order("requested_at", { ascending: false })
-                    .limit(30);
+                const { data, error } = await SCM.get().requestsListById(userId);
                 
                 if (error) throw error;
                 setWaitWords(data);
@@ -308,12 +293,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         // 처리 내역 로딩
         const loadProcessed = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("logs")
-                    .select("*")
-                    .eq("make_by", userId)
-                    .order("created_at", { ascending: false })
-                    .limit(30);
+                const { data, error } = await SCM.get().logsListById(userId);
                 
                 if (error) throw error;
                 setLogs(data);
@@ -338,7 +318,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             // api로 업데이트 요청 날리고 적절하게 반환값 가공
             const res = await axios.post<
                 { data: null; error: PostgrestError } | { data: userInfo; error: null }
-            >("/api/update_nickname", {
+            >("/api/auth/update_nickname", {
                 nickname: updateNickname,
             });
             const { data, error } = res.data;
@@ -422,16 +402,12 @@ const ProfilePage = ({ userName }: { userName: string }) => {
         }
 
         setLoading("닉네임 변경 처리중...");
-        const { data: existingUser, error: existingUserError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("nickname", newNickname)
-            .maybeSingle();
+        const { data: existingUser, error: existingUserError } = await SCM.get().usersByNickname(newNickname);
 
         if (existingUserError) {
             return makeError(existingUserError);
         }
-        if (existingUser) {
+        if (existingUser.length > 0) {
             setNicknameError("이미 존재하는 닉네임 입니다.");
         } else {
             // 존재하는 닉네임이 아니면 업데이트 처리
@@ -520,11 +496,12 @@ const ProfilePage = ({ userName }: { userName: string }) => {
     };
 
     return (
+        <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8 max-w-6xl min-h-full">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 프로필 정보 */}
                 <div className="lg:col-span-1">
-                    <Card>
+                    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                         <CardHeader className="text-center">
                             <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
                                 <User className="h-10 w-10 text-white" />
@@ -536,7 +513,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                             value={newNickname}
                                             onChange={(e) => setNewNickname(e.target.value)}
                                             placeholder="새 닉네임"
-                                            className="text-center"
+                                            className="text-center bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                         />
                                         {nicknameError && (
                                             <p className="text-sm text-red-500">{nicknameError}</p>
@@ -560,7 +537,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-center gap-2">
-                                        <CardTitle className="text-xl">{user.nickname}</CardTitle>
+                                        <CardTitle className="text-xl text-gray-900 dark:text-gray-100">{user.nickname}</CardTitle>
                                         {isOwnProfile && (
                                             <Button
                                                 size="sm"
@@ -580,16 +557,16 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-center">
                                 <div>
-                                    <p className="text-2xl font-bold text-blue-600">
+                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                         {user.contribution}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">총 기여도</p>
+                                    <p className="text-sm text-muted-foreground dark:text-gray-400">총 기여도</p>
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-green-600">
+                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                         {user.month_contribution}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">이달 기여도</p>
+                                    <p className="text-sm text-muted-foreground dark:text-gray-400">이달 기여도</p>
                                     {user.month_contribution_rank !== 0 && (
                                         <Badge
                                             className={getRankColor(user.month_contribution_rank)}
@@ -608,15 +585,15 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                     return (
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center">
-                                                <span className="text-sm text-muted-foreground">
+                                                <span className="text-sm text-muted-foreground dark:text-gray-400">
                                                     다음 등급까지
                                                 </span>
-                                                <span className="text-sm font-medium">
+                                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                     {progress.current} / {progress.target}
                                                 </span>
                                             </div>
                                             <Progress value={progressPercentage} className="h-2" />
-                                            <p className="text-xs text-center text-muted-foreground">
+                                            <p className="text-xs text-center text-muted-foreground dark:text-gray-400">
                                                 {progress.nextRoleName} 등급까지 {progress.target - progress.current}점 남음
                                             </p>
                                         </div>
@@ -624,7 +601,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 } else if (progress.maxLevel) {
                                     return (
                                         <div className="text-center py-3">
-                                            <p className="text-sm font-medium text-purple-600">
+                                            <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
                                                 🎉 최고등급 달성!
                                             </p>
                                         </div>
@@ -632,7 +609,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                 } else if (progress.adminLevel) {
                                     return (
                                         <div className="text-center py-3">
-                                            <p className="text-sm font-medium text-red-600">
+                                            <p className="text-sm font-medium text-red-600 dark:text-red-400">
                                                 👑 관리자 등급입니다
                                             </p>
                                         </div>
@@ -643,20 +620,20 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
                             {/* 월간 기여도 그래프 */}
                             <div className="space-y-3">
-                                <h3 className="text-sm font-medium text-muted-foreground">최근 5개월 기여도</h3>
+                                <h3 className="text-sm font-medium text-muted-foreground dark:text-gray-400">최근 5개월 기여도</h3>
                                 <div className="h-32">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={monthlyContributions}>
                                             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                                             <XAxis
                                                 dataKey="month"
-                                                tick={{ fontSize: 10 }}
+                                                tick={{ fontSize: 10, fill: "#6b7280" }}
                                                 tickFormatter={(value) => {
                                                     const date = new Date(value + '-01');
                                                     return `${date.getMonth() + 1}월`;
                                                 }}
                                             />
-                                            <YAxis tick={{ fontSize: 10 }} />
+                                            <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} />
                                             <Tooltip
                                                 labelFormatter={(value) => {
                                                     const date = new Date(value + '-01');
@@ -704,9 +681,9 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
                         {/* 즐겨찾기한 문서들 */}
                         <TabsContent value="starred">
-                            <Card>
+                            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
                                         <Star className="h-5 w-5 text-yellow-500" />
                                         즐겨찾기한 문서
                                     </CardTitle>
@@ -717,19 +694,19 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                             (
                                             <div className="p-4">
                                                 {starredDocs.length === 0 ? (
-                                                    <p className="text-center text-muted-foreground py-8">
+                                                    <p className="text-center text-muted-foreground dark:text-gray-400 py-8">
                                                         즐겨찾기한 문서가 없습니다.
                                                     </p>
                                                 ) : (
                                                     <div className="space-y-3">
                                                         {starredDocs.map((doc, index) => (
                                                             <Link href={`/words-docs/${doc.id}`} key={doc.id}>
-                                                                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                                                                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                                                                     <div className="flex items-center gap-3">
                                                                         <FileText className="h-4 w-4 text-blue-500" />
                                                                         <div>
-                                                                            <p className="font-medium">{doc.name}</p>
-                                                                            <p className="text-sm text-muted-foreground">
+                                                                            <p className="font-medium text-gray-900 dark:text-gray-100">{doc.name}</p>
+                                                                            <p className="text-sm text-muted-foreground dark:text-gray-400">
                                                                                 {formatTimeAgo(doc.last_update)}에
                                                                                 업데이트
                                                                             </p>
@@ -754,9 +731,9 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
                         {/* 요청 내역 */}
                         <TabsContent value="requests">
-                            <Card>
+                            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
                                         <Clock className="h-5 w-5 text-blue-500" />
                                         단어 요청 내역
                                     </CardTitle>
@@ -765,7 +742,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                     <ScrollArea className="h-[400px]">
                                         {tabsLoading.requests ? <TabSkeleton /> : (<div className="p-4">
                                             {waitWords.length === 0 ? (
-                                                <p className="text-center text-muted-foreground py-8">
+                                                <p className="text-center text-muted-foreground dark:text-gray-400 py-8">
                                                     요청 내역이 없습니다.
                                                 </p>
                                             ) : (
@@ -780,8 +757,8 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                                         <Trash2 className="h-4 w-4 text-red-500" />
                                                                     )}
                                                                     <div>
-                                                                        <p className="font-medium">{item.word}</p>
-                                                                        <p className="text-sm text-muted-foreground">
+                                                                        <p className="font-medium text-gray-900 dark:text-gray-100">{item.word}</p>
+                                                                        <p className="text-sm text-muted-foreground dark:text-gray-400">
                                                                             {getRequestTypeText(item.request_type)}{" "}
                                                                             요청 • {formatTimeAgo(item.requested_at)}
                                                                         </p>
@@ -789,7 +766,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {getStatusIcon(item.status)}
-                                                                    <span className="text-sm">
+                                                                    <span className="text-sm text-gray-900 dark:text-gray-100">
                                                                         {getStatusText(item.status)}
                                                                     </span>
                                                                 </div>
@@ -809,9 +786,9 @@ const ProfilePage = ({ userName }: { userName: string }) => {
 
                         {/* 처리 내역 */}
                         <TabsContent value="processed">
-                            <Card>
+                            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
                                         <CheckCircle className="h-5 w-5 text-green-500" />
                                         처리된 요청
                                     </CardTitle>
@@ -820,7 +797,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                     <ScrollArea className="h-[400px]">
                                         {tabsLoading.processed ? <TabSkeleton /> : (<div className="p-4">
                                             {logs.length === 0 ? (
-                                                <p className="text-center text-muted-foreground py-8">
+                                                <p className="text-center text-muted-foreground dark:text-gray-400 py-8">
                                                     처리된 요청이 없습니다.
                                                 </p>
                                             ) : (
@@ -835,8 +812,8 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                                         <Trash2 className="h-4 w-4 text-red-500" />
                                                                     )}
                                                                     <div>
-                                                                        <p className="font-medium">{log.word}</p>
-                                                                        <p className="text-sm text-muted-foreground">
+                                                                        <p className="font-medium text-gray-900 dark:text-gray-100">{log.word}</p>
+                                                                        <p className="text-sm text-muted-foreground dark:text-gray-400">
                                                                             {getRequestTypeText(log.r_type)} •{" "}
                                                                             {formatTimeAgo(log.created_at)}
                                                                         </p>
@@ -844,7 +821,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {getStatusIcon(log.state)}
-                                                                    <span className="text-sm">
+                                                                    <span className="text-sm text-gray-900 dark:text-gray-100">
                                                                         {getStatusText(log.state)}
                                                                     </span>
                                                                 </div>
@@ -867,7 +844,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
             {/* 로딩 오버레이 */}
             {loading && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-                    <Card className="p-6">
+                    <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                         <div className="flex items-center space-x-3">
                             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                             <span className="text-slate-700 dark:text-slate-300">
@@ -896,6 +873,7 @@ const ProfilePage = ({ userName }: { userName: string }) => {
                 />
             )}
         </div>
+    </div>
     );
 };
 

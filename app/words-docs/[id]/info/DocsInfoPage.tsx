@@ -40,7 +40,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
         const getData = async () => {
             updateLoadingState(25,"문서 정보 가져오는 중...");
             // 문서 정보 가져오기
-            const {data: docsData, error: docsDataError} = await SCM.get().docs(id);
+            const {data: docsData, error: docsDataError} = await SCM.get().docsInfoByDocsId(id);
             if (docsDataError){ return hanldeError(docsDataError); }
             if (docsData === null) return setIsNotFound(true);
             const {data: docsStarData, error: docsStarError} = await SCM.get().docsStarCount(docsData.id);
@@ -51,7 +51,7 @@ export default function DocsInfoPage({ id }: { id: number }) {
             if (docsData.typez === "letter"){
                 const {count:LetterDatas1, error:error1} = await SCM.get().docsWordCount({name: docsData.name, duem: docsData.duem, typez: "letter"});
                 if (error1){ return hanldeError(error1);}
-                const {data, error} = await SCM.get().docsRank(docsData.id);
+                const {data, error} = await SCM.get().docsVeiwRankByDocsId(docsData.id);
                 if (error){ return hanldeError(error); }
                 updateLoadingState(90,"데이터 가공중...");
                 setDocsInfoData({metadata:docsData, wordsCount: LetterDatas1 ?? -1, rank:data, starCount:docsStarData});
@@ -61,14 +61,14 @@ export default function DocsInfoPage({ id }: { id: number }) {
             }
             else if (docsData.typez === "theme"){
                 updateLoadingState(35,"주제 정보 가져오는 중...");
-                const {data: themeData, error: themeDataError} = await SCM.get().theme(docsData.name);
+                const {data: themeData, error: themeDataError} = await SCM.get().themeInfoByThemeName(docsData.name);
                 if (themeDataError){ return hanldeError(themeDataError); }
                 if (!themeData) return setIsNotFound(true);
 
                 updateLoadingState(50,"문서의 단어 정보 가져오는 중...");
                 const {count: themeWordsData1, error: themeWordsError1} = await SCM.get().docsWordCount({name: themeData.name, duem: docsData.duem, typez: "theme"});
                 if (themeWordsError1){ return hanldeError(themeWordsError1); }
-                const {data, error} = await SCM.get().docsRank(docsData.id);
+                const {data, error} = await SCM.get().docsVeiwRankByDocsId(docsData.id);
                 if (error){ return hanldeError(error); }
 
                 updateLoadingState(90,"데이터 가공중...");

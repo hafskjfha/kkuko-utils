@@ -20,7 +20,7 @@ export default function CompleteModal({
 }: CompleteModalProps) {
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -29,9 +29,10 @@ export default function CompleteModal({
                 >
                     <CheckCircle className="w-12 h-12 text-green-500" />
 
-                    {/* ✅ 접근성 향상: DialogTitle, DialogDescription */}
-                    <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground">
+                    <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-muted-foreground dark:text-gray-400">
                         {description}
                     </DialogDescription>
 

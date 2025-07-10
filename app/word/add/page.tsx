@@ -1,6 +1,4 @@
-import WordAddForm from './WordAddFrom';
-import WordAddWrapper from './WordAddWrapper';
-import { Suspense } from 'react';
+import WordAddHome from "./WordAddHome";
 
 export async function generateMetadata() {
     return {
@@ -9,13 +7,10 @@ export async function generateMetadata() {
     };
 }
 
-export default async function WordAddPage({ searchParams }:{searchParams:Promise<{docsID?: string}>}) {
-    const docsID = (await searchParams).docsID ? Number((await searchParams).docsID) : undefined;
+export default async function WordAddPage() {
     return (
-        <div className="max-w-5xl mx-auto px-4 py-8 mb-20">
-            <Suspense fallback={<div>Loading...</div>}>
-                {!docsID || isNaN(docsID) ? <WordAddForm  /> : <WordAddWrapper docsID={docsID} /> }
-            </Suspense>
+        <div className="max-w-5xl mx-auto px-4 py-8 mb-20 dark:bg-gray-900">
+            <WordAddHome />
         </div>
     );
 }

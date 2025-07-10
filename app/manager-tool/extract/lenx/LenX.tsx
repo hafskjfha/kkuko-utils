@@ -251,16 +251,16 @@ const WordExtractorApp = () => {
                     <div className="xl:col-span-1">
                         <div className="space-y-6">
                             {/* Settings Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Settings className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Settings className="h-5 w-5 dark:text-gray-400" />
                                         설정
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="word-length">글자수</Label>
+                                        <Label htmlFor="word-length" className="dark:text-gray-200">글자수</Label>
                                         <Input
                                             id="word-length"
                                             type="number"
@@ -279,7 +279,7 @@ const WordExtractorApp = () => {
                                         />
                                         <Label
                                             htmlFor="sort-option"
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-200"
                                         >
                                             결과 정렬
                                         </Label>
@@ -288,10 +288,10 @@ const WordExtractorApp = () => {
                             </Card>
 
                             {/* Actions Card */}
-                            <Card>
+                            <Card className="dark:bg-gray-800 dark:border-gray-700">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Play className="h-5 w-5" />
+                                    <CardTitle className="flex items-center gap-2 dark:text-white">
+                                        <Play className="h-5 w-5 dark:text-gray-400" />
                                         실행
                                     </CardTitle>
                                 </CardHeader>
@@ -324,7 +324,7 @@ const WordExtractorApp = () => {
 
                             {/* Status Card */}
                             {fileContent && (
-                                <Card>
+                                <Card className="dark:bg-gray-800 dark:border-gray-700">
                                     <CardContent className="pt-6">
                                         <div className="text-center space-y-2">
                                             <div className="text-2xl font-bold text-green-600 dark:text-green-400">

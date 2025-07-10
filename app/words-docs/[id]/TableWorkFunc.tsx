@@ -47,7 +47,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
 
         try {
             // 1. 추가 요청 단어 정보 가져오기
-            const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+            const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
             if (getWaitWordDataError) return makeError(getWaitWordDataError)
             if (!getWaitWordData) return;
 
@@ -119,7 +119,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
             }
 
             // 7. 추가 요청 테이블에서 삭제
-            const { error: deleteWaitWordDataError } = await SCM.delete().wordsFromWaitcId([getWaitWordData.id])
+            const { error: deleteWaitWordDataError } = await SCM.delete().waitWordsByIds([getWaitWordData.id])
             if (deleteWaitWordDataError) return makeError(deleteWaitWordDataError);
 
             setIsProcessing(false);
@@ -136,12 +136,12 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 추가 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
         if (getWaitWordDataError) { return makeError(getWaitWordDataError); }
         if (!getWaitWordData) return;
 
         // 2.1 추가 요청 거부
-        const { error: deleteWaitWordDataError } = await SCM.delete().wordsFromWaitcId([getWaitWordData.id]);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordsByIds([getWaitWordData.id]);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         // 2.2 로그 등록
@@ -165,23 +165,23 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 삭제 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
         if (getWaitWordDataError) { return makeError(getWaitWordDataError); }
         if (!getWaitWordData) return;
 
-        const { data: getWordData, error: getWordError } = await SCM.get().wordNomalInfo(word);
+        const { data: getWordData, error: getWordError } = await SCM.get().wordInfoByWord(word);
         if (getWordError) { return makeError(getWordError); }
         if (!getWordData) return;
 
-        const { data: themeWordData, error: themeWordError } = await SCM.get().wordTheme(getWordData.id)
+        const { data: themeWordData, error: themeWordError } = await SCM.get().wordThemeByWordId(getWordData.id)
         if (themeWordError) { return makeError(themeWordError); }
 
         // 2.1 삭제요청 단어를 words 테이블에서 삭제
-        const { error: deleteWordDataError } = await SCM.delete().wordcWord(getWaitWordData.word);
+        const { error: deleteWordDataError } = await SCM.delete().wordByWord(getWaitWordData.word);
         if (deleteWordDataError) { return makeError(deleteWordDataError); }
 
         // 2.2 대기큐에서 제거
-        const { error: deleteWaitWordDataError } = await SCM.delete().waitWord(getWaitWordData.id);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordById(getWaitWordData.id);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         // 2.3 로그 등록
@@ -243,12 +243,12 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 삭제 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
         if (getWaitWordDataError) { return makeError(getWaitWordDataError); }
         if (!getWaitWordData) return;
 
         // 2.1 삭제 요청 거부
-        const { error: deleteWaitWordDataError } = await SCM.delete().waitWord(getWaitWordData.id);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordById(getWaitWordData.id);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         // 2.2 로그 등록
@@ -272,12 +272,12 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 삭제 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
         if (getWaitWordDataError) { return makeError(getWaitWordDataError); }
         if (!getWaitWordData) return;
 
         // 2. 대기큐에서 삭제
-        const { error: deleteWaitWordDataError } = await SCM.delete().waitWord(getWaitWordData.id);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordById(getWaitWordData.id);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         setIsProcessing(false);
@@ -291,12 +291,12 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 삭제 요청단어 정보 가져오기
-        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfo(word);
+        const { data: getWaitWordData, error: getWaitWordDataError } = await SCM.get().waitWordInfoByWord(word);
         if (getWaitWordDataError) { return makeError(getWaitWordDataError); }
         if (!getWaitWordData) return;
 
         // 2. 대기큐에서 삭제
-        const { error: deleteWaitWordDataError } = await SCM.delete().waitWord(getWaitWordData.id);
+        const { error: deleteWaitWordDataError } = await SCM.delete().waitWordById(getWaitWordData.id);
         if (deleteWaitWordDataError) { return makeError(deleteWaitWordDataError); }
 
         setIsProcessing(false);
@@ -310,11 +310,11 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 즉시 삭제할 단어 정보 가지고 오기
-        const { data: getWordData, error: getWordDataError } = await SCM.get().wordNomalInfo(word);
+        const { data: getWordData, error: getWordDataError } = await SCM.get().wordInfoByWord(word);
         if (getWordDataError) { return makeError(getWordDataError); }
         if (!getWordData) return;
 
-        const { data: themeWordData, error: themeWordError } = await SCM.get().wordTheme(getWordData.id)
+        const { data: themeWordData, error: themeWordError } = await SCM.get().wordThemeByWordId(getWordData.id)
         if (themeWordError) { return makeError(themeWordError); }
 
         // 2 로그에 등록
@@ -366,7 +366,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         }
 
         // 4. 단어 삭제
-        const { error: deleteWordDataError } = await SCM.delete().wordcId(getWordData.id);
+        const { error: deleteWordDataError } = await SCM.delete().wordById(getWordData.id);
         if (deleteWordDataError) {
             makeError(deleteWordDataError);
             setIsProcessing(false);
@@ -385,7 +385,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
         setIsProcessing(true);
 
         // 1. 삭제 요청할 타깃 단어 정보 가지고 오기
-        const { data: getWordData, error: getWordDataError } = await SCM.get().wordNomalInfo(word);
+        const { data: getWordData, error: getWordDataError } = await SCM.get().wordInfoByWord(word);
         if (getWordDataError) { return makeError(getWordDataError); }
         if (!getWordData) return;
 
@@ -396,7 +396,7 @@ export const useWorkFunc = ({ makeError, setIsProcessing, user, isProcessing, Co
             request_type: "delete",
             word_id: getWordData.id
         } as const;
-        const { data: insertWaitWordDataA, error: insertWaitWordDataError } = await SCM.add().waitWordTable(insertWaitWordData);
+        const { data: insertWaitWordDataA, error: insertWaitWordDataError } = await SCM.add().waitWord(insertWaitWordData);
         if (insertWaitWordDataError) {
             makeError(insertWaitWordDataError);
             setIsProcessing(false);

@@ -30,7 +30,7 @@ export default function DocsLogPage({id}:{id: number}){
         const getData = async () => {
             updateLoadingState(25,"문서 정보 가져오는 중...");
             //  문서 정보 가져오기
-            const {data: docsData, error: docsDataError} = await SCM.get().docs(id);
+            const {data: docsData, error: docsDataError} = await SCM.get().docsInfoByDocsId(id);
             if (docsData === null) return setIsNotFound(true);
             if (docsDataError){ return hanldeError(docsDataError); }
 

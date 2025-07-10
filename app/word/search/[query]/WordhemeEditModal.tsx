@@ -40,9 +40,9 @@ const Accordion = ({ title, icon, children }: AccordionProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="border rounded-md mb-4">
+        <div className="border border-gray-200 dark:border-gray-700 rounded-md mb-4">
             <button
-                className="flex items-center justify-between w-full p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-t-md"
+                className="flex items-center justify-between w-full p-4 text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-md text-gray-900 dark:text-gray-100"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <div className="flex items-center gap-2">
@@ -51,7 +51,7 @@ const Accordion = ({ title, icon, children }: AccordionProps) => {
                 </div>
                 {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </button>
-            {isOpen && <div className="p-4 bg-white">{children}</div>}
+            {isOpen && <div className="p-4 bg-white dark:bg-gray-900">{children}</div>}
         </div>
     );
 };
@@ -126,22 +126,22 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
     // 주제 상태에 따른 배지 스타일 결정
     const getTopicBadgeStyle = (topic: string) => {
         if (wordInfo.topic.ok.includes(topic)) {
-            return "bg-green-100 text-green-800 hover:bg-green-200";
+            return "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800";
         } else if (wordInfo.topic.waitAdd.includes(topic)) {
-            return "bg-blue-100 text-blue-800 border-dashed border-blue-300";
+            return "bg-blue-100 text-blue-800 border-dashed border-blue-300 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-600";
         } else if (wordInfo.topic.waitDel.includes(topic)) {
-            return "bg-red-100 text-red-800 border-red-300";
+            return "bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-200 dark:border-red-600";
         } else {
-            return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+            return "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700";
         }
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl overflow-y-auto max-h-[90vh]">
+            <DialogContent className="sm:max-w-2xl overflow-y-auto max-h-[90vh] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
-                        <span className="text-xl font-bold">
+                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                             &quot;{wordInfo.word}&quot; 주제 수정
                         </span>
 
@@ -149,26 +149,28 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                 </DialogHeader>
 
                 <div className="mt-4">
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">
                         이 단어에 적용할 주제를 선택해 주세요. 변경사항은 관리자 검토 후 반영됩니다.
                     </p>
 
                     {/* 선택된 주제 미리보기 */}
                     <div className="mb-6">
-                        <h3 className="text-sm font-medium text-gray-500 mb-2">선택된 주제 ({selectedSeniorTopics.length + selectedYouthTopics.length})</h3>
-                        <div className="flex flex-wrap gap-2 min-h-10 p-2 border rounded-md bg-gray-50">
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                            선택된 주제 ({selectedSeniorTopics.length + selectedYouthTopics.length})
+                        </h3>
+                        <div className="flex flex-wrap gap-2 min-h-10 p-2 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                             {selectedSeniorTopics.concat(selectedYouthTopics).length > 0 ? (
                                 selectedSeniorTopics.concat(selectedYouthTopics).map(topic => (
                                     <Badge
                                         key={`selected-${topic}`}
                                         variant="secondary"
-                                        className="bg-blue-100 text-blue-800 pl-2 pr-1 py-1 flex items-center gap-1"
+                                        className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 pl-2 pr-1 py-1 flex items-center gap-1"
                                     >
                                         {topic}
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-4 w-4 rounded-full ml-1 hover:bg-blue-200"
+                                            className="h-4 w-4 rounded-full ml-1 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200"
                                             onClick={() => handleTopicToggle(topic)}
                                         >
                                             <X size={10} />
@@ -176,7 +178,7 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                                     </Badge>
                                 ))
                             ) : (
-                                <p className="text-gray-400 text-sm p-1">선택된 주제가 없습니다.</p>
+                                <p className="text-gray-400 dark:text-gray-500 text-sm p-1">선택된 주제가 없습니다.</p>
                             )}
                         </div>
                     </div>
@@ -184,7 +186,7 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                     {/* 노인정 주제 아코디언 */}
                     <Accordion
                         title={`노인정 주제 (${selectedSeniorTopics.length}/${noInjungTheme.length})`}
-                        icon={<Users size={18} className="text-blue-600" />}
+                        icon={<Users size={18} className="text-blue-600 dark:text-blue-400" />}
                     >
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             {noInjungTheme.map(topic => {
@@ -200,11 +202,11 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                                             checked={selectedSeniorTopics.includes(topic)}
                                             onCheckedChange={() => handleTopicToggle(topic)}
                                             disabled={isWaitState}
-                                            className={isWaitState ? "opacity-50" : ""}
+                                            className={`${isWaitState ? "opacity-50" : ""} data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 dark:data-[state=checked]:bg-blue-500 dark:data-[state=checked]:border-blue-500`}
                                         />
                                         <label
                                             htmlFor={`senior-${topic}`}
-                                            className={`text-sm flex items-center ${isWaitState ? "cursor-not-allowed" : "cursor-pointer"}`}
+                                            className={`text-sm flex items-center ${isWaitState ? "cursor-not-allowed" : "cursor-pointer"} text-gray-900 dark:text-gray-100`}
                                         >
                                             <Badge
                                                 variant="outline"
@@ -223,7 +225,7 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                     {/* 어인정 주제 아코디언 */}
                     <Accordion
                         title={`어인정 주제 (${selectedYouthTopics.length}/${injungTheme.length})`}
-                        icon={<Book size={18} className="text-purple-600" />}
+                        icon={<Book size={18} className="text-purple-600 dark:text-purple-400" />}
                     >
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             {injungTheme.map(topic => {
@@ -239,11 +241,11 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                                             checked={selectedYouthTopics.includes(topic)}
                                             onCheckedChange={() => handleTopicToggle(topic)}
                                             disabled={isWaitState}
-                                            className={isWaitState ? "opacity-50" : ""}
+                                            className={`${isWaitState ? "opacity-50" : ""} data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 dark:data-[state=checked]:bg-purple-500 dark:data-[state=checked]:border-purple-500`}
                                         />
                                         <label
                                             htmlFor={`youth-${topic}`}
-                                            className={`text-sm flex items-center ${isWaitState ? "cursor-not-allowed" : "cursor-pointer"}`}
+                                            className={`text-sm flex items-center ${isWaitState ? "cursor-not-allowed" : "cursor-pointer"} text-gray-900 dark:text-gray-100`}
                                         >
                                             <Badge
                                                 variant="outline"
@@ -264,13 +266,13 @@ const WordThemeEditModal = ({ isOpen, onClose, wordInfo, onSave, injungTheme, no
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="mr-2"
+                        className="mr-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                         취소
                     </Button>
                     <Button
                         onClick={()=> setConfirmModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                        className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white flex items-center gap-2"
                     >
                         <Save size={16} />
                         변경사항 저장
