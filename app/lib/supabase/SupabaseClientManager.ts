@@ -52,6 +52,10 @@ class AddManager implements IAddManager {
     public async wordThemesReq(q: { word_id: number; theme_id: number; typez: 'add' | 'delete'; req_by: string | null; }[]) {
         return await this.supabase.from('word_themes_wait').upsert(q, { onConflict: "word_id,theme_id", ignoreDuplicates: true }).select('themes(name), typez');
     }
+    public async waitWords(q: { word: string; requested_by: string | null; request_type: 'add'; }[]) {
+        return this.supabase.from('wait_words').upsert(q,{ onConflict: "word", ignoreDuplicates: true }).select('*');
+    }
+    
 }
 
 class GetManager implements IGetManager {
