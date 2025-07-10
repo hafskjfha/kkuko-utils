@@ -29,12 +29,14 @@ const VirtualizedTextViewer = React.memo(({
     content, 
     placeholder = "내용이 없습니다.",
     searchable = false,
-    height = "h-[400px]"
+    height = "h-[400px]",
+    ...rest
 }: { 
     content: string; 
     placeholder?: string;
     searchable?: boolean;
     height?: string;
+    [key: string]: unknown;
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
@@ -79,14 +81,14 @@ const VirtualizedTextViewer = React.memo(({
 
     if (!content) {
         return (
-            <div className={`flex items-center justify-center ${height} text-muted-foreground`}>
+            <div className={`flex items-center justify-center ${height} text-muted-foreground`} {...rest}>
                 {placeholder}
             </div>
         );
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-3" {...rest}>
             {searchable && (
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -210,6 +212,7 @@ const WordExtractorApp = () => {
 
     const handleError = useCallback((err: unknown) => {
         if (err instanceof Error) {
+            console.error(err);
             seterrorModalView({
                 ErrName: err.name,
                 ErrMessage: err.message,
@@ -217,6 +220,7 @@ const WordExtractorApp = () => {
                 inputValue: null
             });
         } else {
+            console.error(err);
             seterrorModalView({
                 ErrName: null,
                 ErrMessage: null,
@@ -523,6 +527,7 @@ const WordExtractorApp = () => {
                                             </div>
                                         ) : (
                                             <VirtualizedTextViewer
+                                                data-testid="file-content-1"
                                                 content={fileContent1}
                                                 placeholder="파일이 아직 업로드되지 않았습니다."
                                                 searchable={shouldEnableSearch1}
@@ -551,6 +556,7 @@ const WordExtractorApp = () => {
                                             </div>
                                         ) : (
                                             <VirtualizedTextViewer
+                                                data-testid="file-content-2"
                                                 content={fileContent2}
                                                 placeholder="파일이 아직 업로드되지 않았습니다."
                                                 searchable={shouldEnableSearch2}
@@ -574,6 +580,7 @@ const WordExtractorApp = () => {
                                     </CardHeader>
                                     <CardContent>
                                         <VirtualizedTextViewer
+                                            data-testid="merged-content"
                                             content={mergedContent}
                                             placeholder="파일이 아직 병합되지 않았습니다."
                                             searchable={shouldEnableSearchMerged}

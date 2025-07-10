@@ -55,7 +55,16 @@ const WordExtractorApp = () => {
             if (fileContent) {
                 // 길이에 맞는 단어 추출
                 const words = fileContent.split(/\s+/).filter((word) => word.length === wordLength);
-                setExtractedWords(sortChecked ? words.sort((a,b)=>a.localeCompare(b,'ko')): words);
+                const uniqueSet = new Set();
+                const result: string[] = [];
+                words.forEach((word)=>{
+                    const cleanedWord = word.replace(/[.,!?;:()]/g, ''); // 특수문자 제거
+                    if (cleanedWord && !uniqueSet.has(cleanedWord)) {
+                        uniqueSet.add(cleanedWord);
+                        result.push(cleanedWord);
+                    }
+                })
+                setExtractedWords(sortChecked ? result.sort((a,b)=>a.localeCompare(b,'ko')): result);
             }
         } catch (err) {
             handleError(err);

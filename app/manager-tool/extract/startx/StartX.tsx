@@ -54,9 +54,18 @@ const WordExtractorApp = () => {
             await new Promise(resolve => setTimeout(resolve, 1))
             if (fileContent && wordStart) {
                 // 시작 글자에 맞는 단어 추출
+                const uniqueSet = new Set();
+                const result: string[] = [];
+
                 const words = fileContent.split(/\s+/).filter((word) => word.startsWith(wordStart));
-                setExtractedWords(sortChecked ? words.sort((a,b)=>a.localeCompare(b,"ko")) : words);
-                console.log(words.length)
+                words.forEach(word => {
+                    const cleanedWord = word.replace(/[.,!?;:()]/g, ''); // 특수문자 제거
+                    if (cleanedWord && !uniqueSet.has(cleanedWord)) {
+                        uniqueSet.add(cleanedWord);
+                        result.push(cleanedWord);
+                    }
+                });
+                setExtractedWords(sortChecked ? result.sort((a,b)=>a.localeCompare(b,"ko")) : result);
             }
         } catch (err) {
             handleError(err);

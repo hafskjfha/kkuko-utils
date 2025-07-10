@@ -337,7 +337,7 @@ const LoopWordExtractorApp = () => {
                                                 { value: 'mode4', label: '모드 4', description: '시작(두음 ok)=끝(두음 ok)' }
                                             ].map((mode) => (
                                                 <div key={mode.value} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={mode.value} id={mode.value} />
+                                                    <RadioGroupItem value={mode.value} id={mode.value} data-testid={`test-${mode.value}`}/>
                                                     <Label
                                                         htmlFor={mode.value}
                                                         className="flex-1 cursor-pointer dark:text-gray-200"

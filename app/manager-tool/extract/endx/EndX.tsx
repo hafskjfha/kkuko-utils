@@ -52,11 +52,21 @@ const WordExtractorApp = () => {
         try {
             setLoading(true);
             await new Promise(resolve => setTimeout(resolve, 1))
-            console.log(fileContent?.length, wordEnd)
+
             if (fileContent && wordEnd) {
                 const words = fileContent.split(/\s+/).filter((word) => word.endsWith(wordEnd));
-                setExtractedWords(sortChecked ? words.sort((a, b) => a.localeCompare(b, "ko")) : words);
-                console.log(words.length)
+                // 중복 제거
+                const uniqueSet = new Set();
+                const result: string[] = [];
+                words.forEach(word => {
+                    const cleanedWord = word.replace(/[.,!?;:()]/g, ''); // 특수문자 제거
+                    if (cleanedWord && !uniqueSet.has(cleanedWord)) {
+                        uniqueSet.add(cleanedWord);
+                        result.push(cleanedWord);
+                    }
+                });
+                setExtractedWords(sortChecked ? result.sort((a, b) => a.localeCompare(b, "ko")) : result);
+
             }
         } catch (err) {
             handleError(err);
