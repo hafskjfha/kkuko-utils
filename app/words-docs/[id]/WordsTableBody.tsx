@@ -13,10 +13,9 @@ const WordAddModal = lazy(() => import("./WordAddModal"));
 const WordsTableBody = ({
     title,
     initialData,
-    id,
     isMission,
     isLong
-}: { initialData: WordData[]; title: string, id: string, isMission: boolean, isLong: boolean }) => {
+}: { initialData: WordData[]; title: string, isMission: boolean, isLong: boolean }) => {
     const [wordAddModalOpen, setWordAddModalOpen] = useState(false);
     const [isTableVisible, setIsTableVisible] = useState(true);
 

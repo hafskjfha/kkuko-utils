@@ -474,7 +474,6 @@ const DocsDataHome = ({ id, data, metaData, starCount }: DocsPageProp) => {
                                                 key={`${activeTab}-${item.title}-${item.data.length}`}
                                                 title={item.title} 
                                                 initialData={item.data || []} 
-                                                id={`${id}`} 
                                                 isMission={activeTab === "mission"}
                                                 isLong={activeTab==="long"}
                                             />
