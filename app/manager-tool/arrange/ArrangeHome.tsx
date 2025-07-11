@@ -542,7 +542,7 @@ const ToolSector = ({ fileContent, setFileContent, setLineCount, seterrorModalVi
     // 정렬 v3
     const handleSortWordv3 = () => {
         try {
-            const updatedContent = fileContent.split("\n").sort((a, b) => {
+            const updatedContent = fileContent.split("\n").filter((word)=>word!=="" && !word.includes('=[')).sort((a, b) => {
                 const aFirst = a[0];
                 const bFirst = b[0];
                 if (aFirst === bFirst) {
