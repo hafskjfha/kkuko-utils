@@ -1,11 +1,9 @@
-import { count } from '@/app/lib/lib';
 import { ISupabaseClientManager, IAddManager, IGetManager, IDeleteManager, IUpdateManager } from './ISupabaseClientManager';
 import type { PostgrestError, PostgrestSingleResponse, Session, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/types/database.types';
 import type { addWordQueryType, addWordThemeQueryType, DocsLogData, WordLogData } from '@/app/types/type';
 import { reverDuemLaw } from '../DuemLaw';
 import { sum } from 'es-toolkit';
-import { error } from 'console';
 
 const CACHE_DURATION = 10 * 60 * 1000;
 
