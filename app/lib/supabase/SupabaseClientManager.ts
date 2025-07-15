@@ -20,7 +20,7 @@ class AddManager implements IAddManager {
         return await this.supabase.from('words').insert(insertWordData).select('*');
     }
     public async wordThemes(insertWordThemesData: addWordThemeQueryType[]) {
-        return await this.supabase.from('word_themes').insert(insertWordThemesData).select('words(*),themes(*)');
+        return await this.supabase.from('word_themes').upsert(insertWordThemesData, { ignoreDuplicates: true, onConflict: "word_id,theme_id" }).select('words(*),themes(*)');
     }
     public async waitWord(insertWaitWordData: { word: string, requested_by: string | null, request_type: "delete", word_id: number } | { word: string, requested_by: string | null, request_type: "add" }) {
         return await this.supabase.from('wait_words').insert(insertWaitWordData).select('*').maybeSingle();
@@ -287,7 +287,10 @@ class GetManager implements IGetManager {
         return await this.supabase.from('words').select('word',{ count: 'exact', head: true });
     }
     public async waitWordsCount() {
-        return await this.supabase.from('wait_words').select('word',{ count: 'exact', head: true });
+        const {count: count1, error: error1} = await this.supabase.from('wait_words').select('word',{ count: 'exact', head: true });
+        const {count: count2, error: error2} = await this.supabase.from('word_themes_wait').select('word_id', { count: 'exact', head: true });
+        if (error1 || error2) return {count: null, error: error1 ?? error2};
+        return {count: (count1 ?? 0) + (count2 ?? 0), error: null};
     }
     public async allWordWaitTheme(c?: "add" | "delete") {
         if (c=="add"){
