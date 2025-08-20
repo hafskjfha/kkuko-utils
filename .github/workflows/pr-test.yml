@@ -1,41 +1,388 @@
-name: Jest Test with Sticky Comment (Internal)
+name: Run Tests on main PR
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
+  contents: read
   pull-requests: write
-  issues: write
+  checks: write
 
 jobs:
   test:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout PR Code
-        uses: actions/checkout@v3
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
-
+          node-version: '20'
+          cache: 'npm'
+          
       - name: Install dependencies
         run: npm ci
-
-      - name: Run Jest
-        run: npx jest --json --outputFile=jest-results.json
+        
+      - name: Run tests with coverage
+        run: |
+          npm test -- \
+            --coverage \
+            --coverageReporters=json-summary \
+            --coverageReporters=text \
+            --testResultsProcessor=jest-junit \
+            --verbose
         continue-on-error: true
-
-      - name: Generate Markdown Summary
-        run: node .github/scripts/gen-summary.js > summary.md
-
-      - name: Sticky PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: jest-summary
-          path: summary.md
+        id: test
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
+          
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: ./test-results/junit.xml
+          check_name: "Test Results"
+          comment_title: "Test Results"
+          
+      - name: Create test and coverage report
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Helper function to read JSON file safely
+            function readJsonFile(filePath) {
+              try {
+                if (fs.existsSync(filePath)) {
+                  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                }
+              } catch (error) {
+                console.log(`Error reading ${filePath}:`, error.message);
+              }
+              return null;
+            }
+            
+            // Simple XML parser for JUnit results
+            function parseJUnitXML(xmlPath) {
+              try {
+                if (!fs.existsSync(xmlPath)) {
+                  console.log('JUnit XML file not found');
+                  return null;
+                }
+                
+                const xmlContent = fs.readFileSync(xmlPath, 'utf8');
+                const testSuites = [];
+                
+                // Extract testsuite blocks
+                const testSuiteRegex = /<testsuite[^>]*name="([^"]*)"[^>]*tests="(\d+)"[^>]*failures="(\d+)"[^>]*errors="(\d+)"[^>]*time="([^"]*)"[^>]*>(.*?)<\/testsuite>/gs;
+                let suiteMatch;
+                
+                while ((suiteMatch = testSuiteRegex.exec(xmlContent)) !== null) {
+                  const [, suiteName, tests, failures, errors, time, suiteContent] = suiteMatch;
+                  
+                  // Extract test cases within this suite
+                  const testCases = [];
+                  const testCaseRegex = /<testcase[^>]*name="([^"]*)"[^>]*time="([^"]*)"[^>]*(?:classname="([^"]*)"[^>]*)?>(.*?)<\/testcase>/gs;
+                  let caseMatch;
+                  
+                  while ((caseMatch = testCaseRegex.exec(suiteContent)) !== null) {
+                    const [, testName, testTime, className, caseContent] = caseMatch;
+                    
+                    let status = '✅';
+                    let message = '';
+                    
+                    if (caseContent.includes('<failure')) {
+                      status = '❌';
+                      const failureMatch = caseContent.match(/<failure[^>]*(?:message="([^"]*)")?[^>]*>/);
+                      if (failureMatch && failureMatch[1]) {
+                        message = failureMatch[1].substring(0, 100) + (failureMatch[1].length > 100 ? '...' : '');
+                      }
+                    } else if (caseContent.includes('<error')) {
+                      status = '🔴';
+                      const errorMatch = caseContent.match(/<error[^>]*(?:message="([^"]*)")?[^>]*>/);
+                      if (errorMatch && errorMatch[1]) {
+                        message = errorMatch[1].substring(0, 100) + (errorMatch[1].length > 100 ? '...' : '');
+                      }
+                    } else if (caseContent.includes('<skipped')) {
+                      status = '⏭️';
+                      message = 'Test was skipped';
+                    }
+                    
+                    testCases.push({
+                      name: testName,
+                      time: testTime ? `${Math.round(parseFloat(testTime) * 1000)}ms` : '',
+                      status,
+                      message,
+                      className: className || suiteName
+                    });
+                  }
+                  
+                  testSuites.push({
+                    name: suiteName,
+                    tests: parseInt(tests) || 0,
+                    failures: parseInt(failures) || 0,
+                    errors: parseInt(errors) || 0,
+                    time: time ? `${Math.round(parseFloat(time) * 1000)}ms` : '',
+                    testCases
+                  });
+                }
+                
+                return testSuites;
+              } catch (error) {
+                console.log('Error parsing JUnit XML:', error.message);
+                return null;
+              }
+            }
+            
+            // Helper function to get coverage emoji
+            function getCoverageEmoji(percentage) {
+              if (percentage >= 90) return '🟢';
+              if (percentage >= 80) return '🟡';
+              if (percentage >= 70) return '🟠';
+              return '🔴';
+            }
+            
+            // Helper function to get coverage status text
+            function getCoverageStatus(percentage) {
+              if (percentage >= 90) return 'Excellent';
+              if (percentage >= 80) return 'Good';
+              if (percentage >= 70) return 'Fair';
+              if (percentage >= 60) return 'Needs Work';
+              return 'Poor';
+            }
+            
+            // Read test results and coverage data
+            const coverageData = readJsonFile('./coverage/coverage-summary.json');
+            const testSuites = parseJUnitXML('./test-results/junit.xml');
+            const testStatus = '${{ steps.test.outcome }}';
+            
+            // Build comment
+            let commentBody = `# 🧪 Test Results & Coverage Report\n\n`;
+            
+            // Test results section with detailed breakdown
+            if (testSuites && testSuites.length > 0) {
+              const totalTests = testSuites.reduce((sum, suite) => sum + suite.tests, 0);
+              const totalFailures = testSuites.reduce((sum, suite) => sum + suite.failures + suite.errors, 0);
+              const totalPassed = totalTests - totalFailures;
+              
+              if (testStatus === 'success') {
+                commentBody += `## ✅ All Tests Passed! (${totalPassed}/${totalTests})\n\n`;
+                commentBody += `🎉 Great work! All your tests are passing.\n\n`;
+              } else {
+                commentBody += `## ❌ Some Tests Failed (${totalPassed}/${totalTests} passed)\n\n`;
+                commentBody += `🔍 ${totalFailures} test(s) failed. Please check and fix them before merging.\n\n`;
+              }
+              
+              // Test suites summary
+              commentBody += `### 📋 Test Suites Summary\n\n`;
+              commentBody += `| Test Suite | Tests | Status | Duration |\n`;
+              commentBody += `|------------|-------|--------|----------|\n`;
+              
+              testSuites.forEach(suite => {
+                const suitePassed = suite.tests - suite.failures - suite.errors;
+                const suiteStatus = suite.failures + suite.errors > 0 ? '❌' : '✅';
+                const suiteName = path.basename(suite.name).replace(/\.test\.(ts|js)$/, '');
+                
+                commentBody += `| \`${suiteName}\` | ${suitePassed}/${suite.tests} | ${suiteStatus} | ${suite.time} |\n`;
+              });
+              
+              commentBody += `\n`;
+              
+              // Detailed test results (collapsible)
+              commentBody += `### 🔍 Detailed Test Results\n\n`;
+              
+              testSuites.forEach(suite => {
+                const suiteName = path.basename(suite.name).replace(/\.test\.(ts|js)$/, '');
+                const suitePassed = suite.tests - suite.failures - suite.errors;
+                const suiteEmoji = suite.failures + suite.errors > 0 ? '❌' : '✅';
+                
+                commentBody += `<details>\n`;
+                commentBody += `<summary>${suiteEmoji} <strong>${suiteName}</strong> (${suitePassed}/${suite.tests} passed, ${suite.time})</summary>\n\n`;
+                
+                if (suite.testCases.length > 0) {
+                  // Group test cases by their class/describe block
+                  const groupedTests = {};
+                  suite.testCases.forEach(testCase => {
+                    const group = testCase.className || 'Tests';
+                    if (!groupedTests[group]) {
+                      groupedTests[group] = [];
+                    }
+                    groupedTests[group].push(testCase);
+                  });
+                  
+                  Object.entries(groupedTests).forEach(([groupName, tests]) => {
+                    if (Object.keys(groupedTests).length > 1) {
+                      commentBody += `#### 📂 ${path.basename(groupName)}\n\n`;
+                    }
+                    
+                    tests.forEach(test => {
+                      const testName = test.name.length > 80 ? test.name.substring(0, 77) + '...' : test.name;
+                      commentBody += `${test.status} ${testName}`;
+                      
+                      if (test.time && test.time !== '0ms') {
+                        commentBody += ` \`(${test.time})\``;
+                      }
+                      
+                      if (test.message && test.status !== '✅') {
+                        commentBody += `  \n   └─ *${test.message}*`;
+                      }
+                      
+                      commentBody += `\n`;
+                    });
+                    commentBody += `\n`;
+                  });
+                } else {
+                  commentBody += `*No detailed test cases found.*\n`;
+                }
+                
+                commentBody += `\n</details>\n\n`;
+              });
+              
+              // Failed tests highlight (if any)
+              const failedTests = testSuites.flatMap(suite => 
+                suite.testCases.filter(test => test.status === '❌' || test.status === '🔴')
+              );
+              
+              if (failedTests.length > 0) {
+                commentBody += `### 🚨 Failed Tests Summary\n\n`;
+                failedTests.forEach((test, index) => {
+                  const shortName = test.name.length > 60 ? test.name.substring(0, 57) + '...' : test.name;
+                  commentBody += `${index + 1}. **${shortName}**\n`;
+                  if (test.message) {
+                    commentBody += `   └─ \`${test.message}\`\n`;
+                  }
+                });
+                commentBody += `\n`;
+              }
+            } else {
+              // Fallback if JUnit parsing fails
+              if (testStatus === 'success') {
+                commentBody += `## ✅ All Tests Passed!\n\n`;
+                commentBody += `🎉 Great work! All your tests are passing.\n\n`;
+              } else {
+                commentBody += `## ❌ Some Tests Failed\n\n`;
+                commentBody += `🔍 Please check the failed tests and fix them before merging.\n\n`;
+              }
+            }
+            
+            // Add workflow links
+            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+            commentBody += `📋 **[View detailed workflow results](${runUrl})**\n\n`;
+            
+            // Coverage section
+            if (coverageData && coverageData.total) {
+              const { lines, statements, functions, branches } = coverageData.total;
+              
+              commentBody += `## 📊 Code Coverage Report\n\n`;
+              
+              // Main coverage table
+              commentBody += `| Metric | Coverage | Status |\n`;
+              commentBody += `|--------|----------|--------|\n`;
+              commentBody += `| **Lines** | \`${lines.pct}%\` (${lines.covered}/${lines.total}) | ${getCoverageEmoji(lines.pct)} ${getCoverageStatus(lines.pct)} |\n`;
+              commentBody += `| **Statements** | \`${statements.pct}%\` (${statements.covered}/${statements.total}) | ${getCoverageEmoji(statements.pct)} ${getCoverageStatus(statements.pct)} |\n`;
+              commentBody += `| **Functions** | \`${functions.pct}%\` (${functions.covered}/${functions.total}) | ${getCoverageEmoji(functions.pct)} ${getCoverageStatus(functions.pct)} |\n`;
+              commentBody += `| **Branches** | \`${branches.pct}%\` (${branches.covered}/${branches.total}) | ${getCoverageEmoji(branches.pct)} ${getCoverageStatus(branches.pct)} |\n\n`;
+              
+              // Overall coverage summary
+              const avgCoverage = ((lines.pct + statements.pct + functions.pct + branches.pct) / 4).toFixed(1);
+              
+              if (avgCoverage >= 90) {
+                commentBody += `### 🏆 Outstanding Coverage: ${avgCoverage}%\n`;
+                commentBody += `Your code coverage is excellent! Keep up the great work.\n\n`;
+              } else if (avgCoverage >= 80) {
+                commentBody += `### 👍 Good Coverage: ${avgCoverage}%\n`;
+                commentBody += `Your code coverage is good. Consider adding a few more tests to reach excellence.\n\n`;
+              } else if (avgCoverage >= 70) {
+                commentBody += `### ⚠️ Fair Coverage: ${avgCoverage}%\n`;
+                commentBody += `Your code coverage is fair but could be improved. Consider adding more tests.\n\n`;
+              } else {
+                commentBody += `### 🔴 Low Coverage: ${avgCoverage}%\n`;
+                commentBody += `Your code coverage is below recommended levels. Please add more tests.\n\n`;
+              }
+              
+              // Files breakdown
+              const fileCount = Object.keys(coverageData).filter(key => key !== 'total').length;
+              if (fileCount > 0) {
+                commentBody += `### 📂 Coverage by File (${fileCount} files tested)\n\n`;
+                commentBody += `<details>\n<summary>Click to expand file-by-file coverage</summary>\n\n`;
+                commentBody += `| File | Lines | Functions | Branches | Statements |\n`;
+                commentBody += `|------|-------|-----------|----------|-----------|\n`;
+                
+                Object.entries(coverageData)
+                  .filter(([key]) => key !== 'total')
+                  .sort(([,a], [,b]) => b.lines.pct - a.lines.pct)
+                  .slice(0, 15) // Show top 15 files to keep comment reasonable
+                  .forEach(([filePath, data]) => {
+                    const shortPath = filePath.length > 40 ? '...' + filePath.slice(-37) : filePath;
+                    commentBody += `| \`${shortPath}\` | ${getCoverageEmoji(data.lines.pct)} ${data.lines.pct}% | ${getCoverageEmoji(data.functions.pct)} ${data.functions.pct}% | ${getCoverageEmoji(data.branches.pct)} ${data.branches.pct}% | ${getCoverageEmoji(data.statements.pct)} ${data.statements.pct}% |\n`;
+                  });
+                
+                if (fileCount > 15) {
+                  commentBody += `| ... and ${fileCount - 15} more files | | | | |\n`;
+                }
+                
+                commentBody += `\n</details>\n\n`;
+              }
+              
+              // Coverage recommendations
+              commentBody += `### 📈 Recommendations\n`;
+              const lowCoverageFiles = Object.entries(coverageData)
+                .filter(([key, data]) => key !== 'total' && data.lines.pct < 70)
+                .slice(0, 3);
+              
+              if (lowCoverageFiles.length > 0) {
+                commentBody += `Consider improving test coverage for:\n`;
+                lowCoverageFiles.forEach(([filePath, data]) => {
+                  const fileName = path.basename(filePath);
+                  commentBody += `- 📄 \`${fileName}\` (${data.lines.pct}% lines covered)\n`;
+                });
+                commentBody += `\n`;
+              } else {
+                commentBody += `🎯 All files have good coverage! Great job!\n\n`;
+              }
+            } else {
+              commentBody += `## ⚠️ Coverage data not available\n\n`;
+              commentBody += `Coverage information could not be read. Make sure tests are running with coverage enabled.\n\n`;
+            }
+            
+            // Footer
+            commentBody += `---\n`;
+            commentBody += `🤖 **Automated report** | `;
+            commentBody += `⏱️ **Generated**: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} KST | `;
+            commentBody += `🔄 **Workflow**: [${context.workflow}](${runUrl})\n`;
+            
+            // Update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('🧪 Test Results & Coverage Report') && 
+              comment.user.login === 'github-actions[bot]'
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+              console.log('✅ Updated existing comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+              console.log('✅ Created new comment');
+            }
