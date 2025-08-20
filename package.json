@@ -13,7 +13,7 @@
     "test:coverage": "jest --coverage",
     "test:test": "jest 2>&1 | tee test.txt",
     "test:ci": "jest --ci --coverage --watchAll=false",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.3",
