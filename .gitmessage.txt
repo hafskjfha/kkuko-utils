@@ -1,0 +1,10 @@
+# <type>: <subject>
+# 예시: feat: 로그인 기능 추가
+
+# --- Commit Message Template ---
+# type (필수): feat | fix | docs | style | refactor | test | chore
+# subject (필수): 간단한 한 줄 요약 (50자 이내)
+#
+# body (선택): 상세 설명 (무엇을, 왜 했는지)
+#
+# footer (선택): 관련 이슈 번호, BREAKING CHANGE 등
