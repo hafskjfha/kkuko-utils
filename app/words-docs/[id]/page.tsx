@@ -6,6 +6,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return {
         title: "끄코 유틸리티 - 단어장공유",
         description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서`,
+        openGraph: {
+            title: "끄코 유틸리티 - 단어장공유",
+            description: `끄코 유틸리티 - 단어장 공유 ${id}번 문서`,
+            type: "website",
+            url: `https://kkuko-utils.vercel.app/words-docs/${id}`,
+            siteName: "끄코 유틸리티",
+            locale: "ko_KR",
+        },
     };
 }
 
