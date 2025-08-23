@@ -284,7 +284,9 @@ class GetManager implements IGetManager {
         return await this.supabase.from("logs").select("*").eq("make_by", userId).order("created_at", { ascending: false }).limit(30);
     }
     public async wordsCount(){
-        return await this.supabase.from('words').select('word',{ count: 'exact', head: true });
+        const { data, error } = await this.supabase.from('word_last_letter_counts').select('count');
+        if (error) return { count: null, error };
+        return { count: sum(data?.map(({ count }) => count) ?? []) ?? 0, error: null };
     }
     public async waitWordsCount() {
         const {count: count1, error: error1} = await this.supabase.from('wait_words').select('word',{ count: 'exact', head: true });
