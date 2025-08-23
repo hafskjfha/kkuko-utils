@@ -5,6 +5,14 @@ export async function generateMetadata() {
     return {
         title: "끄코 유틸리티 - 기타 기능",
         description: `끄코 유틸리티 - 기타 기능 홈`,
+        openGraph: {
+            title: "끄코 유틸리티 - 기타 기능",
+            description: "끄코 유틸리티 - 기타 기능 홈",
+            type: "website",
+            url: "https://kkuko-utils.vercel.app/extra-features",
+            siteName: "끄코 유틸리티",
+            locale: "ko_KR",
+        },
     };
 }
 

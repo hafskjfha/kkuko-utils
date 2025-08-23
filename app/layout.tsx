@@ -22,6 +22,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "kkuko utils",
 	description: "kkuko utils",
+	openGraph: {
+		title: "끄코 유틸리티",
+		description: "끄코 유틸리티",
+		type: "website",
+		siteName: "끄코 유틸리티",
+		locale: "ko_KR",
+	},
 };
 
 export default function RootLayout({
