@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Database, Gamepad2, ChevronRight, Sparkles } from "lucide-react";
+import { Database, Gamepad2, ChevronRight, Sparkles, Monitor } from "lucide-react";
 
 export async function generateMetadata() {
     return {
@@ -25,6 +25,14 @@ const features = [
         color: "from-purple-500 to-pink-500",
         bgColor: "group-hover:bg-purple-50 dark:group-hover:bg-purple-950/20"
     },
+    {
+        title: "유용한 프로그램",
+        description: "다양한 유용한 프로그램을 확인하고 활용하세요.",
+        link: "/programs",
+        icon: Monitor,
+        color: "from-gray-500 to-gray-600",
+        bgColor: "group-hover:bg-gray-50 dark:group-hover:bg-gray-950/20"
+    }
 ];
 
 export default function ExtraFeaturesPage() {
