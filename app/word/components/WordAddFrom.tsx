@@ -439,7 +439,7 @@ const WordAddForm = ({ saveFn, initWord = "", initThemes = [] }: WordAddFormProp
                                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">주제를 선택합니다.</h3>
                                     </div>
                                     <div className="ml-6 space-y-2">
-                                        <p className="text-gray-700 dark:text-gray-300">주제는 여러 개 선택할 수 있습니다. 검색창을 활용해 빠르게 찾을 수 있습니다.</p>
+                                        <p className="text-gray-700 dark:text-gray-300">주제는 여러 개 선택할 수 있습니다. 검색창을 활용해 빠르게 찾을 수 있습니다.<br />주제없음은 노인정에서 찾을 수 있습니다.</p>
                                         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
                                             <div className="flex flex-col gap-2">
                                                 <Input value="과일" disabled className="w-40 bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600" placeholder="주제 검색" />
