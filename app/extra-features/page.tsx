@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Database, Gamepad2, ChevronRight, Sparkles, Monitor } from "lucide-react";
+import { Database, Gamepad2, ChevronRight, Sparkles, Monitor, BarChart3 } from "lucide-react";
 
 export async function generateMetadata() {
     return {
@@ -32,6 +32,14 @@ const features = [
         icon: Monitor,
         color: "from-gray-500 to-gray-600",
         bgColor: "group-hover:bg-gray-50 dark:group-hover:bg-gray-950/20"
+    }, 
+    {
+        title: "리플레이 분석기",
+        description: "게임 리플레이 데이터를 분석하고 통계 정보를 제공합니다.",
+        link: "/replay-analyzer",
+        icon: BarChart3,
+        color: "from-orange-500 to-orange-600",
+        bgColor: "group-hover:bg-orange-50 dark:group-hover:bg-orange-950/20"
     }
 ];
 
