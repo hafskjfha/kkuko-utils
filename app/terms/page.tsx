@@ -38,7 +38,7 @@ const TermsOfService = () => {
           <CardContent className="space-y-6">
             <div>
               <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                본 약관은 hafskjfha(이하 "서비스 제공자")가 제공하는 Kkuko Utils 서비스(이하 "서비스")의 이용과 관련하여 
+                본 약관은 hafskjfha(이하 &quot;서비스 제공자&quot;)가 제공하는 Kkuko Utils 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여
                 서비스 제공자와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
               </p>
             </div>
@@ -48,9 +48,9 @@ const TermsOfService = () => {
                 제2조 (정의)
               </h3>
               <ul className="space-y-2 text-slate-700 dark:text-slate-300">
-                <li>• "서비스"란 서비스 제공자가 제공하는 Kkuko Utils 웹 서비스를 의미합니다.</li>
-                <li>• "이용자"란 본 약관에 따라 서비스를 이용하는 회원 및 비회원을 의미합니다.</li>
-                <li>• "회원"란 서비스에 개인정보를 제공하여 회원등록을 한 자를 의미합니다.</li>
+                <li>• &quot;서비스&quot;란 서비스 제공자가 제공하는 Kkuko Utils 웹 서비스를 의미합니다.</li>
+                <li>• &quot;이용자&quot;란 본 약관에 따라 서비스를 이용하는 회원 및 비회원을 의미합니다.</li>
+                <li>• &quot;회원&quot;란 서비스에 개인정보를 제공하여 회원등록을 한 자를 의미합니다.</li>
               </ul>
             </div>
 

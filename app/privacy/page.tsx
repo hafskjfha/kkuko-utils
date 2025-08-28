@@ -38,7 +38,7 @@ const PrivacyPolicy = () => {
           <CardContent className="space-y-6">
             <div>
               <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                hafskjfha(이하 "서비스 제공자")는 다음의 목적을 위하여 개인정보를 처리합니다. 
+                hafskjfha(이하 &quot;서비스 제공자&quot;)는 다음의 목적을 위하여 개인정보를 처리합니다. 
                 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 
                 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
               </p>
