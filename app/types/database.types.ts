@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -188,6 +188,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          img: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: number
+          img?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: number
+          img?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          category: Database["public"]["Enums"]["program_category"]
+          created_at: string
+          description: string
+          github_repo: string
+          id: number
+          is_active: boolean
+          name: string
+          readme_path: string
+          tags: string[]
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["program_category"]
+          created_at?: string
+          description: string
+          github_repo: string
+          id?: number
+          is_active?: boolean
+          name: string
+          readme_path: string
+          tags: string[]
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["program_category"]
+          created_at?: string
+          description?: string
+          github_repo?: string
+          id?: number
+          is_active?: boolean
+          name?: string
+          readme_path?: string
+          tags?: string[]
+        }
+        Relationships: []
       }
       release_note: {
         Row: {
@@ -550,10 +610,10 @@ export type Database = {
       delete_word_themes_bulk: {
         Args: { pairs: Json }
         Returns: {
-          word_id: number
-          word: string
           theme_id: number
           theme_name: string
+          word: string
+          word_id: number
         }[]
       }
       delete_word_themes_wait_bulk: {
@@ -563,9 +623,9 @@ export type Database = {
       get_delete_requests_by_themeid: {
         Args: { input_theme_id: number }
         Returns: {
-          word: string
-          requested_by: string
           request_type: Database["public"]["Enums"]["request_type_enum"]
+          requested_by: string
+          word: string
         }[]
       }
       get_doc_rank: {
@@ -577,7 +637,7 @@ export type Database = {
         Returns: number
       }
       increment_contribution: {
-        Args: { target_id: string; inc_amount: number }
+        Args: { inc_amount: number; target_id: string }
         Returns: undefined
       }
       increment_doc_views: {
@@ -623,6 +683,7 @@ export type Database = {
     }
     Enums: {
       document_type: "letter" | "theme" | "ect"
+      program_category: "tool" | "util" | "other"
       request_status_enum: "pending" | "approved" | "rejected"
       request_type_enum: "add" | "delete"
       role_level: "r1" | "r2" | "r3" | "r4" | "admin"
@@ -755,6 +816,7 @@ export const Constants = {
   public: {
     Enums: {
       document_type: ["letter", "theme", "ect"],
+      program_category: ["tool", "util", "other"],
       request_status_enum: ["pending", "approved", "rejected"],
       request_type_enum: ["add", "delete"],
       role_level: ["r1", "r2", "r3", "r4", "admin"],

@@ -213,6 +213,28 @@ const AuthPage = () => {
                                         </>
                                     )}
                                 </Button>
+                                
+                                <p className="text-xs text-slate-500 dark:text-slate-400 text-center leading-relaxed">
+                                    가입을 하는 것은{" "}
+                                    <a 
+                                        href="/terms" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors"
+                                    >
+                                        운영정책
+                                    </a>
+                                    과{" "}
+                                    <a 
+                                        href="/privacy" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors"
+                                    >
+                                        개인정보처리방침
+                                    </a>
+                                    을 동의하는 것으로 간주됩니다.
+                                </p>
                             </div>
                         ) : (
                             <Button

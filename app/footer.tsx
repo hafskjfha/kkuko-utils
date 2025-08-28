@@ -53,6 +53,22 @@ const Footer = () => {
                 <FileText className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" />
                 <span className="text-sm font-medium group-hover:text-white transition-colors">Release Notes</span>
               </Link>
+              
+              <Link
+                href="/terms"
+                className="group flex items-center space-x-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-200 border border-gray-700/50 hover:border-gray-600/50"
+              >
+                <FileText className="w-5 h-5 text-gray-400 group-hover:text-green-400 transition-colors" />
+                <span className="text-sm font-medium group-hover:text-white transition-colors">서비스 약관</span>
+              </Link>
+              
+              <Link
+                href="/privacy"
+                className="group flex items-center space-x-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-200 border border-gray-700/50 hover:border-gray-600/50"
+              >
+                <FileText className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
+                <span className="text-sm font-medium group-hover:text-white transition-colors">개인정보처리방침</span>
+              </Link>
             </nav>
           </div>
         </div>

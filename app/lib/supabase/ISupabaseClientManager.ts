@@ -15,6 +15,7 @@ type user_star_docs = Database['public']['Tables']['user_star_docs']['Row'];
 type log = Database['public']['Tables']['logs']['Row'];
 type word_themes_wait = Database['public']['Tables']['word_themes_wait']['Row'];
 type wait_word_themes = Database['public']['Tables']['wait_word_themes']['Row'];
+type notification = Database['public']['Tables']['notification']['Row'];
 
 type delete_word_themes_bulk = Database['public']['Functions']['delete_word_themes_bulk']['Returns'];
 
@@ -82,6 +83,7 @@ export interface IGetManager{
     lastWordCountByLetters(letters: string[]): Promise<number>;
     wordsByQuery(query: string): Promise<{data: string[], error: null} | {data: null; error: PostgrestError}>;
     logsByFillter({filterState, filterType, from, to}:{filterState?: "approved" | "rejected" | "pending" | "all", filterType: "delete" | "add" | "all", from: number, to: number}): Promise<PostgrestSingleResponse<(log & {make_by_user: { nickname: string; } | null; processed_by_user: { nickname: string | null } | null;})[]>>
+    notice(): Promise<PostgrestSingleResponse<notification | null>>;
 }
 
 // delete 관련 타입

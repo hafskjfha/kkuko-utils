@@ -6,6 +6,7 @@ import Header from "./header";
 import Script from 'next/script';
 import { Providers } from "./providers";
 import AutoLogin from "./AutoLogin";
+import NoticeProvider from "./components/NoticeProvider";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 
@@ -82,6 +83,7 @@ export default function RootLayout({
 				}
 				<Providers>
 					<AutoLogin />
+					<NoticeProvider />
 					<Header />
 					{children}
 				</Providers>

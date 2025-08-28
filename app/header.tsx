@@ -71,7 +71,7 @@ const Header = () => {
         { 
             href: "/extra-features", 
             label: "기타 기능", 
-            isActive: !(pathname === "/word-combiner") && !(pathname.includes('manager-tool')) && !(pathname.includes('words-docs')) && !(pathname === "/")
+            isActive: !(pathname === "/word-combiner") && !(pathname.includes('manager-tool')) && !(pathname.includes('words-docs')) && !(pathname === "/") && !(pathname.includes('admin'))
         }
     ];
 
