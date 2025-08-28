@@ -69,7 +69,7 @@ export interface IGetManager{
     starredDocsById(userId: string): Promise<PostgrestSingleResponse<(user_star_docs & {docs: docs})[]>>;
     requestsListById(userId: string): Promise<PostgrestSingleResponse<wait_word[]>>;
     logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
-    wordsCount(): Promise<PostgrestSingleResponse<{word: string}[]>>;
+    wordsCount(): Promise<{count: number | null; error: PostgrestError | null}>;
     waitWordsCount(): Promise<{count: number | null; error: PostgrestError | null}>;
     allWordWaitTheme(c?: "add" | "delete"): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
     waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme, wait_words:{word: string}})[]>>;
