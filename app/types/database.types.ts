@@ -189,6 +189,30 @@ export type Database = {
           },
         ]
       }
+      notification: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          img: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: number
+          img?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: number
+          img?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       programs: {
         Row: {
           category: Database["public"]["Enums"]["program_category"]

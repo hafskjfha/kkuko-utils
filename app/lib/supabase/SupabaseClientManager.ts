@@ -415,6 +415,9 @@ class GetManager implements IGetManager {
 
         return await query;
     }
+    public async notice(): Promise<PostgrestSingleResponse<{ body: string; created_at: string; id: number; img: string | null; title: string; } | null>> {
+        return await this.supabase.from('notification').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    }
 }
 
 class DeleteManager implements IDeleteManager {
