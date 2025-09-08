@@ -18,6 +18,7 @@ import { chunk as chunkArray } from "es-toolkit";
 import JsonViewer from "./JosnViewer"
 import Link from "next/link";
 import { isNoin } from "@/app/lib/lib";
+import { json } from "stream/consumers";
 
 const keya = (word: string, themeName: string) => `[${word}, ${themeName}]`
 
@@ -224,7 +225,8 @@ export default function WordsAddHome() {
         const wordAddQuery: { word: string, k_canuse: boolean, noin_canuse: boolean, added_by: string }[] = [];
         const themesAddQuery: { word_id: number, theme_id: number }[] = [];
         const logsQuery: { word: string, processed_by: string, make_by: string, r_type: "add", state: "approved" }[] = []
-        const docsLogsQuery: { docs_id: number, word: string, add_by: string, type: "add" }[] = []
+        const docsLogsQuery: ({ docs_id: number, word: string, add_by: string, type: "add" } | { docs_id: number, word: string, add_by: string, type: "delete" })[] = []
+        const wordThemeDelQuery: {word_id: number, theme_id: number}[] = [];
 
         const inseredWordMap: Record<string, number> = {};
 
@@ -234,7 +236,7 @@ export default function WordsAddHome() {
                 k_canuse: true,
                 noin_canuse: isNoin(data.themes),
                 added_by: waitWord[data.word]?.requested_by ?? user.uuid
-            })
+            });
         }
 
         const chuckQuerysA = chunkArray(wordAddQuery, 250)
@@ -275,7 +277,7 @@ export default function WordsAddHome() {
             }
         }
 
-        setProgress(40);
+        setProgress(30);
         const needCheckWord: string[] = [];
         for (const data of jsonData) {
             const wordId = inseredWordMap[data.word]
@@ -294,22 +296,45 @@ export default function WordsAddHome() {
             }
         }
 
-        setProgress(50);
-        const needCheckedWordsDatas: { id: number, word: string }[] = []
+        setProgress(40);
+        const needCheckedWordsDatas: { id: number, word: string }[] = [];
+        const existingWordThemes: Record<number, { themeId: number, themeCode: string, themeName: string }[]> = {};
+        const checkedData: Record<string, number> = {};        
+        const existingWordMap: Record<string, { wordId: number ,themes: { id: number, code: string, name: string }[] }> = {};
+        
+
         const abab = chunkArray(needCheckWord, 100)
         for (let i = 0; i < abab.length; i++) {
             const chuckChecks = abab[i];
             setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
             const { data: needCheckedWordsData, error: ff } = await SCM.get().wordsByWords(chuckChecks);
             if (ff) return makeError(ff)
-            needCheckedWordsDatas.push(...needCheckedWordsData)
+            needCheckedWordsDatas.push(...needCheckedWordsData);
+            for (const data of needCheckedWordsData) {
+                checkedData[data.word] = data.id
+                existingWordMap[data.word] = { wordId: data.id, themes: [] };
+            }
+            const { data: existingWordThemesData, error: ee } = await SCM.get().wordsThemesByWordId(needCheckedWordsData.map(({ id }) => id));
+            if (ee) return makeError(ee);
+            Object.entries(existingWordThemesData).forEach(([wordId, themes]) => {
+                existingWordThemes[Number(wordId)] = (existingWordThemes[Number(wordId)] ?? []).concat(themes.map(({ themeId, themeCode, themeName }) => ({ themeId, themeCode, themeName })));
+            });
         }
 
-
-        const checkedData: Record<string, number> = {};
-        for (const data of needCheckedWordsDatas) {
-            checkedData[data.word] = data.id
+        for ( const data of jsonData){
+            if (existingWordThemes[checkedData[data.word]]) {
+                const addThemesSet = new Set(data.themes);
+                for (const existTheme of existingWordThemes[checkedData[data.word]]) {
+                    if (!addThemesSet.has(existTheme.themeCode)) {
+                        wordThemeDelQuery.push({
+                            word_id: checkedData[data.word],
+                            theme_id: existTheme.themeId
+                        })
+                    }
+                }
+            }
         }
+
 
         for (const data of jsonData) {
             const exWordId = checkedData[data.word]
@@ -353,6 +378,22 @@ export default function WordsAddHome() {
                         type: "add" as const
                     })
                 }
+            }
+        }
+
+        setProgress(50);
+        setCurrentTask('파일에 없는 단어-주제 쌍 제거 중...');
+        const { data: wordthemeDeletedData, error: wordThemeDeleteError } = await SCM.delete().wordTheme(wordThemeDelQuery);
+        if (wordThemeDeleteError) return makeError(wordThemeDeleteError);
+        for (const data of wordthemeDeletedData) {
+            const docsId = themeDocsInfo[data.theme_name]
+            if (docsId){
+                docsLogsQuery.push({
+                    docs_id: docsId,
+                    word: data.word,
+                    add_by: user.uuid,
+                    type: "delete"
+                })
             }
         }
 

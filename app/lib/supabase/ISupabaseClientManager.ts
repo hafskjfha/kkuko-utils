@@ -84,6 +84,7 @@ export interface IGetManager{
     wordsByQuery(query: string): Promise<{data: string[], error: null} | {data: null; error: PostgrestError}>;
     logsByFillter({filterState, filterType, from, to}:{filterState?: "approved" | "rejected" | "pending" | "all", filterType: "delete" | "add" | "all", from: number, to: number}): Promise<PostgrestSingleResponse<(log & {make_by_user: { nickname: string; } | null; processed_by_user: { nickname: string | null } | null;})[]>>
     notice(): Promise<PostgrestSingleResponse<notification | null>>;
+    wordsThemesByWordId(wordIds: number[]): Promise<{data: null, error: PostgrestError} | {data: Record<number, {themeId: number, themeCode: string, themeName: string}[]>, error: null}>;
 }
 
 // delete 관련 타입
