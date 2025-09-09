@@ -20,7 +20,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/app/components/ui/pagination";
-import { ArrowLeft, Filter, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Filter, Trash2 } from "lucide-react";
 import { PostgrestError } from '@supabase/supabase-js';
 import ErrorModal from '@/app/components/ErrModal';
 
@@ -29,7 +29,7 @@ type ErrorMessage = {
     ErrMessage: string;
     ErrStackRace: string;
     inputValue: string;
-}
+};
 
 type WordLog = {
     id: number;
@@ -103,16 +103,38 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
     const [wordLogType, setWordLogType] = useState<"all" | "add" | "delete">("all");
     const [docsLogType, setDocsLogType] = useState<"all" | "add" | "delete">("all");
     const [selectedDocsName, setSelectedDocsName] = useState<string>("all");
-    const [dateFilter, setDateFilter] = useState<string>("");
+    const [dateFromFilter, setDateFromFilter] = useState<string>("");
+    const [dateToFilter, setDateToFilter] = useState<string>("");
     
     // 로그 데이터 상태
     const [wordLogs, setWordLogs] = useState<WordLog[]>(initialWordLogs);
     const [docsLogs, setDocsLogs] = useState<DocsLog[]>(initialDocsLogs);
     
-    const PAGE_SIZE = 30;
+    // 페이지 크기 - 날짜 필터가 적용되면 150개, 아니면 30개
+    const isDateFilterApplied = dateFromFilter || dateToFilter;
+    const PAGE_SIZE = isDateFilterApplied ? 150 : 30;
 
-    // 현재 표시할 로그들
-    const currentLogs = selectedTab === "word_logs" ? wordLogs : docsLogs;
+    // 현재 표시할 로그들 (날짜 필터링 적용)
+    const getFilteredLogs = (): (WordLog | DocsLog)[] => {
+        let logs: (WordLog | DocsLog)[] = selectedTab === "word_logs" ? wordLogs : docsLogs;
+        
+        // 날짜 범위 필터링 적용
+        if (dateFromFilter || dateToFilter) {
+            logs = logs.filter((log) => {
+                const logDate = new Date(selectedTab === "word_logs" ? (log as WordLog).created_at : (log as DocsLog).date);
+                const fromDate = dateFromFilter ? new Date(dateFromFilter) : null;
+                const toDate = dateToFilter ? new Date(dateToFilter) : null;
+                
+                if (fromDate && logDate < fromDate) return false;
+                if (toDate && logDate > toDate) return false;
+                return true;
+            });
+        }
+        
+        return logs;
+    };
+    
+    const currentLogs = getFilteredLogs();
     const totalPages = Math.ceil(currentLogs.length / PAGE_SIZE);
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     const currentPageLogs = currentLogs.slice(startIndex, startIndex + PAGE_SIZE);
@@ -249,48 +271,25 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
         }
     };
 
-    // 로그 다운로드
-    const downloadLogs = () => {
-        const logs = selectedTab === "word_logs" ? wordLogs : docsLogs;
-        const lastUpdateDate = new Date();
-        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const localTime = lastUpdateDate.toLocaleString(undefined, { timeZone: userTimeZone });
-
-        let content = "";
-        if (selectedTab === "word_logs") {
-            content = (logs as WordLog[]).map(log => 
-                `${log.word}\t${log.state}\t${log.r_type}\t${log.created_at}\t${log.make_by_user?.nickname || 'N/A'}\t${log.processed_by_user?.nickname || 'N/A'}`
-            ).join('\n');
-            content = `단어\t상태\t타입\t처리일시\t요청자\t처리자\n${content}`;
-        } else {
-            content = (logs as DocsLog[]).map(log => 
-                `${log.word}\t${log.docs.name}\t${log.type}\t${log.date}\t${log.users?.nickname || 'N/A'}`
-            ).join('\n');
-            content = `단어\t문서명\t타입\t처리일시\t처리자\n${content}`;
-        }
-
-        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${selectedTab === "word_logs" ? "단어로그" : "문서로그"}(${localTime}).txt`;
-        a.click();
-
-        URL.revokeObjectURL(url);
-    };
-
     // 필터 변경시 로그 새로고침
     useEffect(() => {
         refreshLogs();
     }, [wordLogState, wordLogType, docsLogType, selectedDocsName]);
 
-    // 페이지 변경시 선택 상태 초기화
+    // 날짜 필터 변경이나 페이지 변경시 선택 상태 초기화 및 첫 페이지로 이동
     useEffect(() => {
         setSelectedWordLogs(new Set());
         setSelectedDocsLogs(new Set());
         setAllSelected(false);
-    }, [currentPage, selectedTab]);
+        setCurrentPage(1);
+    }, [selectedTab, dateFromFilter, dateToFilter]);
+
+    // 페이지 변경시에만 선택 상태 초기화
+    useEffect(() => {
+        setSelectedWordLogs(new Set());
+        setSelectedDocsLogs(new Set());
+        setAllSelected(false);
+    }, [currentPage]);
 
     // 날짜 포맷 함수
     const formatDate = (dateStr: string) => {
@@ -360,7 +359,7 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
 
                             {/* 필터 섹션 */}
                             <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                     {selectedTab === "word_logs" ? (
                                         <>
                                             <div>
@@ -425,41 +424,72 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
                                         </>
                                     )}
                                     <div>
-                                        <Label htmlFor="date-filter">날짜 필터</Label>
+                                        <Label htmlFor="date-from-filter">시작 날짜+시간</Label>
                                         <Input
-                                            type="date"
-                                            value={dateFilter}
-                                            onChange={(e) => setDateFilter(e.target.value)}
+                                            type="datetime-local"
+                                            value={dateFromFilter}
+                                            onChange={(e) => setDateFromFilter(e.target.value)}
                                             className="w-full"
                                         />
                                     </div>
-                                    <div className="flex items-end">
-                                        <Button onClick={refreshLogs} disabled={loading} className="w-full">
+                                    <div>
+                                        <Label htmlFor="date-to-filter">종료 날짜+시간</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={dateToFilter}
+                                            onChange={(e) => setDateToFilter(e.target.value)}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="flex items-end gap-2">
+                                        <Button onClick={refreshLogs} disabled={loading} className="flex-1">
                                             <Filter className="w-4 h-4 mr-2" />
                                             {loading ? "로딩..." : "필터 적용"}
                                         </Button>
+                                        {isDateFilterApplied && (
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={() => {
+                                                    setDateFromFilter("");
+                                                    setDateToFilter("");
+                                                }}
+                                                className="px-3"
+                                                title="날짜 필터 초기화"
+                                            >
+                                                ✕
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
+                                
+                                {/* 필터 적용 상태 표시 */}
+                                {isDateFilterApplied && (
+                                    <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                                            📅 날짜 필터가 적용되어 페이지당 {PAGE_SIZE}개씩 표시됩니다.
+                                            {dateFromFilter && ` 시작: ${new Date(dateFromFilter).toLocaleString('ko-KR')}`}
+                                            {dateToFilter && ` 종료: ${new Date(dateToFilter).toLocaleString('ko-KR')}`}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <TabsContent value={selectedTab}>
-                                <div className="flex justify-end mb-4 gap-2">
-                                    <Button
-                                        variant="outline"
-                                        className="bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800"
-                                        onClick={deleteSelectedLogs}
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        선택 삭제
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800"
-                                        onClick={downloadLogs}
-                                    >
-                                        <Download className="w-4 h-4 mr-2" />
-                                        로그 다운로드
-                                    </Button>
+                                <div className="flex justify-between items-center mb-4">
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                        전체 {selectedTab === "word_logs" ? wordLogs.length : docsLogs.length}개 중 {currentLogs.length}개 표시
+                                        {isDateFilterApplied && ` (페이지당 ${PAGE_SIZE}개)`}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            className="bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800"
+                                            onClick={deleteSelectedLogs}
+                                        >
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            선택 삭제
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 <div className="border rounded-md dark:border-gray-700">
