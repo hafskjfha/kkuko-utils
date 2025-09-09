@@ -192,7 +192,6 @@ export default function WordsAddHome() {
         // 추가요청 단어 및 기존 단어의 주제 수정 요청 가져오기
         const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('add');
         const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme();
-        console.error(JSON.stringify(waitThemeWord))
 
         if (waitWordsError) { return makeError(waitWordsError); }
         if (waitThemeWordError) { return makeError(waitThemeWordError); }
@@ -221,7 +220,6 @@ export default function WordsAddHome() {
         waitThemeWord.filter(({typez}) => typez === 'delete').forEach(({ words: { word, id }, themes: { code }, req_by }) => {
             if (!delWordTheme[word]) delWordTheme[word] = { themes: [], req_by: req_by, wordId: id };
             delWordTheme[word].themes.push(code);
-            console.error(JSON.stringify(delWordTheme[word].themes));
         });
         
         // 문서 및 주제 정보 맵핑
@@ -347,7 +345,6 @@ export default function WordsAddHome() {
                 existingWordThemes[Number(wordId)] = (existingWordThemes[Number(wordId)] ?? []).concat(themes.map(({ themeId, themeCode, themeName }) => ({ themeId, themeCode, themeName })));
             });
         }
-        console.error(JSON.stringify(delWordTheme))
         // 기존에는 있는 주제이지만 JSON에는 없는 주제 제거 쿼리 준비
         for ( const data of jsonData){
             const addThemesSet = new Set(data.themes);
@@ -363,7 +360,6 @@ export default function WordsAddHome() {
             }
             if (delWordTheme[data.word]){
                 for (const delTheme of delWordTheme[data.word].themes){
-                    console.error(JSON.stringify(delWordTheme[data.word]));
                     if (!addThemesSet.has(delTheme)){
                         const delThemeId = themeCodeInfo[delTheme]
                         if (delThemeId){
