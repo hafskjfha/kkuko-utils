@@ -417,6 +417,26 @@ class GetManager implements IGetManager {
 
         return await query;
     }
+    public async docsLogsByFilter({ docsName, logType, from, to }: { docsName?: string; logType: 'add' | 'delete' | 'all'; from: number; to: number; }) {
+        let query = this.supabase
+            .from('docs_logs')
+            .select(`
+                *,
+                docs(*),
+                users(nickname)
+            `, { count: 'exact' })
+            .order('date', { ascending: false });
+
+        if (docsName && docsName !== "all") {
+            query = query.eq('docs.name', docsName);
+        }
+        if (logType !== "all") {
+            query = query.eq('type', logType);
+        }
+        query = query.range(from, to);
+
+        return await query;
+    }
     public async notice(): Promise<PostgrestSingleResponse<{ body: string; created_at: string; id: number; img: string | null; title: string; } | null>> {
         return await this.supabase.from('notification').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
     }
@@ -491,6 +511,12 @@ class DeleteManager implements IDeleteManager {
     }
     public async wordsWaitThemesByIds(ids: number[]){
         return await this.supabase.from('word_themes_wait').delete().in('word_id', ids);
+    }
+    public async logsByIds(ids: number[]) {
+        return await this.supabase.from('logs').delete().in('id', ids);
+    }
+    public async docsLogsByIds(ids: number[]) {
+        return await this.supabase.from('docs_logs').delete().in('id', ids);
     }
 }
 

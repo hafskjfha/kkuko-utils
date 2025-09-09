@@ -13,7 +13,8 @@ import {
     FileText,
     BookOpen,
     Activity,
-    AlertCircle
+    AlertCircle,
+    History
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SCM } from '../lib/supabaseClient';
@@ -82,6 +83,15 @@ const AdminDashboard = () => {
             color: 'text-blue-600',
             bgColor: 'bg-blue-50 hover:bg-blue-100',
             borderColor: 'border-blue-200'
+        },
+        {
+            title: '로그 관리',
+            description: '단어 로그와 문서 로그를 관리합니다',
+            icon: History,
+            path: '/admin/logs',
+            color: 'text-purple-600',
+            bgColor: 'bg-purple-50 hover:bg-purple-100',
+            borderColor: 'border-purple-200'
         }
     ];
 
@@ -166,7 +176,7 @@ const AdminDashboard = () => {
                         <CardDescription className="dark:text-gray-300">자주 사용하는 기능들에 빠르게 접근할 수 있습니다</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <button
                                 onClick={() => handleNavigation('/admin/add-words')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 bg-white dark:bg-transparent"
@@ -194,6 +204,13 @@ const AdminDashboard = () => {
                             >
                                 <Activity className="w-8 h-8 text-purple-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">문서 요청</span>
+                            </button>
+                            <button
+                                onClick={() => handleNavigation('/admin/logs')}
+                                className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900 transition-all duration-200 bg-white dark:bg-transparent"
+                            >
+                                <History className="w-8 h-8 text-orange-600 mb-2" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">로그 관리</span>
                             </button>
                         </div>
                     </CardContent>
