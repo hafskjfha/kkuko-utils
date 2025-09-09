@@ -182,31 +182,46 @@ export default function WordsAddHome() {
         setProgress(0);
         setCurrentTask('필요한 정보 가져오는 중...');
 
+        // 문서, 주제정보 가져오기
         const { data: docsDatas, error: docsDataError } = await SCM.get().allDocs();
         if (docsDataError) return makeError(docsDataError);
         const { data: themeData, error: themeError } = await SCM.get().allThemes();
         if (themeError) return makeError(themeError);
 
+        // 추가요청 단어 및 기존 단어의 주제 수정 요청 가져오기
         const { data: waitWords, error: waitWordsError } = await SCM.get().allWaitWords('add');
-        const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme('add');
+        const { data: waitThemeWord, error: waitThemeWordError } = await SCM.get().allWordWaitTheme();
 
         if (waitWordsError) { return makeError(waitWordsError); }
         if (waitThemeWordError) { return makeError(waitThemeWordError); }
 
-        const { data: waitWordTheme, error: waitWordThemeError } = await SCM.get().waitWordsThemes(waitWords.map(({ id }) => id))
+        // 추가요청 단어의 주제 수정 요청 가져오기
+        const { data: waitWordTheme, error: waitWordThemeError } = await SCM.get().waitWordsThemes(waitWords.map(({ id }) => id));
         if (waitWordThemeError) { return makeError(waitWordThemeError); }
 
+        // 단어 및 주제 수정 요청의 요청자 정보 맵핑
         const waitWord: Record<string, { id: number, requested_by: string | null }> = {};
         const waitTheme: Record<string, { req_by: string | null }> = {};
 
-        waitWords.forEach(({ id, word, requested_by }) => waitWord[word] = { id, requested_by });
-        waitThemeWord.forEach(({ words: { word }, themes: { name }, req_by }) => {
+        waitWords.forEach(({ id, word, requested_by }) => 
+            waitWord[word] = { id, requested_by }
+        );
+        waitThemeWord.filter(({typez}) => typez === 'add').forEach(({ words: { word }, themes: { name }, req_by }) => {
             waitTheme[keya(word, name)] = { req_by }
         })
         waitWordTheme.forEach(({ wait_words: { word }, themes: { name } }) => {
             waitTheme[keya(word, name)] = { req_by: waitWord[word]?.requested_by ?? null }
         })
 
+        // 주제 수정 요청 처리후 삭제할 word_id 저장
+        const delWaitThemeWordIds: Set<number> = new Set();
+        const delWordTheme: Record<string, {themes: string[], req_by: string | null, wordId: number}> = {};
+        waitThemeWord.filter(({typez}) => typez === 'delete').forEach(({ words: { word, id }, themes: { code }, req_by }) => {
+            if (!delWordTheme[word]) delWordTheme[word] = { themes: [], req_by: req_by, wordId: id };
+            delWordTheme[word].themes.push(code);
+        });
+        
+        // 문서 및 주제 정보 맵핑
         const letterDocsInfo: Record<string, number> = {};
         const themeDocsInfo: Record<string, number> = {};
         const themeCodeInfo: Record<string, number> = {}
@@ -221,26 +236,31 @@ export default function WordsAddHome() {
             themeCodeInfo[code] = id
         })
 
+        // DB 쿼리 준비
         const wordAddQuery: { word: string, k_canuse: boolean, noin_canuse: boolean, added_by: string }[] = [];
         const themesAddQuery: { word_id: number, theme_id: number }[] = [];
         const logsQuery: { word: string, processed_by: string, make_by: string, r_type: "add", state: "approved" }[] = []
-        const docsLogsQuery: { docs_id: number, word: string, add_by: string, type: "add" }[] = []
+        const docsLogsQuery: ({ docs_id: number, word: string, add_by: string, type: "add" } | { docs_id: number, word: string, add_by: string, type: "delete" })[] = []
+        const wordThemeDelQuery: {word_id: number, theme_id: number}[] = [];
 
+        // 추가된 단어 - id 맵핑
         const inseredWordMap: Record<string, number> = {};
 
+        // 단어 추가 쿼리 준비
         for (const data of jsonData) {
             wordAddQuery.push({
                 word: data.word,
                 k_canuse: true,
                 noin_canuse: isNoin(data.themes),
                 added_by: waitWord[data.word]?.requested_by ?? user.uuid
-            })
+            });
         }
 
         const chuckQuerysA = chunkArray(wordAddQuery, 250)
         setProgress(20);
         const com: Record<string, number> = {}; // uuid-기여수
 
+        // 단어 추가
         for (let i = 0; i < chuckQuerysA.length; i++) {
             const chuckQuery = chuckQuerysA[i]
             setCurrentTask(`단어 추가중... ${i}/${chuckQuerysA.length}`);
@@ -252,8 +272,9 @@ export default function WordsAddHome() {
                 continue
             }
 
+            // 추가된 단어 맵핑 및 로그, 기여도 쿼리 준비
             for (const data of insertedWordsData) {
-                inseredWordMap[data.word] = data.id;
+                inseredWordMap[data.word] = data.id; // 추가된 단어 - id 맵핑
                 const make_by = waitWord[data.word]?.requested_by ?? user.uuid;
                 com[make_by] = (com[make_by] ?? 0) + 1;
                 logsQuery.push({
@@ -275,8 +296,9 @@ export default function WordsAddHome() {
             }
         }
 
-        setProgress(40);
-        const needCheckWord: string[] = [];
+        setProgress(30);
+        // 추가된 단어 주제 추가 쿼리 준비 및 기존단어 체크 준비
+        const needCheckWord: string[] = []; // 추가되지않음 (기존에 존재해서)
         for (const data of jsonData) {
             const wordId = inseredWordMap[data.word]
             if (wordId) {
@@ -294,23 +316,64 @@ export default function WordsAddHome() {
             }
         }
 
-        setProgress(50);
-        const needCheckedWordsDatas: { id: number, word: string }[] = []
+        setProgress(40);
+        const needCheckedWordsDatas: { id: number, word: string }[] = [];
+        const existingWordThemes: Record<number, { themeId: number, themeCode: string, themeName: string }[]> = {}; // 단어id - 주제들
+        const checkedData: Record<string, number> = {}; // 단어 - 단어id
+        const existingWordMap: Record<string, { wordId: number ,themes: { id: number, code: string, name: string }[] }> = {}; // 기존단어 - {단어id, 주제들}
+        
+        // 기존 단어 체크
         const abab = chunkArray(needCheckWord, 100)
         for (let i = 0; i < abab.length; i++) {
             const chuckChecks = abab[i];
             setCurrentTask(`기존단어 체크중... ${i}/${abab.length}`);
             const { data: needCheckedWordsData, error: ff } = await SCM.get().wordsByWords(chuckChecks);
             if (ff) return makeError(ff)
-            needCheckedWordsDatas.push(...needCheckedWordsData)
+            needCheckedWordsDatas.push(...needCheckedWordsData);
+
+            // 기존 단어 맵핑
+            for (const data of needCheckedWordsData) {
+                checkedData[data.word] = data.id
+                existingWordMap[data.word] = { wordId: data.id, themes: [] };
+            }
+
+            // 기존 단어의 주제 맵핑
+            const { data: existingWordThemesData, error: ee } = await SCM.get().wordsThemesByWordId(needCheckedWordsData.map(({ id }) => id));
+            if (ee) return makeError(ee);
+            Object.entries(existingWordThemesData).forEach(([wordId, themes]) => {
+                existingWordThemes[Number(wordId)] = (existingWordThemes[Number(wordId)] ?? []).concat(themes.map(({ themeId, themeCode, themeName }) => ({ themeId, themeCode, themeName })));
+            });
+        }
+        // 기존에는 있는 주제이지만 JSON에는 없는 주제 제거 쿼리 준비
+        for ( const data of jsonData){
+            const addThemesSet = new Set(data.themes);
+            if (existingWordThemes[checkedData[data.word]]) {
+                for (const existTheme of existingWordThemes[checkedData[data.word]]) {
+                    if (!addThemesSet.has(existTheme.themeCode)) {
+                        wordThemeDelQuery.push({
+                            word_id: checkedData[data.word],
+                            theme_id: existTheme.themeId
+                        })
+                    }
+                }
+            }
+            if (delWordTheme[data.word]){
+                for (const delTheme of delWordTheme[data.word].themes){
+                    if (!addThemesSet.has(delTheme)){
+                        const delThemeId = themeCodeInfo[delTheme]
+                        if (delThemeId){
+                            wordThemeDelQuery.push({
+                                word_id: delWordTheme[data.word].wordId,
+                                theme_id: delThemeId
+                            })
+                            delWaitThemeWordIds.add(delWordTheme[data.word].wordId);
+                        }
+                    }
+                }
+            }
         }
 
-
-        const checkedData: Record<string, number> = {};
-        for (const data of needCheckedWordsDatas) {
-            checkedData[data.word] = data.id
-        }
-
+        // 기존 단어 누락된 주제 추가 쿼리 준비
         for (const data of jsonData) {
             const exWordId = checkedData[data.word]
             if (exWordId) {
@@ -321,15 +384,15 @@ export default function WordsAddHome() {
                             word_id: exWordId,
                             theme_id: themeId
                         })
+                        delWaitThemeWordIds.add(exWordId);
                     }
                 }
             }
         }
-        const insertThemeMap: Record<string, string[]> = {};
+        const insertThemeMap: Record<string, string[]> = {}; // 단어 - 추가된 주제이름들 맵핑
 
+        // 단어 주제 추가
         const chuckQuerysB = chunkArray(themesAddQuery, 250)
-
-
         for (let i = 0; i < chuckQuerysB.length; i++) {
             const chuckQuery = chuckQuerysB[i]
             setCurrentTask(`주제 정보 추가 중...${i}/${chuckQuerysB.length}`)
@@ -341,6 +404,7 @@ export default function WordsAddHome() {
             }
         }
 
+        // 로그 및 문서로그 쿼리 준비
         for (const [word, themes] of Object.entries(insertThemeMap)) {
             for (const theme of themes) {
                 const themeDocsId = themeDocsInfo[theme]
@@ -356,8 +420,32 @@ export default function WordsAddHome() {
             }
         }
 
+        setProgress(50);
+        // JSON에 없는 단어-주제 쌍 제거
+        setCurrentTask('파일에 없는 단어-주제 쌍 제거 중...');
+        const { data: wordthemeDeletedData, error: wordThemeDeleteError } = await SCM.delete().wordTheme(wordThemeDelQuery);
+        if (wordThemeDeleteError) return makeError(wordThemeDeleteError);
+        for (const data of wordthemeDeletedData) {
+            const docsId = themeDocsInfo[data.theme_name]
+            if (docsId){
+                docsLogsQuery.push({
+                    docs_id: docsId,
+                    word: data.word,
+                    add_by: delWordTheme[data.word]?.req_by ?? user.uuid,
+                    type: "delete"
+                })
+                com[delWordTheme[data.word]?.req_by ?? user.uuid] = (com[delWordTheme[data.word]?.req_by ?? user.uuid] ?? 0) + 1;
+            }
+        }
+        const delWaitIds = Array.from(delWaitThemeWordIds);
+        if (delWaitIds.length > 0){
+            const { error: delWaitError } = await SCM.delete().wordsWaitThemesByIds(delWaitIds);
+            if (delWaitError) return makeError(delWaitError);
+        }
+
         setProgress(60);
-        setCurrentTask('로그 등록중...')
+        // 로그 등록
+        setCurrentTask('로그 등록중...');
         const { error: logError } = await SCM.add().wordLog(logsQuery);
         if (logError) {
             return makeError(logError);
@@ -379,7 +467,7 @@ export default function WordsAddHome() {
 
         await SCM.update().docsLastUpdate([...updateThemeDocsIds]);
 
-        for (const p of chunkArray(logsQuery.map(({word})=>word),100)){
+        for (const p of chunkArray(logsQuery.map(({word})=>word),400)){
             const {error} = await SCM.delete().waitWordsByWords(p);
             if (error) { return makeError(error); }
         }

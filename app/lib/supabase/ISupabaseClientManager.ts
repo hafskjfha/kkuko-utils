@@ -71,7 +71,7 @@ export interface IGetManager{
     logsListById(userId: string): Promise<PostgrestSingleResponse<log[]>>;
     wordsCount(): Promise<{count: number | null; error: PostgrestError | null}>;
     waitWordsCount(): Promise<{count: number | null; error: PostgrestError | null}>;
-    allWordWaitTheme(c?: "add" | "delete"): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string}; themes: theme; users: user | null})[]>>
+    allWordWaitTheme(c?: "add" | "delete"): Promise<PostgrestSingleResponse<(word_themes_wait & {words: {word: string, id: number}; themes: theme; users: user | null})[]>>
     waitWordsThemes(waitWordIds: number[]): Promise<PostgrestSingleResponse<(wait_word_themes & {themes: theme, wait_words:{word: string}})[]>>;
     wordsByWords(words: string[]): Promise<PostgrestSingleResponse<word[]>>;
     randomWordByFirstLetter(f: string[]): Promise<{data: string, error: null}|{data: null, error: PostgrestError}|{data: null, error: null}>;
@@ -83,7 +83,9 @@ export interface IGetManager{
     lastWordCountByLetters(letters: string[]): Promise<number>;
     wordsByQuery(query: string): Promise<{data: string[], error: null} | {data: null; error: PostgrestError}>;
     logsByFillter({filterState, filterType, from, to}:{filterState?: "approved" | "rejected" | "pending" | "all", filterType: "delete" | "add" | "all", from: number, to: number}): Promise<PostgrestSingleResponse<(log & {make_by_user: { nickname: string; } | null; processed_by_user: { nickname: string | null } | null;})[]>>
+    docsLogsByFilter({ docsName, logType, from, to }: { docsName?: string; logType: 'add' | 'delete' | 'all'; from: number; to: number; }): Promise<PostgrestSingleResponse<(docs_log & { docs: docs; users: { nickname: string } | null })[]>>;
     notice(): Promise<PostgrestSingleResponse<notification | null>>;
+    wordsThemesByWordId(wordIds: number[]): Promise<{data: null, error: PostgrestError} | {data: Record<number, {themeId: number, themeCode: string, themeName: string}[]>, error: null}>;
 }
 
 // delete 관련 타입
@@ -99,6 +101,9 @@ export interface IDeleteManager{
     waitWordsByWords(words: string[]): Promise<PostgrestSingleResponse<null>>;
     waitWordsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     waitWordByWord(word: string): Promise<PostgrestSingleResponse<null>>;
+    wordsWaitThemesByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
+    logsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
+    docsLogsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
 }
 
 // update 관련 타입

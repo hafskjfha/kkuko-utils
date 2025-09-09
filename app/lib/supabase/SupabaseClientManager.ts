@@ -296,12 +296,12 @@ class GetManager implements IGetManager {
     }
     public async allWordWaitTheme(c?: "add" | "delete") {
         if (c=="add"){
-            return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)').eq('typez','add');
+            return await this.supabase.from('word_themes_wait').select('*,words(word,id),themes(*),users(*)').eq('typez','add');
         }
         else if (c=="delete"){
-            return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)').eq('typez',"delete")    
+            return await this.supabase.from('word_themes_wait').select('*,words(word,id),themes(*),users(*)').eq('typez',"delete")    
         }
-        return await this.supabase.from('word_themes_wait').select('*,words(word),themes(*),users(*)');
+        return await this.supabase.from('word_themes_wait').select('*,words(word,id),themes(*),users(*)');
     }
     public async waitWordsThemes(waitWordIds: number[]) {
         return await this.supabase.from('wait_word_themes').select('*,themes(*),wait_words(word)').in('wait_word_id', waitWordIds)
@@ -417,8 +417,41 @@ class GetManager implements IGetManager {
 
         return await query;
     }
+    public async docsLogsByFilter({ docsName, logType, from, to }: { docsName?: string; logType: 'add' | 'delete' | 'all'; from: number; to: number; }) {
+        let query = this.supabase
+            .from('docs_logs')
+            .select(`
+                *,
+                docs(*),
+                users(nickname)
+            `, { count: 'exact' })
+            .order('date', { ascending: false });
+
+        if (docsName && docsName !== "all") {
+            query = query.eq('docs.name', docsName);
+        }
+        if (logType !== "all") {
+            query = query.eq('type', logType);
+        }
+        query = query.range(from, to);
+
+        return await query;
+    }
     public async notice(): Promise<PostgrestSingleResponse<{ body: string; created_at: string; id: number; img: string | null; title: string; } | null>> {
         return await this.supabase.from('notification').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    }
+    public async wordsThemesByWordId(wordIds: number[]) {
+        const { data, error } = await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
+        if (error){
+            return {data: null, error};
+        }
+        const result: Record<number, { themeId: number; themeCode: string; themeName: string; }[]> = {};
+        data.forEach(({ word_id, themes: {id, code, name} }) => {
+            if (!result[word_id]) { result[word_id] = []; }
+            result[word_id].push({ themeId: id, themeCode: code, themeName: name });
+        });
+        
+        return {data: result, error: null};
     }
 }
 
@@ -475,6 +508,15 @@ class DeleteManager implements IDeleteManager {
     }
     public async waitWordByWord(word: string) {
         return await this.supabase.from('wait_words').delete().eq("word", word)
+    }
+    public async wordsWaitThemesByIds(ids: number[]){
+        return await this.supabase.from('word_themes_wait').delete().in('word_id', ids);
+    }
+    public async logsByIds(ids: number[]) {
+        return await this.supabase.from('logs').delete().in('id', ids);
+    }
+    public async docsLogsByIds(ids: number[]) {
+        return await this.supabase.from('docs_logs').delete().in('id', ids);
     }
 }
 
