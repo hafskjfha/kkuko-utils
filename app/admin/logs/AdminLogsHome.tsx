@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/app/store/store';
 import { SCM } from "@/app/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
@@ -22,7 +20,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/app/components/ui/pagination";
-import { ArrowLeft, Calendar, Filter, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Filter, Download, Trash2 } from "lucide-react";
 import { PostgrestError } from '@supabase/supabase-js';
 import ErrorModal from '@/app/components/ErrModal';
 
@@ -111,7 +109,6 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
     const [wordLogs, setWordLogs] = useState<WordLog[]>(initialWordLogs);
     const [docsLogs, setDocsLogs] = useState<DocsLog[]>(initialDocsLogs);
     
-    const user = useSelector((state: RootState) => state.user);
     const PAGE_SIZE = 30;
 
     // 현재 표시할 로그들

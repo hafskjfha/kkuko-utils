@@ -18,7 +18,6 @@ import { chunk as chunkArray } from "es-toolkit";
 import JsonViewer from "./JosnViewer"
 import Link from "next/link";
 import { isNoin } from "@/app/lib/lib";
-import { json } from "stream/consumers";
 
 const keya = (word: string, themeName: string) => `[${word}, ${themeName}]`
 
