@@ -478,7 +478,7 @@ export default function AdminLogsHome({ initialWordLogs, initialDocsLogs, allDoc
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="text-sm text-gray-600 dark:text-gray-400">
                                         전체 {selectedTab === "word_logs" ? wordLogs.length : docsLogs.length}개 중 {currentLogs.length}개 표시
-                                        {isDateFilterApplied && ` (페이지당 ${PAGE_SIZE}개)`}
+                                        {` (페이지당 ${PAGE_SIZE}개)`}
                                     </div>
                                     <div className="flex gap-2">
                                         <Button

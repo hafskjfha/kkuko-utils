@@ -9,7 +9,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
 import { FileJson, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
-import { SCM } from "@/app/lib/supabaseClient";
+import { SCM, supabaseInQueryChunk } from "@/app/lib/supabaseClient";
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/store/store";
 import ErrorModal from "@/app/components/ErrModal";
@@ -423,23 +423,31 @@ export default function WordsAddHome() {
         setProgress(50);
         // JSON에 없는 단어-주제 쌍 제거
         setCurrentTask('파일에 없는 단어-주제 쌍 제거 중...');
-        const { data: wordthemeDeletedData, error: wordThemeDeleteError } = await SCM.delete().wordTheme(wordThemeDelQuery);
-        if (wordThemeDeleteError) return makeError(wordThemeDeleteError);
-        for (const data of wordthemeDeletedData) {
-            const docsId = themeDocsInfo[data.theme_name]
-            if (docsId){
-                docsLogsQuery.push({
-                    docs_id: docsId,
-                    word: data.word,
-                    add_by: delWordTheme[data.word]?.req_by ?? user.uuid,
-                    type: "delete"
-                })
-                com[delWordTheme[data.word]?.req_by ?? user.uuid] = (com[delWordTheme[data.word]?.req_by ?? user.uuid] ?? 0) + 1;
+        if (wordThemeDelQuery.length > 0) {
+            const { data: wordthemeDeletedData, error: wordThemeDeleteError } = await SCM.delete().wordTheme(wordThemeDelQuery);
+            if (wordThemeDeleteError) return makeError(wordThemeDeleteError);
+                for (const data of wordthemeDeletedData) {
+                    const docsId = themeDocsInfo[data.theme_name]
+                    if (docsId){
+                    docsLogsQuery.push({
+                        docs_id: docsId,
+                        word: data.word,
+                        add_by: delWordTheme[data.word]?.req_by ?? user.uuid,
+                        type: "delete"
+                    })
+                    com[delWordTheme[data.word]?.req_by ?? user.uuid] = (com[delWordTheme[data.word]?.req_by ?? user.uuid] ?? 0) + 1;
+                }
             }
         }
         const delWaitIds = Array.from(delWaitThemeWordIds);
-        if (delWaitIds.length > 0){
-            const { error: delWaitError } = await SCM.delete().wordsWaitThemesByIds(delWaitIds);
+        if (delWaitIds.length > 0) {
+            const { error: delWaitError } = await supabaseInQueryChunk<null, number>(
+                delWaitIds,
+                async (chunk) => {
+                    const r = await SCM.delete().wordsWaitThemesByIds(chunk);
+                    return {...r};
+                },
+            )
             if (delWaitError) return makeError(delWaitError);
         }
 
