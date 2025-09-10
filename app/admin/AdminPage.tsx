@@ -14,7 +14,8 @@ import {
     BookOpen,
     Activity,
     AlertCircle,
-    History
+    History,
+    Megaphone
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SCM } from '../lib/supabaseClient';
@@ -92,6 +93,15 @@ const AdminDashboard = () => {
             color: 'text-purple-600',
             bgColor: 'bg-purple-50 hover:bg-purple-100',
             borderColor: 'border-purple-200'
+        },
+        {
+            title: '공지사항 관리',
+            description: '서비스 공지사항을 작성하고 관리합니다',
+            icon: Megaphone,
+            path: '/admin/notice',
+            color: 'text-orange-600',
+            bgColor: 'bg-orange-50 hover:bg-orange-100',
+            borderColor: 'border-orange-200'
         }
     ];
 
@@ -211,6 +221,13 @@ const AdminDashboard = () => {
                             >
                                 <History className="w-8 h-8 text-orange-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">로그 관리</span>
+                            </button>
+                            <button
+                                onClick={() => handleNavigation('/admin/notice')}
+                                className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900 transition-all duration-200 bg-white dark:bg-transparent"
+                            >
+                                <Megaphone className="w-8 h-8 text-yellow-600 mb-2" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">공지사항</span>
                             </button>
                         </div>
                     </CardContent>
