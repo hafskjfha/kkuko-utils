@@ -20,7 +20,9 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@/types/*": ["./app/types/*"]
+      "@/types/*": ["./app/types/*"],
+      "@/components/*": ["./app/components/*"],
+      "@/lib/*": ["./app/lib/*"],
     },
     "typeRoots": ["./node_modules/@types", "./app/types"]
   },

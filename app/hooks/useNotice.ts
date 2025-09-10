@@ -9,6 +9,7 @@ interface NoticeData {
     body: string;
     img: string | null;
     created_at: string;
+    end_at: string;
 }
 
 export function useNotice() {

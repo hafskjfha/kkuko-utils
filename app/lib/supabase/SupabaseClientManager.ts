@@ -55,6 +55,9 @@ class AddManager implements IAddManager {
     public async waitWords(q: { word: string; requested_by: string | null; request_type: 'add'; }[]) {
         return this.supabase.from('wait_words').upsert(q,{ onConflict: "word", ignoreDuplicates: true }).select('*');
     }
+    public async notification(data: { title: string; body: string; img?: string | null; end_at: string }) {
+        return await this.supabase.from('notification').insert(data).select('*').single();
+    }
     
 }
 
@@ -437,21 +440,13 @@ class GetManager implements IGetManager {
 
         return await query;
     }
-    public async notice(): Promise<PostgrestSingleResponse<{ body: string; created_at: string; id: number; img: string | null; title: string; } | null>> {
-        return await this.supabase.from('notification').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    public async notice(){
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        return await this.supabase.from('notification').select('*').gte('end_at', today.toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle();
     }
     public async wordsThemesByWordId(wordIds: number[]) {
-        const { data, error } = await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
-        if (error){
-            return {data: null, error};
-        }
-        const result: Record<number, { themeId: number; themeCode: string; themeName: string; }[]> = {};
-        data.forEach(({ word_id, themes: {id, code, name} }) => {
-            if (!result[word_id]) { result[word_id] = []; }
-            result[word_id].push({ themeId: id, themeCode: code, themeName: name });
-        });
-        
-        return {data: result, error: null};
+        return await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
     }
 }
 
@@ -518,6 +513,9 @@ class DeleteManager implements IDeleteManager {
     public async docsLogsByIds(ids: number[]) {
         return await this.supabase.from('docs_logs').delete().in('id', ids);
     }
+    public async notificationById(id: number) {
+        return await this.supabase.from('notification').delete().eq('id', id);
+    }
 }
 
 class UpdateManager implements IUpdateManager {
@@ -531,6 +529,9 @@ class UpdateManager implements IUpdateManager {
     }
     public async docView(id: number): Promise<void> {
         await this.supabase.rpc('increment_doc_views', { doc_id: id })
+    }
+    public async notification(id: number, data: { title?: string; body?: string; img?: string | null; end_at: string}) {
+        return await this.supabase.from('notification').update(data).eq('id', id).select('*').single();
     }
 }
 
@@ -577,5 +578,29 @@ export class SupabaseClientManager implements ISupabaseClientManager {
     }
     public async logout(){
         await this.supabase.auth.signOut()
+    }
+    
+    // 이미지 업로드 기능
+    public async uploadImage(file: File, path: string) {
+        return await this.supabase.storage
+            .from('public_img')
+            .upload(path, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+    }
+    
+    // 이미지 삭제 기능
+    public async deleteImage(path: string) {
+        return await this.supabase.storage
+            .from('public_img')
+            .remove([path]);
+    }
+    
+    // 공개 URL 가져오기
+    public getPublicUrl(path: string) {
+        return this.supabase.storage
+            .from('public_img')
+            .getPublicUrl(path);
     }
 }

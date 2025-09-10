@@ -35,6 +35,7 @@ export interface IAddManager {
     wordsThemes(q: addWordThemeQueryType[]): Promise<PostgrestSingleResponse<{words:{word: string}; themes: {name: string}}[]>>;
     wordThemesReq(q: {word_id: number, theme_id: number, typez: "add" | "delete", req_by: string | null}[]): Promise<PostgrestSingleResponse<{typez: "add" | "delete"; themes:{name: string}}[]>>
     waitWords(q: {word: string, requested_by: string | null, request_type: "add"}[]): Promise<PostgrestSingleResponse<(wait_word)[]>>;
+    notification(data: { title: string; body: string; img?: string | null; end_at: string }): Promise<PostgrestSingleResponse<notification>>;
 }
 
 // get 관련 타입
@@ -85,7 +86,7 @@ export interface IGetManager{
     logsByFillter({filterState, filterType, from, to}:{filterState?: "approved" | "rejected" | "pending" | "all", filterType: "delete" | "add" | "all", from: number, to: number}): Promise<PostgrestSingleResponse<(log & {make_by_user: { nickname: string; } | null; processed_by_user: { nickname: string | null } | null;})[]>>
     docsLogsByFilter({ docsName, logType, from, to }: { docsName?: string; logType: 'add' | 'delete' | 'all'; from: number; to: number; }): Promise<PostgrestSingleResponse<(docs_log & { docs: docs; users: { nickname: string } | null })[]>>;
     notice(): Promise<PostgrestSingleResponse<notification | null>>;
-    wordsThemesByWordId(wordIds: number[]): Promise<{data: null, error: PostgrestError} | {data: Record<number, {themeId: number, themeCode: string, themeName: string}[]>, error: null}>;
+    wordsThemesByWordId(wordIds: number[]): Promise<PostgrestSingleResponse<{word_id: number, themes: theme}[]>>;
 }
 
 // delete 관련 타입
@@ -104,6 +105,7 @@ export interface IDeleteManager{
     wordsWaitThemesByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     logsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
     docsLogsByIds(ids: number[]): Promise<PostgrestSingleResponse<null>>;
+    notificationById(id: number): Promise<PostgrestSingleResponse<null>>;
 }
 
 // update 관련 타입
@@ -111,6 +113,7 @@ export interface IUpdateManager{
     userContribution({ userId, amount }: { userId: string, amount?: number }): Promise<PostgrestSingleResponse<undefined>>;
     docsLastUpdate(docs_ids: number[]): Promise<void>;
     docView(id: number): Promise<void>;
+    notification(id: number, data: { title?: string; body?: string; img?: string | null; end_at?: string | null }): Promise<PostgrestSingleResponse<notification>>;
 }
 
 // 전체 supabaseManager 타입 
