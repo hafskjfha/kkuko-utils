@@ -443,7 +443,7 @@ class GetManager implements IGetManager {
     public async notice(){
         const today = new Date();
         today.setHours(23, 59, 59, 999);
-        return await this.supabase.from('notification').select('*').lte('end_at', today.toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle();
+        return await this.supabase.from('notification').select('*').gte('end_at', today.toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle();
     }
     public async wordsThemesByWordId(wordIds: number[]) {
         return await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
