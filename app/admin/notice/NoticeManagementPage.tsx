@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import {
     Card,
     CardContent,
@@ -29,6 +30,7 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { StorageError } from '@supabase/storage-js';
 import ErrorModal from '@/app/components/ErrModal';
 import CompleteModal from '@/app/components/CompleteModal';
+import ConfirmModal from '@/app/components/ConfirmModal';
 
 interface NotificationData {
     id: number;
@@ -385,10 +387,13 @@ const NoticeManagementPage = () => {
                                     </div>
                                     {currentNotice.img && (
                                         <div>
-                                            <img
+                                            <Image
                                                 src={currentNotice.img}
                                                 alt="공지 이미지"
+                                                width={800}
+                                                height={600}
                                                 className="max-w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+                                                style={{ width: 'auto', height: 'auto' }}
                                             />
                                         </div>
                                     )}
@@ -483,10 +488,13 @@ const NoticeManagementPage = () => {
                                     {/* 이미지 미리보기 */}
                                     {(imagePreview || formData.img) && (
                                         <div className="relative">
-                                            <img
+                                            <Image
                                                 src={imagePreview || formData.img}
                                                 alt="이미지 미리보기"
+                                                width={600}
+                                                height={192}
                                                 className="max-w-full max-h-48 rounded-lg border border-gray-200 dark:border-gray-700"
+                                                style={{ width: 'auto', height: 'auto', objectFit: 'contain' }}
                                             />
                                             <Button
                                                 type="button"
@@ -600,40 +608,14 @@ const NoticeManagementPage = () => {
 
             {/* 삭제 확인 모달 */}
             {deleteConfirmModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <Card className="w-full max-w-md mx-4 bg-white dark:bg-gray-800">
-                        <CardHeader>
-                            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-red-600" />
-                                공지사항 삭제 확인
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-gray-600 dark:text-gray-300 mb-6">
-                                정말로 현재 공지사항을 삭제하시겠습니까?<br />
-                                삭제된 공지사항은 복구할 수 없습니다.
-                            </p>
-                            <div className="flex gap-3 justify-end">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setDeleteConfirmModal(false)}
-                                    className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                                >
-                                    취소
-                                </Button>
-                                <Button
-                                    onClick={handleDelete}
-                                    className="bg-red-600 hover:bg-red-700 text-white"
-                                >
-                                    <Trash2 className="w-4 h-4 mr-1" />
-                                    삭제
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                <ConfirmModal
+                    open={deleteConfirmModal}
+                    onClose={() => setDeleteConfirmModal(false)}
+                    onConfirm={handleDelete}
+                    title="정말로 현재 공지사항을 삭제하시겠습니까?"
+                    description="삭제된 공지사항은 복구할 수 없습니다."
+                />
             )}
-
 
         </div>
     );
