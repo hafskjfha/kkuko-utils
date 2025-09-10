@@ -441,17 +441,7 @@ class GetManager implements IGetManager {
         return await this.supabase.from('notification').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
     }
     public async wordsThemesByWordId(wordIds: number[]) {
-        const { data, error } = await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
-        if (error){
-            return {data: null, error};
-        }
-        const result: Record<number, { themeId: number; themeCode: string; themeName: string; }[]> = {};
-        data.forEach(({ word_id, themes: {id, code, name} }) => {
-            if (!result[word_id]) { result[word_id] = []; }
-            result[word_id].push({ themeId: id, themeCode: code, themeName: name });
-        });
-        
-        return {data: result, error: null};
+        return await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
     }
 }
 
