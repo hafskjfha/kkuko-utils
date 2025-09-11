@@ -99,7 +99,7 @@ export default function WordAddHome(){
             }));
 
         const { data: insertWordThemesData ,error: insertWordThemesError } = await SCM.add().wordThemes(insertWordThemesQuery);
-        if (insertWordThemesError) { throw insertWordThemesError; }
+        if (insertWordThemesError) { return makeError(insertWordThemesError); }
 
         const { data: docsData, error: docsError } = await SCM.get().allDocs();
         if (docsError) { return makeError(docsError); }
