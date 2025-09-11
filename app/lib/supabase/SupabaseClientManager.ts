@@ -448,6 +448,10 @@ class GetManager implements IGetManager {
     public async wordsThemesByWordId(wordIds: number[]) {
         return await this.supabase.from('word_themes').select('word_id, themes(*)').in('word_id', wordIds);
     }
+    public async allUser(sortField?: 'contribution' | 'month_contribution' | 'nickname', isAsc?: boolean) {
+        return await this.supabase.from('users').select('*').order(sortField ?? 'contribution', { ascending: isAsc ?? false });
+    }
+    
 }
 
 class DeleteManager implements IDeleteManager {

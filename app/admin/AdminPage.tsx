@@ -15,7 +15,8 @@ import {
     Activity,
     AlertCircle,
     History,
-    Megaphone
+    Megaphone,
+    Users
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SCM } from '../lib/supabaseClient';
@@ -102,6 +103,15 @@ const AdminDashboard = () => {
             color: 'text-orange-600',
             bgColor: 'bg-orange-50 hover:bg-orange-100',
             borderColor: 'border-orange-200'
+        },
+        {
+            title: '사용자 관리',
+            description: '등록된 사용자들의 정보와 기여도를 관리합니다',
+            icon: Users,
+            path: '/admin/users',
+            color: 'text-indigo-600',
+            bgColor: 'bg-indigo-50 hover:bg-indigo-100',
+            borderColor: 'border-indigo-200'
         }
     ];
 
@@ -186,7 +196,7 @@ const AdminDashboard = () => {
                         <CardDescription className="dark:text-gray-300">자주 사용하는 기능들에 빠르게 접근할 수 있습니다</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                             <button
                                 onClick={() => handleNavigation('/admin/add-words')}
                                 className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 bg-white dark:bg-transparent"
@@ -228,6 +238,13 @@ const AdminDashboard = () => {
                             >
                                 <Megaphone className="w-8 h-8 text-yellow-600 mb-2" />
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">공지사항</span>
+                            </button>
+                            <button
+                                onClick={() => handleNavigation('/admin/users')}
+                                className="flex flex-col items-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 bg-white dark:bg-transparent"
+                            >
+                                <Users className="w-8 h-8 text-indigo-600 mb-2" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">사용자 관리</span>
                             </button>
                         </div>
                     </CardContent>

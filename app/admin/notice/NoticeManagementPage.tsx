@@ -22,6 +22,7 @@ import {
     AlertCircle,
     Info,
     Upload,
+    ArrowLeft,
 
 } from 'lucide-react';
 import { SCM } from '@/app/lib/supabaseClient';
@@ -31,6 +32,7 @@ import { StorageError } from '@supabase/storage-js';
 import ErrorModal from '@/app/components/ErrModal';
 import CompleteModal from '@/app/components/CompleteModal';
 import ConfirmModal from '@/app/components/ConfirmModal';
+import Link from 'next/link';
 
 interface NotificationData {
     id: number;
@@ -314,6 +316,14 @@ const NoticeManagementPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-300">
             <div className="max-w-4xl mx-auto">
+                {/* 관리자 대시보드로 이동 버튼 */}
+                <Link href={'/admin'} className="mb-4 flex">
+                    <Button variant="outline">
+                        <ArrowLeft />
+                        관리자 대시보드로 이동
+                    </Button>
+                </Link>
+                
                 {/* 헤더 */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-3">
