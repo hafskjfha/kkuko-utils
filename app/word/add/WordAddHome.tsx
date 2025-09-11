@@ -12,6 +12,8 @@ import { PostgrestError } from "@supabase/supabase-js";
 import useSWR from "swr";
 import { fetcher } from "../lib";
 import WordAddForm from "../components/WordAddFrom";
+import { isNoin } from "@/app/lib/lib";
+import { DocsLogData } from "@/app/types/type";
 
 interface TopicInfo {
     topicsCode: Record<string, string>;
@@ -30,7 +32,7 @@ export default function WordAddHome(){
         topicsKo: {},
         topicsID: {}
     });
-    const { data } = useSWR("themes", fetcher);
+    const { data } = useSWR("themes", fetcher, { dedupingInterval: 120000 });
 
     useEffect(() => {
         setIsLogin(!!user.uuid);
@@ -64,8 +66,92 @@ export default function WordAddHome(){
         });
     }
 
+    const onSaveByAdmin = async (word: string, themes: string[]) => {
+        if (!user.uuid || !['admin','r4'].includes(user.role)) return;
+
+        const { data: existingWord, error: exstedCheckError } = await SCM.get().wordInfoByWord(word);
+
+        if (exstedCheckError) { return makeError(exstedCheckError); }
+        if (existingWord) { return setWorkFail("이미 존재하는 단어입니다."); }
+
+        const { data: insertedWord, error: insertedWordError } = await SCM.add().word([{
+            word, 
+            added_by: user.uuid,
+            noin_canuse: isNoin(themes),
+        }]);
+        if (insertedWordError) { return makeError(insertedWordError); }
+        if (!insertedWord || insertedWord.length === 0) { return setWorkFail("단어 추가에 실패했습니다."); }
+
+        const { error: insertWordLogError } = await SCM.add().wordLog([{
+            word,
+            make_by: user.uuid,
+            processed_by: user.uuid,
+            r_type: "add",
+            state: "approved"
+        }]);
+        if (insertWordLogError) { return makeError(insertWordLogError); }
+
+        const insertWordThemesQuery = themes
+            .filter(tc => topicInfo.topicsID[tc])
+            .map(tc => ({
+                word_id: insertedWord[0].id,
+                theme_id: topicInfo.topicsID[tc]
+            }));
+
+        const { data: insertWordThemesData ,error: insertWordThemesError } = await SCM.add().wordThemes(insertWordThemesQuery);
+        if (insertWordThemesError) { throw insertWordThemesError; }
+
+        const { data: docsData, error: docsError } = await SCM.get().allDocs();
+        if (docsError) { return makeError(docsError); }
+
+        const letterDocs = docsData.filter(d => d.typez === 'letter');
+        const themeDocs = docsData.filter(d => d.typez === 'theme');
+
+        const docsLogQuery: DocsLogData[] = [];
+
+        for (const doc of letterDocs){
+            if (doc.name === word[word.length - 1]) {
+                docsLogQuery.push({
+                    word: word,
+                    docs_id: doc.id,
+                    add_by: user.uuid,
+                    type: "add"
+                });
+            }
+        }
+
+        for (const insertedTheme of insertWordThemesData){
+            for (const doc of themeDocs){
+                if (doc.name === insertedTheme.themes.name) {
+                    docsLogQuery.push({
+                        word: word,
+                        docs_id: doc.id,
+                        add_by: user.uuid,
+                        type: "add"
+                    });
+                }
+            }
+        }
+
+        const { error: insertDocsLogError } = await SCM.add().docsLog(docsLogQuery);
+        if (insertDocsLogError) { return makeError(insertDocsLogError); }
+
+        await SCM.update().docsLastUpdate(docsLogQuery.map(d => d.docs_id));
+
+        setCompleteState({
+            word: word,
+            selectedTheme: themes.map(code => topicInfo.topicsCode[code]).join(', '),
+            onClose: () => {
+                setCompleteState(null);
+            }
+        });
+    }
+
     const onSave = async (word: string, themes: string[]) => {
         if (!user.uuid) return;
+        if (['admin','r4'].includes(user.role)) {
+            return onSaveByAdmin(word, themes);
+        }
 
         try {
             // Check if word already exists
@@ -141,8 +227,8 @@ export default function WordAddHome(){
                 <CompleteModal
                     open={!!completeState}
                     onClose={completeState.onClose}
-                    title="단어 추가 요청이 완료되었습니다."
-                    description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 추가요청이 완료되었습니다.`}
+                    title={`단어 추가${['admin','r4'].includes(user.role) ? "가" : " 요청이"} 완료되었습니다.`}
+                    description={`단어: ${completeState.word} 주제: ${completeState.selectedTheme}의 ${['admin','r4'].includes(user.role) ? "추가가" : "추가요청이"} 완료되었습니다.`}
                 />
             }
 

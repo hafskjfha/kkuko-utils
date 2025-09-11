@@ -20,6 +20,8 @@ import { josa } from "es-hangul";
 import { useRouter } from 'next/navigation'
 import  DuemRaw,{ reverDuemLaw } from '@/app/lib/DuemLaw';
 import WordSearchBar from "./SearchBar";
+import { PostgrestError } from "@supabase/supabase-js";
+import { DocsLogData } from "@/app/types/type";
 
 export interface WordInfoProps {
     word: string;
@@ -59,6 +61,15 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
     const las1 = [DuemRaw(wordInfo.word[wordInfo.word.length - 1])];
     const [goFirstLetterWords, setGoFirstLetterWords] = useState<number | null>(null);
     const [goLastLetterWords, setGoLastLetterWords] = useState<number | null>(null);
+
+    const makeError = (error: PostgrestError, inputValue?: string) => {
+        setErrorModalView({
+            ErrMessage: error.message,
+            ErrName: error.name,
+            ErrStackRace: error.code,
+            inputValue: inputValue ?? "/word/search"
+        });
+    }
 
     useEffect(()=>{
         const gf = async () => {
@@ -137,12 +148,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
 
         const { data: editRequestData, error: editRequestError } = await SCM.add().wordThemesReq([...delThemesQuery, ...newThemesQuery]);
         if (editRequestError) {
-            setErrorModalView({
-                ErrMessage: "An error occurred while saving the theme edit.",
-                ErrName: "ErrorSavingThemeEdit",
-                ErrStackRace: editRequestError.message,
-                inputValue: "theme edit save"
-            });
+            makeError(editRequestError, "theme edit save");
             return;
         }
 
@@ -168,7 +174,65 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
 
     const onCancelOrDeleteRequest = async () => {
         setConFirmModalOpen(false)
-        if (wordInfo.status === "ok" && user.uuid) {
+        if (wordInfo.status === "ok" && user.uuid && ['admin','r4'].includes(user.role)) {
+            const { error : deleteError } = await SCM.delete().wordById(wordInfo.dbId);
+            if (deleteError) {
+                makeError(deleteError, "delete word");
+                return;
+            }
+
+            const { error: addLogError } = await SCM.add().wordLog([{
+                word: wordInfo.word,
+                make_by: user.uuid,
+                processed_by: user.uuid,
+                r_type: "delete",
+                state: "approved"
+            }]);
+            if (addLogError) {
+                makeError(addLogError, "delete word log");
+                return;
+            }
+
+            const {data: docsData, error: docsError} = await SCM.get().allDocs();
+            if (docsError) {
+                makeError(docsError, "get all docs for word delete");
+                return;
+            }
+            const docsLogQuery: DocsLogData[] = [];
+
+            const connectedLetterDocs = docsData.filter((doc) => doc.typez === "letter" && doc.name === wordInfo.word[wordInfo.word.length - 1]);
+            for (const doc of connectedLetterDocs) {
+                docsLogQuery.push({
+                    docs_id: doc.id,
+                    add_by: user.uuid,
+                    type: "delete",
+                    word: wordInfo.word,
+                });
+            }
+
+            const connectedThemeDocs = docsData.filter((doc) => doc.typez === "theme" && wordInfo.topic.ok.includes(doc.name));
+            for (const doc of connectedThemeDocs) {
+                docsLogQuery.push({
+                    docs_id: doc.id,
+                    add_by: user.uuid,
+                    type: "delete",
+                    word: wordInfo.word,
+                });
+            }
+
+            if (docsLogQuery.length > 0) {
+                const { error: addDocsLogError } = await SCM.add().docsLog(docsLogQuery);
+                if (addDocsLogError) {
+                    makeError(addDocsLogError, "add docs log for word delete");
+                    return;
+                }
+            }
+            await SCM.update().docsLastUpdate(docsLogQuery.map(d => d.docs_id));
+
+            setCompleteModalOpen({ word: wordInfo.word, work: "dr", s: "r" });
+
+        }
+        else if (wordInfo.status === "ok" && user.uuid) {
             const { data: requestDeleteData, error: requestDeleteError } = await SCM.add().waitWord({
                 word: wordInfo.word,
                 request_type: "delete" as const,
@@ -177,12 +241,7 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
             })
 
             if (requestDeleteError) {
-                setErrorModalView({
-                    ErrMessage: "An error occurred while delete request",
-                    ErrName: "ErrorDeleteRequest",
-                    ErrStackRace: requestDeleteError.hint,
-                    inputValue: "delete request"
-                });
+                makeError(requestDeleteError, "delete request");
                 return;
             };
             if (!requestDeleteData) return;
@@ -194,24 +253,14 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
         else if (wordInfo.status !== "ok" && user.uuid && wordInfo.requester_uuid === user.uuid) {
             const { error: requestCancelError } = await SCM.delete().waitWordByWord(wordInfo.word);
             if (requestCancelError) {
-                setErrorModalView({
-                    ErrMessage: "An error occurred while cancel request",
-                    ErrName: "ErrorCancelRequest",
-                    ErrStackRace: requestCancelError.message,
-                    inputValue: "cancel request"
-                });
+                makeError(requestCancelError, "cancel request");
                 return;
             };
             if (wordInfo.status === "삭제요청") {
                 wordInfo.status = "ok"
                 const { data: originData, error: originDataError } = await SCM.get().wordInfoByWord(wordInfo.word);
                 if (originDataError) {
-                    setErrorModalView({
-                        ErrMessage: "An error occurred while cancel request",
-                        ErrName: "ErrorCancelRequest",
-                        ErrStackRace: originDataError.message,
-                        inputValue: "cancel request"
-                    });
+                    makeError(originDataError, "cancel request");
                     return;
                 }
 
@@ -516,13 +565,13 @@ const WordInfo = ({ wordInfo }: { wordInfo: WordInfoProps }) => {
             {completeModalOpen &&<CompleteModal
                 open={completeModalOpen !== null}
                 onClose={onCompleteModalClose}
-                title={completeModalOpen.s === "t" ? `단어 "${completeModalOpen.word}"에 대한 주제 수정 완료` : `${josa(wordInfo.word, "을/를")} ${wordInfo.status === "ok" ? "삭제 요청취소를" : (wordInfo.status == "삭제요청" ? "삭제 요청을" : "추가 요청취소를")} 하였습니다`}
+                title={completeModalOpen.s === "t" ? `단어 "${completeModalOpen.word}"에 대한 주제 수정 완료` : `${josa(wordInfo.word, "을/를")} ${wordInfo.status === "ok" ? "삭제 요청취소를" : (wordInfo.status === "삭제요청" ? (['admin','r4'].includes(user.role)) ? "삭제를" : "삭제 요청을" : "추가 요청취소를")} 하였습니다 ${wordInfo.status === "삭제요청" && ['admin','r4'].includes(user.role) ? "(새로고침을 한번 해주세요.)" :""}`}
                 description={completeModalOpen.s === "t" ? `주제 수정이 요청이 완료되었습니다. ${completeModalOpen.addThemes.length > 0 ? `추가 요청된 주제: ${completeModalOpen.addThemes.join(", ")}` : ``} ${completeModalOpen.delThemes.length > 0 ? `삭제 요청된 주제: ${completeModalOpen.delThemes.join(", ")}` : ``}` : ``}
                 />
             }
             {conFirmModalOpen &&
                 <ConfirmModal
-                    title={`"${wordInfo.word}"${josa(wordInfo.word, "을/를")[wordInfo.word.length]} ${wordInfo.status === "ok" ? "삭제 요청" : `${wordInfo.status === "삭제요청" ? "삭제" : "추가"} 요청 취소`}를 하시겠습니까?`}
+                    title={`"${wordInfo.word}"${josa(wordInfo.word, "을/를")[wordInfo.word.length]} ${wordInfo.status === "ok" ? (['admin','r4'].includes(user.role)) ? "삭제" : "삭제 요청" : `${wordInfo.status === "삭제요청" ? "삭제" : "추가"} 요청 취소`}를 하시겠습니까?`}
                     description={"요청후 취소 할 수 " + (wordInfo.status === "ok" ? "있습니다." : "없습니다.")}
                     open={conFirmModalOpen}
                     onClose={() => setConFirmModalOpen(false)}
