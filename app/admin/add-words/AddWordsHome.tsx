@@ -510,7 +510,7 @@ export default function WordsAddHome() {
         await SCM.update().docsLastUpdate([...updateThemeDocsIds]);
 
         const { error: waitWordsDeleteError } = await supabaseInQueryChunk(
-            waitWords.map(({ id }) => id),
+            jsonData.filter(({ word}) => waitWord[word]).map(({ word}) => waitWord[word].id),
             async (chunk) => {
                 const r = await SCM.delete().waitWordsByIds(chunk);
                 return { ...r };
